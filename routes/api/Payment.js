@@ -3,7 +3,7 @@ var express = require("express");
 var router = express.Router();
 var Payment = require("../../modals/Payment");
 var Tenants = require("../../modals/Tenants");
-
+var Charges = require("../../modals/Charges");
   //   Add  Payment
 router.post("/add_payment", async (req, res) => {
     try {
@@ -302,6 +302,23 @@ router.get("/Payment_summary/tenant/:tenantid/:entryindex", async (req, res) => 
   }
 });
 
+//charge collection in add 
+router.post("/add_charges", async (req, res) => {
+  try {
+
+    var data = await Charges.create(req.body);
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Add Charge Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  } 
+});
 
 
 module.exports = router;
