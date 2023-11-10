@@ -17,7 +17,7 @@ charges_amount: { type: Number },
 tenant_firstName: { type: String },
 charges_memo: { type: String },
 charges_attachment :[{ type: Array }],
-charges_entries: [entrySchema],  
+entries: [entrySchema],  
 });
 
 module.exports = mongoose.model("charges", chargesSchema);
