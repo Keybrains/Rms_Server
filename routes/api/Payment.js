@@ -321,4 +321,49 @@ router.post("/add_charges", async (req, res) => {
 });
 
 
+
+router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
+  try {
+    // Extract tenantId from the request parameters
+    const tenantId = req.params.tenant_id;
+    console.log("Tenant ID:", tenantId);
+
+    // Fetch data from the Payment collection based on tenantId
+    const paymentData = await Payment.find({ tenant_id: tenantId });
+    console.log("Payment Data:", paymentData);
+
+    // Fetch data from the Charges collection based on tenantId
+    const chargesData = await Charges.find({ tenant_id: tenantId });
+    console.log("Charges Data:", chargesData);
+
+    // Check if there are no payment records
+    if (paymentData.length === 0) {
+      console.log("No payment records found.");
+    }
+
+    // Check if there are no charges records
+    if (chargesData.length === 0) {
+      console.log("No Charges records found.");
+    }
+
+    // Create a merged object using both payment and charges data
+    const mergedData = {
+      payments: paymentData,
+      charges: chargesData,
+    };
+
+    res.json({
+      data: mergedData,
+      statusCode: 200,
+      message: "Read Payments and Charges",
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;
