@@ -11,6 +11,7 @@ const entrySchema = new Schema({
 const paymentSchema = new Schema({  
 tenant_id:{type: String},
 entryIndex:{type: String},
+type:{type: String, default:"Payment"}, 
 payment_id:{type: String},
 rental_adress: { type: String },
 date: { type: String },
