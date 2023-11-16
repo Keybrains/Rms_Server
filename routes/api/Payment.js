@@ -321,7 +321,7 @@ router.post("/add_charges", async (req, res) => {
 });
 
 
-
+//payment charge api
 router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
   try {
     // Extract tenantId from the request parameters
