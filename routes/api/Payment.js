@@ -1,90 +1,112 @@
-
 var express = require("express");
 var router = express.Router();
 var Payment = require("../../modals/Payment");
 var Tenants = require("../../modals/Tenants");
 var Charges = require("../../modals/Charges");
-  //   Add  Payment
+//   Add  Payment
+// router.post("/add_payment", async (req, res) => {
+//   try {
+//     var data = await Payment.create(req.body);
+//     res.json({
+//       statusCode: 200,
+//       data: data,
+//       message: "Add payment Successfully",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 router.post("/add_payment", async (req, res) => {
-    try {
-  
-      var data = await Payment.create(req.body);
-      res.json({
-        statusCode: 200,
-        data: data,
-        message: "Add payment Successfully",
-      });
-    } catch (error) {
-      res.json({
-        statusCode: 500,
-        message: error.message,
-      });
-    } 
-  });
+  try {
+    const { entries, ...restOfData } = req.body;
 
-
-  router.get("/payment", async (req, res) => {
-    try {
-      var data = await Payment.find();
-  
-      if (data.length === 0) {
-        // Log a message for debugging
-        console.log("No payment records found.");
-      }
-  
-      res.json({
-        data: data,
-        statusCode: 200,
-        message: "Read All Payments",
-      });
-    } catch (error) {
-      console.error(error); // Log the error to the console for debugging
-      res.json({
-        statusCode: 500,
-        message: error.message,
+    if (entries && Array.isArray(entries)) {
+      entries.forEach((entry, index) => {
+        entry.paymentIndex = ("0" + (index + 1)).slice(-2); // Generate paymentIndex "01", "02", ...
       });
     }
-  });
-  
-    
-    // delete Payment
-      router.delete("/Payment", async (req, res) => {
-        try {
-          let result = await Payment.deleteMany({
-            _id: { $in: req.body },
-          });
-          res.json({
-            statusCode: 200,
-            data: result,
-            message: "Payment Deleted Successfully",
-          });
-        } catch (err) {
-          res.json({
-            statusCode: 500,
-            message: err.message,
-          });
-        }
-      });
-    
-       //edit rentals 
-     router.put("/Payment/:id", async (req, res) => {
-      try {
-        let result = await Payment.findByIdAndUpdate(req.params.id, req.body);
-        res.json({
-          statusCode: 200,
-          data: result,
-          message: "Payment Data Updated Successfully",
-        });
-      } catch (err) {
-        res.json({
-          statusCode: 500,
-          message: err.message,
-        });
-      }
+
+    const newPayment = {
+      entries: entries,
+      ...restOfData,
+    };
+
+    const data = await Payment.create(newPayment);
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Add Payment Successfully",
     });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+router.get("/payment", async (req, res) => {
+  try {
+    var data = await Payment.find();
 
+    if (data.length === 0) {
+      // Log a message for debugging
+      console.log("No payment records found.");
+    }
 
-    //get Payment table  summary data id wise 
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read All Payments",
+    });
+  } catch (error) {
+    console.error(error); // Log the error to the console for debugging
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+// delete Payment
+router.delete("/Payment", async (req, res) => {
+  try {
+    let result = await Payment.deleteMany({
+      _id: { $in: req.body },
+    });
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Payment Deleted Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+//edit rentals
+router.put("/Payment/:id", async (req, res) => {
+  try {
+    let result = await Payment.findByIdAndUpdate(req.params.id, req.body);
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Payment Data Updated Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+//get Payment table  summary data id wise
 
 router.get("/Payment_summary/:id", async (req, res) => {
   try {
@@ -110,7 +132,7 @@ router.get("/Payment_summary/:id", async (req, res) => {
   }
 });
 
-//get tennat data as per payment in tenant firstname 
+//get tennat data as per payment in tenant firstname
 // router.get("/payment/financial", async (req, res) => {
 //   try {
 //     const data = await Payment.aggregate([
@@ -140,7 +162,6 @@ router.get("/Payment_summary/:id", async (req, res) => {
 //     });
 //   }
 // });
-
 
 // router.get("/payment/financial", async (req, res) => {
 //   try {
@@ -186,8 +207,7 @@ router.get("/Payment_summary/:id", async (req, res) => {
 //   }
 // });
 
-
-//rental adress wise data get in payment collection 
+//rental adress wise data get in payment collection
 // router.get("/payment/:rental_address", async (req, res) => {
 //   try {
 //     const rentalAddress = req.params.rental_address; // Get the rental address from the URL parameter
@@ -218,29 +238,32 @@ router.get("/payment/:rental_address", async (req, res) => {
 
     const data = await Payment.aggregate([
       {
-        $match: { rental_adress: rentalAddress }
+        $match: { rental_adress: rentalAddress },
       },
       {
-        $unwind: "$entries"
+        $unwind: "$entries",
       },
       {
         $lookup: {
           from: "tenants",
-          let: { tenantId: { $toObjectId: "$tenant_id" }, entryIdx: "$entries.entryIndex" },
+          let: {
+            tenantId: { $toObjectId: "$tenant_id" },
+            entryIdx: "$entries.entryIndex",
+          },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$tenantId"] },
-                    { $eq: ["$entryIndex", "$$entryIdx"] }
-                  ]
-                }
-              }
-            }
+                    { $eq: ["$entryIndex", "$$entryIdx"] },
+                  ],
+                },
+              },
+            },
           ],
-          as: "TenantData"
-        }
+          as: "TenantData",
+        },
       },
       {
         $group: {
@@ -252,13 +275,15 @@ router.get("/payment/:rental_address", async (req, res) => {
           tenant_firstName: { $first: "$tenant_firstName" },
           attachment: { $first: "$attachment" },
           entries: { $push: "$entries" },
-          TenantData: { $first: "$TenantData" }
-        }
-      }
+          TenantData: { $first: "$TenantData" },
+        },
+      },
     ]);
 
     if (data.length === 0) {
-      console.log("No payment records found for the rental address: " + rentalAddress);
+      console.log(
+        "No payment records found for the rental address: " + rentalAddress
+      );
     }
 
     res.json({
@@ -275,25 +300,72 @@ router.get("/payment/:rental_address", async (req, res) => {
   }
 });
 
-
-router.get("/Payment_summary/tenant/:tenantid/:entryindex", async (req, res) => {
-  try {
-    const tenantId = req.params.tenantid; 
-    const entryIndex = req.params.entryindex; 
-    var data = await Payment.find({ tenant_id : tenantId });
-    var data = await Payment.find({ entryIndex : entryIndex});
-    if (data && data.length > 0) {
-      res.json({
-        data: data,
-        statusCode: 200,
-        message: "summaryGet Successfully",
-      });
-    } else {
-      res.status(404).json({
-        statusCode: 404,
-        message: "summary not found",
+router.get(
+  "/Payment_summary/tenant/:tenantid/:entryindex",
+  async (req, res) => {
+    try {
+      const tenantId = req.params.tenantid;
+      const entryIndex = req.params.entryindex;
+      var data = await Payment.find({ tenant_id: tenantId });
+      var data = await Payment.find({ entryIndex: entryIndex });
+      if (data && data.length > 0) {
+        res.json({
+          data: data,
+          statusCode: 200,
+          message: "summaryGet Successfully",
+        });
+      } else {
+        res.status(404).json({
+          statusCode: 404,
+          message: "summary not found",
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        statusCode: 500,
+        message: error.message,
       });
     }
+  }
+);
+
+//charge collection in add
+// router.post("/add_charges", async (req, res) => {
+//   try {
+//     var data = await Charges.create(req.body);
+//     res.json({
+//       statusCode: 200,
+//       data: data,
+//       message: "Add Charge Successfully",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+router.post("/add_charges", async (req, res) => {
+  try {
+    const { entries, ...restOfData } = req.body;
+
+    if (entries && Array.isArray(entries)) {
+      entries.forEach((entry, index) => {
+        entry.chargeIndex = ("0" + (index + 1)).slice(-2); // Generate chargeIndex "01", "02", ...
+      });
+    }
+
+    const newCharges = {
+      entries: entries,
+      ...restOfData,
+    };
+
+    const data = await Charges.create(newCharges);
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Add Charges Successfully",
+    });
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
@@ -301,25 +373,34 @@ router.get("/Payment_summary/tenant/:tenantid/:entryindex", async (req, res) => 
     });
   }
 });
-
-//charge collection in add 
-router.post("/add_charges", async (req, res) => {
+router.delete("/delete_charge/:mainId/:chargeIndex", async (req, res) => {
   try {
+    const { mainId, chargeIndex } = req.params;
+    const updatedCharge = await Charges.findOneAndUpdate(
+      { _id: mainId },
+      { $pull: { entries: { chargeIndex: chargeIndex } } },
+      { new: true }
+    );
 
-    var data = await Charges.create(req.body);
+    if (!updatedCharge) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Charge not found",
+      });
+    }
+
     res.json({
       statusCode: 200,
-      data: data,
-      message: "Add Charge Successfully",
+      data: updatedCharge,
+      message: "Charge entry deleted successfully",
     });
   } catch (error) {
-    res.json({
+    res.status(500).json({
       statusCode: 500,
       message: error.message,
     });
-  } 
+  }
 });
-
 //payment charge api
 router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
   try {

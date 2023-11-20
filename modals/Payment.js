@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const entrySchema = new Schema({
+  paymentIndex : { type: String },
   account: { type: String },
   balance: { type: Number},
   amount: { type: Number },

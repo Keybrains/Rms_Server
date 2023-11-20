@@ -131,6 +131,7 @@ router.post("/tenant", async (req, res) => {
       while (num.length < 2) num = "0" + num;
       return num;
     }
+
     req.body["tenant_id"] = pad(count + 1);
 
     const {
@@ -249,6 +250,111 @@ router.post("/tenant", async (req, res) => {
       data: data,
       statusCode: 200,
       message: "Read All Tenants",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+//new api to get
+router.get("/tenants", async (req, res) => {
+  try {
+    // Find tenants with at least one entry
+    const tenantsWithData = await Tenants.find(
+      { entries: { $not: { $size: 0 } } }
+    );
+
+    // Extract data for each tenant along with their entries
+    const data = tenantsWithData.map((tenant) => {
+      return tenant.entries.map((entry) => {
+        return {
+          _id: tenant._id,
+          tenant_firstName: tenant.tenant_firstName,
+          tenant_lastName: tenant.tenant_lastName,
+          tenant_unitNumber: tenant.tenant_unitNumber,
+          tenant_mobileNumber: tenant.tenant_mobileNumber,
+          tenant_workNumber: tenant.tenant_workNumber,
+          tenant_homeNumber: tenant.tenant_homeNumber,
+          tenant_faxPhoneNumber: tenant.tenant_faxPhoneNumber,
+          tenant_email: tenant.tenant_email,
+          tenant_password: tenant.tenant_password,
+          alternate_email: tenant.alternate_email,
+          tenant_residentStatus: tenant.tenant_residentStatus,
+          birth_date: tenant.birth_date,
+          textpayer_id: tenant.textpayer_id,
+          comments: tenant.comments,
+          contact_name: tenant.contact_name,
+          relationship_tenants: tenant.relationship_tenants,
+          email: tenant.email,
+          emergency_PhoneNumber: tenant.emergency_PhoneNumber,
+
+          entry: {
+            entryIndex: entry.entryIndex,
+            rental_adress: entry.rental_adress,
+            lease_type: entry.lease_type,
+            start_date: entry.start_date,
+            end_date: entry.end_date,
+            leasing_agent: entry.leasing_agent,
+            rent_cycle: entry.rent_cycle,
+            amount: entry.amount,
+            account: entry.account,
+            nextDue_date: entry.nextDue_date,
+            memo: entry.memo,
+            upload_file: entry.upload_file,
+            isrenton: entry.isrenton,
+            rent_paid: entry.rent_paid,
+            propertyOnRent: entry.propertyOnRent,
+            Due_date: entry.Due_date,
+            Security_amount: entry.Security_amount,
+            recuring_amount: entry.recuring_amount,
+            recuring_account: entry.recuring_account,
+            recuringnextDue_date: entry.recuringnextDue_date,
+            recuringmemo: entry.recuringmemo,
+            recuringfrequency: entry.recuringfrequency,
+            onetime_account: entry.onetime_account,
+            onetime_amount: entry.onetime_amount,
+            onetime_Due_date: entry.onetime_Due_date,
+            onetime_memo: entry.onetime_memo,
+
+             // add cosigner
+            cosigner_firstName: entry.cosigner_firstName,
+            cosigner_lastName: entry.cosigner_lastName,
+            cosigner_mobileNumber: entry.cosigner_mobileNumber,
+            cosigner_workNumber: entry.cosigner_workNumber,
+            cosigner_homeNumber: entry.cosigner_homeNumber,
+            cosigner_faxPhoneNumber: entry.cosigner_faxPhoneNumber,
+            cosigner_email: entry.cosigner_email,
+            cosigner_alternateemail: entry.cosigner_alternateemail,
+            cosigner_streetAdress: entry.cosigner_streetAdress,
+            cosigner_city: entry.cosigner_city,
+            cosigner_state: entry.cosigner_state,
+            cosigner_zip: entry.cosigner_zip,
+            cosigner_country: entry.cosigner_country,
+            cosigner_postalcode: entry.cosigner_postalcode,
+          
+            // add account 
+            account_name: entry.account_name,
+            account_type: entry.account_type,
+          
+            //account level (sub account)
+            parent_account: entry.parent_account,
+            account_number: entry.account_number,
+            fund_type: entry.fund_type,
+            cash_flow: entry.cash_flow,
+            notes: entry.notes,
+            entry_id: entry._id,
+          },
+        };
+      });
+    }).flat(); // Flatten the nested arrays
+
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read Non-Empty Tenants",
     });
   } catch (error) {
     res.json({
@@ -729,7 +835,7 @@ router.delete("/tenant/:tenantId/entry/:entryIndex", async (req, res) => {
       });
       return;
     }
-
+    
     const entryIndexToDelete = tenant.entries.findIndex(
       (e) => e.entryIndex === entryIndex
     );
