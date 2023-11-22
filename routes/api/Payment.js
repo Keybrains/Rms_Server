@@ -408,11 +408,11 @@ router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
     const tenantId = req.params.tenant_id;
     console.log("Tenant ID:", tenantId);
 
-    // Fetch data from the Payment collection based on tenantId
+    // Fetch data from the Payment collection based on tenantId and sort by date
     const paymentData = await Payment.find({ tenant_id: tenantId });
     console.log("Payment Data:", paymentData);
 
-    // Fetch data from the Charges collection based on tenantId
+    // Fetch data from the Charges collection based on tenantId and sort by date
     const chargesData = await Charges.find({ tenant_id: tenantId });
     console.log("Charges Data:", chargesData);
 
@@ -421,16 +421,28 @@ router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
       console.log("No payment records found.");
     }
 
-    // Check if there are no charges records
-    if (chargesData.length === 0) {
-      console.log("No Charges records found.");
-    }
 
-    // Create a merged object using both payment and charges data
-    const mergedData = {
-      payments: paymentData,
-      charges: chargesData,
-    };
+    // Combine payment and charges arrays into a single array
+    const mergedData = [...paymentData, ...chargesData];
+
+    // Sort the merged data by the 'date' field
+    // mergedData.sort((a, b) => {
+    //   const dateA = new Date(a.date);
+    //   const dateB = new Date(b.date);
+    //   return dateA - dateB;
+    // });
+    // console.log("mergeddata", mergedData);
+    
+    // // Check if there are no charges records
+    // if (chargesData.length === 0) {
+    //   console.log("No Charges records found.");
+    // }
+
+    // // Create a merged object using both payment and charges data
+    // const mergedData = {
+    //   payments: paymentData,
+    //   charges: chargesData,
+    // };
 
     res.json({
       data: mergedData,
@@ -445,5 +457,6 @@ router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;
