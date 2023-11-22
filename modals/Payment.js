@@ -22,6 +22,7 @@ tenant_firstName: { type: String },
 tenant_lastName: { type: String },
 memo: { type: String },
 attachment :[{ type: Array }],
+debitcard_number:{type:Number},
 entries: [entrySchema],  
 });
 
