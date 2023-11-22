@@ -10,10 +10,11 @@ const entrySchema = new Schema({
 
 const chargesSchema = new Schema({  
 tenant_id:{type: String},
-type:{type: String, default:"Charge"}, 
 entryIndex:{type: String},
+type:{type: String, default:"Charge"}, 
 rental_adress: { type: String },
-charges_date: { type: String },
+// charges_date: { type: String },
+date: { type: String },
 charges_amount: { type: Number },
 tenant_firstName: { type: String },
 charges_memo: { type: String },
