@@ -258,5 +258,25 @@ router.get("/workorder/tenant/:rental_addresses", async (req, res) => {
   }
 });
   
+router.get('/workorder/vendor/:id', async (req, res) => {
+  try {
+    const workorderId = req.params.id;
 
+    // Find the work order by workorder_id
+    const workorder = await Workorder.findOne({ workorder_id: workorderId });
+
+    if (!workorder) {
+      return res.status(404).json({ message: 'Workorder not found' });
+    }
+
+    // Extract vendor_name from the retrieved workorder document
+    const vendorName = workorder.vendor_name;
+
+    res.json({
+      vendor_name: vendorName,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 module.exports = router;

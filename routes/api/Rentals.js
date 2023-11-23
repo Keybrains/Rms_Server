@@ -7,7 +7,7 @@ var Tenants = require("../../modals/Tenants");
 // Post api working
 // router.post("/rentals", async (req, res) => {
 //   try {
-    
+
 //     var data = await Rentals.create(req.body);
 //     res.json({
 //       statusCode: 200,
@@ -64,7 +64,7 @@ router.post("/rentals", async (req, res) => {
     });
 
     data.entries = entries;
-    
+
     // Remove the _id fields from the entries
     const responseData = { ...data.toObject() };
     responseData.entries = responseData.entries.map((entryItem) => {
@@ -103,39 +103,100 @@ router.get("/rentals", async (req, res) => {
   }
 });
 
+router.get("/rental", async (req, res) => {
+  try {
+    var rentalsWithData = await Rentals.find(
+      { entries: { $not: { $size: 0 } } }
+    );
+
+    const data = rentalsWithData.map((tenant) => {
+      return tenant.entries.map((entry) => {
+        return {
+          _id: tenant._id,
+          rentalOwner_firstName: tenant.rentalOwner_firstName,
+          rentalOwner_lastName: tenant.rentalOwner_lastName,
+          rentalOwner_companyName: tenant.rentalOwner_companyName,
+          rentalOwner_primaryEmail: tenant.rentalOwner_primaryEmail,
+          rentalOwner_phoneNumber: tenant.rentalOwner_phoneNumber,
+          rentalOwner_homeNumber: tenant.rentalOwner_homeNumber,
+          rentalOwner_businessNumber: tenant.rentalOwner_businessNumber,
+
+
+          entries: {
+            entryIndex: entry.entryIndex,
+            rental_adress: entry.rental_adress,
+            property_type: entry.property_type,
+            isrenton: entry.isrenton,
+            rental_city: entry.rental_city,
+            rental_country: entry.rental_country,
+            rental_postcode: entry.rental_postcode,
+            rentalOwner_operatingAccount: entry.rentalOwner_operatingAccount,
+            rentalOwner_propertyReserve: entry.rentalOwner_propertyReserve,
+            staffMember: entry.staffMember,
+            rental_bed: entry.rental_bed,
+            rental_bath: entry.rental_bath,
+            propertyres_image: entry.propertyres_image,
+            rental_soft: entry.rental_soft,
+            rental_units: entry.rental_units,
+            rental_unitsAdress: entry.rental_unitsAdress,
+            rentalcom_soft: entry.rentalcom_soft,
+            rentalcom_units: entry.rentalcom_units,
+            rentalcom_unitsAdress: entry.rentalcom_unitsAdress,
+            property_image: entry.property_image,
+            entry_id: entry._id,
+
+          },
+        };
+      });
+    }).flat();
+
+    data.reverse();
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read All Rentals",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 
 router.delete("/rentals", async (req, res) => {
   try {
     const propIdsToDelete = req.body;
 
-      console.log("propIdsToDelete from body", propIdsToDelete);
-  
-      // Get the names of the staff members to be deleted
-      const propertyToDelete = await Rentals.find({
-        _id: { $in: propIdsToDelete },
-      }).select("rental_adress");
-      console.log("propertyToDelete after variable",propertyToDelete)
-  
-      const propNamesToDelete = propertyToDelete.map(
-        (staff) => staff.rental_adress
-      );
-  
-      const assignedProperty = await Tenants.find({
-        rental_adress: { $in: propNamesToDelete },
-      }); 
-  
-      if (assignedProperty.length > 0) {
-        return res.status(201).json({
-          statusCode: 201,
-          message:
-            "Property is already assigned. Deletion not allowed.",
-        });
-      }
+    console.log("propIdsToDelete from body", propIdsToDelete);
 
-      const result = await Rentals.deleteMany({
-        _id: { $in: propIdsToDelete },
+    // Get the names of the staff members to be deleted
+    const propertyToDelete = await Rentals.find({
+      _id: { $in: propIdsToDelete },
+    }).select("rental_adress");
+    console.log("propertyToDelete after variable", propertyToDelete)
+
+    const propNamesToDelete = propertyToDelete.map(
+      (staff) => staff.rental_adress
+    );
+
+    const assignedProperty = await Tenants.find({
+      rental_adress: { $in: propNamesToDelete },
+    });
+
+    if (assignedProperty.length > 0) {
+      return res.status(201).json({
+        statusCode: 201,
+        message:
+          "Property is already assigned. Deletion not allowed.",
       });
-      
+    }
+
+    const result = await Rentals.deleteMany({
+      _id: { $in: propIdsToDelete },
+    });
+
     res.json({
       statusCode: 200,
       data: result,
@@ -188,7 +249,7 @@ router.delete("/rental/:rentalId/entry/:entryIndex", async (req, res) => {
     const assignedProperty = await Tenants.find({
       "entries.rental_adress": { $in: propNamesToDelete },
     });
-    console.log(assignedProperty,"xyz")
+    console.log(assignedProperty, "xyz")
 
     console.log(assignedProperty.includes(propNamesToDelete), "abc")
 
@@ -217,8 +278,8 @@ router.delete("/rental/:rentalId/entry/:entryIndex", async (req, res) => {
   }
 });
 
- //edit rentals 
- router.put("/rentals/:id", async (req, res) => {
+//edit rentals 
+router.put("/rentals/:id", async (req, res) => {
   try {
     let result = await Rentals.findByIdAndUpdate(req.params.id, req.body);
     res.json({
@@ -446,7 +507,7 @@ router.post("/filterproperty/owners", async (req, res) => {
 router.get("/property", async (req, res) => {
   try {
     const data = await Rentals.find({ "entries.isrenton": false }, "entries.rental_adress");
-    
+
     if (data.length > 0) {
       const rentalAddresses = data.map(entry => entry.entries[0].rental_adress);
       res.json({
@@ -475,7 +536,7 @@ router.get("/property", async (req, res) => {
 router.get("/property_onrent", async (req, res) => {
   try {
     const data = await Rentals.find({ "entries.isrenton": true }, "entries.rental_adress");
-    
+
     if (data.length > 0) {
       const rentalAddresses = data.map(entry => entry.entries[0].rental_adress);
       res.json({
@@ -495,13 +556,13 @@ router.get("/property_onrent", async (req, res) => {
       message: error.message,
     });
   }
-}); 
+});
 
 // find all rental_address
 router.get("/rental_allproperty", async (req, res) => {
   try {
     var data = await Rentals.find().select("rental_adress")
-    
+
     res.json({
       statusCode: 200,
       data: data,
@@ -513,20 +574,25 @@ router.get("/rental_allproperty", async (req, res) => {
       message: error.message,
     });
   }
-}); 
+});
 
 router.get("/allproperty", async (req, res) => {
   try {
-    // Use the .find() method to retrieve all rental addresses and _id
-    const data = await Rentals.find({}, '_id entries.rental_adress');
+    const data = await Rentals.find({}, 'entries.rental_adress');
 
-    // Extract rental addresses and _id from the data
-    const rentalAddresses = data
-      .filter(entry => entry.entries && entry.entries[0] && entry.entries[0].rental_adress)
-      .map(entry => ({
-        _id: entry._id,
-        rental_adress: entry.entries[0].rental_adress
-      }));
+    const rentalAddresses = data.reduce((addresses, rental) => {
+      if (rental.entries && rental.entries.length > 0) {
+        rental.entries.forEach(entry => {
+          if (entry.rental_adress) {
+            addresses.push({
+              _id: rental._id,
+              rental_adress: entry.rental_adress
+            });
+          }
+        });
+      }
+      return addresses;
+    }, []);
 
     res.json({
       statusCode: 200,
@@ -540,6 +606,7 @@ router.get("/allproperty", async (req, res) => {
     });
   }
 });
+
 
 
 //fillter api rentel_address wise in outstanding balance in lease 
@@ -635,8 +702,8 @@ router.post("/search_Properties", async (req, res) => {
 
 router.get("/rentals_property/:rental_adress", async (req, res) => {
   try {
-    const adress = req.params.rental_adress; 
-    var data = await Rentals.findOne({ rental_adress: adress }); 
+    const adress = req.params.rental_adress;
+    var data = await Rentals.findOne({ rental_adress: adress });
     if (data) {
       res.json({
         data: data,
@@ -706,7 +773,7 @@ router.put("/rental/:id/entry/:entryIndex", async (req, res) => {
       rentalOwner_phoneNumber: req.body.rentalOwner_phoneNumber,
       rentalOwner_homeNumber: req.body.rentalOwner_homeNumber,
       rentalOwner_businessNumber: req.body.rentalOwner_businessNumber
-    }; 
+    };
 
     // Find the rental by ID
     const rental = await Rentals.findById(id);
@@ -741,7 +808,7 @@ router.put("/rental/:id/entry/:entryIndex", async (req, res) => {
 router.get("/Rentals_summary/tenant/:rental_address", async (req, res) => {
   try {
     const address = req.params.rental_address;
-    const data = await Rentals.find({ "entries.rental_adress" : address });
+    const data = await Rentals.find({ "entries.rental_adress": address });
 
     if (data && data.length > 0) {
       res.json({
