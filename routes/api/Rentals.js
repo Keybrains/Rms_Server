@@ -578,16 +578,21 @@ router.get("/rental_allproperty", async (req, res) => {
 
 router.get("/allproperty", async (req, res) => {
   try {
-    // Use the .find() method to retrieve all rental addresses and _id
-    const data = await Rentals.find({}, '_id entries.rental_adress');
+    const data = await Rentals.find({}, 'entries.rental_adress');
 
-    // Extract rental addresses and _id from the data
-    const rentalAddresses = data
-      .filter(entry => entry.entries && entry.entries[0] && entry.entries[0].rental_adress)
-      .map(entry => ({
-        _id: entry._id,
-        rental_adress: entry.entries[0].rental_adress
-      }));
+    const rentalAddresses = data.reduce((addresses, rental) => {
+      if (rental.entries && rental.entries.length > 0) {
+        rental.entries.forEach(entry => {
+          if (entry.rental_adress) {
+            addresses.push({
+              _id: rental._id,
+              rental_adress: entry.rental_adress
+            });
+          }
+        });
+      }
+      return addresses;
+    }, []);
 
     res.json({
       statusCode: 200,
@@ -601,6 +606,7 @@ router.get("/allproperty", async (req, res) => {
     });
   }
 });
+
 
 
 //fillter api rentel_address wise in outstanding balance in lease 
