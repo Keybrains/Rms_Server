@@ -95,7 +95,10 @@ router.post("/tenant", async (req, res) => {
 
     const tenantRentalAddress = entries[0].rental_adress;
 
-    console.log("Attempting to find matching rental for address:", tenantRentalAddress);
+    console.log(
+      "Attempting to find matching rental for address:",
+      tenantRentalAddress
+    );
 
     const matchingRental = await Rentals.findOne({
       "entries.rental_adress": tenantRentalAddress,
@@ -103,14 +106,13 @@ router.post("/tenant", async (req, res) => {
 
     console.log("Matching Rental:", matchingRental);
 
-    
     if (matchingRental) {
       const matchingEntry = matchingRental.entries.find(
         (entry) => entry.rental_adress === tenantRentalAddress
       );
-    
+
       console.log("Matching Entry:", matchingEntry);
-    
+
       if (
         matchingEntry &&
         matchingEntry.rental_adress.trim() === tenantRentalAddress.trim()
@@ -120,7 +122,7 @@ router.post("/tenant", async (req, res) => {
         await matchingRental.save();
       } else {
         console.log("Conditions not met for setting isrenton to true.");
-      } 
+      }
     }
 
     // const mailOptions = {
@@ -178,35 +180,36 @@ router.get("/tenant", async (req, res) => {
 router.get("/tenants", async (req, res) => {
   try {
     // Find tenants with at least one entry
-    const tenantsWithData = await Tenants.find(
-      { entries: { $not: { $size: 0 } } }
-    );
+    const tenantsWithData = await Tenants.find({
+      entries: { $not: { $size: 0 } },
+    });
 
     // Extract data for each tenant along with their entries
-    const data = tenantsWithData.map((tenant) => {
-      return tenant.entries.map((entry) => {
-        return {
-          _id: tenant._id,
-          tenant_firstName: tenant.tenant_firstName,
-          tenant_lastName: tenant.tenant_lastName,
-          tenant_unitNumber: tenant.tenant_unitNumber,
-          tenant_mobileNumber: tenant.tenant_mobileNumber,
-          tenant_workNumber: tenant.tenant_workNumber,
-          tenant_homeNumber: tenant.tenant_homeNumber,
-          tenant_faxPhoneNumber: tenant.tenant_faxPhoneNumber,
-          tenant_email: tenant.tenant_email,
-          tenant_password: tenant.tenant_password,
-          alternate_email: tenant.alternate_email,
-          tenant_residentStatus: tenant.tenant_residentStatus,
-          birth_date: tenant.birth_date,
-          textpayer_id: tenant.textpayer_id,
-          comments: tenant.comments,
-          contact_name: tenant.contact_name,
-          relationship_tenants: tenant.relationship_tenants,
-          email: tenant.email,
-          emergency_PhoneNumber: tenant.emergency_PhoneNumber,
+    const data = tenantsWithData
+      .map((tenant) => {
+        return tenant.entries.map((entry) => {
+          return {
+            _id: tenant._id,
+            tenant_firstName: tenant.tenant_firstName,
+            tenant_lastName: tenant.tenant_lastName,
+            tenant_unitNumber: tenant.tenant_unitNumber,
+            tenant_mobileNumber: tenant.tenant_mobileNumber,
+            tenant_workNumber: tenant.tenant_workNumber,
+            tenant_homeNumber: tenant.tenant_homeNumber,
+            tenant_faxPhoneNumber: tenant.tenant_faxPhoneNumber,
+            tenant_email: tenant.tenant_email,
+            tenant_password: tenant.tenant_password,
+            alternate_email: tenant.alternate_email,
+            tenant_residentStatus: tenant.tenant_residentStatus,
+            birth_date: tenant.birth_date,
+            textpayer_id: tenant.textpayer_id,
+            comments: tenant.comments,
+            contact_name: tenant.contact_name,
+            relationship_tenants: tenant.relationship_tenants,
+            email: tenant.email,
+            emergency_PhoneNumber: tenant.emergency_PhoneNumber,
 
-          entries: {
+          entry: {
             entryIndex: entry.entryIndex,
             rental_adress: entry.rental_adress,
             lease_type: entry.lease_type,
@@ -264,7 +267,7 @@ router.get("/tenants", async (req, res) => {
           },
         };
       });
-    }).flat(); 
+    }).flat(); // Flatten the nested arrays
 
     res.json({
       data: data,
@@ -279,28 +282,26 @@ router.get("/tenants", async (req, res) => {
   }
 });
 
-
 router.delete("/tenant", async (req, res) => {
-    try {
-      let result = await Tenants.deleteMany({
-        _id: { $in: req.body },
-      });
-      res.json({
-        statusCode: 200,
-        data: result,
-        message: "Tenants Deleted Successfully",
-      });
-    } catch (err) {
-      res.json({
-        statusCode: 500,
-        message: err.message,
-      });
-    }
-  });
+  try {
+    let result = await Tenants.deleteMany({
+      _id: { $in: req.body },
+    });
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Tenants Deleted Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
 
-  
- //edit tenant
-// PUT request to update tenant data old 
+//edit tenant
+// PUT request to update tenant data old
 // router.put("/tenant/:id", async (req, res) => {
 //   try {
 //     // Update the tenant data
@@ -333,8 +334,7 @@ router.delete("/tenant", async (req, res) => {
 //   }
 // });
 
-
-// put api new change new entry add existing tenant add new index id and add recored 
+// put api new change new entry add existing tenant add new index id and add recored
 router.put("/tenant/:id", async (req, res) => {
   try {
     const tenantId = req.params.id;
@@ -342,7 +342,9 @@ router.put("/tenant/:id", async (req, res) => {
     const tenant = await Tenants.findById(tenantId);
 
     if (!tenant) {
-      return res.status(404).json({ statusCode: 404, message: "Tenant not found" });
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Tenant not found" });
     }
 
     const currentDate = new Date();
@@ -356,13 +358,20 @@ router.put("/tenant/:id", async (req, res) => {
 
     if (updateData.entries && Array.isArray(updateData.entries)) {
       // Find the last entry in the existing entries
-      const lastEntry = tenant.entries.length > 0 ? tenant.entries[tenant.entries.length - 1] : null;
-      let nextEntryIndex = lastEntry ? (parseInt(lastEntry.entryIndex) + 1).toString().padStart(2, "0") : "01";
+      const lastEntry =
+        tenant.entries.length > 0
+          ? tenant.entries[tenant.entries.length - 1]
+          : null;
+      let nextEntryIndex = lastEntry
+        ? (parseInt(lastEntry.entryIndex) + 1).toString().padStart(2, "0")
+        : "01";
 
       // Loop through the entries and set entryIndex
       updateData.entries.forEach((entry) => {
         entry.entryIndex = nextEntryIndex;
-        nextEntryIndex = (parseInt(nextEntryIndex) + 1).toString().padStart(2, "0");
+        nextEntryIndex = (parseInt(nextEntryIndex) + 1)
+          .toString()
+          .padStart(2, "0");
       });
 
       tenant.entries.push(...updateData.entries);
@@ -384,9 +393,7 @@ router.put("/tenant/:id", async (req, res) => {
   }
 });
 
-
-
-//get  rentroll table data 
+//get  rentroll table data
 router.get("/rentroll", async (req, res) => {
   try {
     var data = await Tenants.find();
@@ -403,7 +410,7 @@ router.get("/rentroll", async (req, res) => {
   }
 });
 
-//get tenant table  summary data id wise 
+//get tenant table  summary data id wise
 
 router.get("/tenant_summary/:id", async (req, res) => {
   try {
@@ -428,8 +435,6 @@ router.get("/tenant_summary/:id", async (req, res) => {
     });
   }
 });
-
-
 
 router.get("/tenant_summary/tenant/:tenant_email", async (req, res) => {
   try {
@@ -457,15 +462,15 @@ router.get("/tenant_summary/tenant/:tenant_email", async (req, res) => {
   }
 });
 
- // Define a route to get a tenant's rental addresses by email
- router.get("/tenant_rental_addresses/:tenantId", async (req, res) => {
+// Define a route to get a tenant's rental addresses by email
+router.get("/tenant_rental_addresses/:tenantId", async (req, res) => {
   try {
     const userId = req.params.tenantId; // Get the user ID from the URL parameter
     var data = await Tenants.findById(userId);
-   
+
     if (data && data.entries.length > 0) {
       // Extract rental addresses from the data.entries array
-      const rental_adress = data.entries.map(entry => entry.rental_adress);
+      const rental_adress = data.entries.map((entry) => entry.rental_adress);
 
       res.json({
         rental_adress: rental_adress, // Use "rental_adress" here
@@ -489,12 +494,12 @@ router.get("/tenant_summary/tenant/:tenant_email", async (req, res) => {
   }
 });
 
-
 //fillter api lease type wise
 router.post("/filterlease_type", async (req, res) => {
   try {
     let pipeline = [];
-    if (req.body.lease_type) { // Corrected from req.body.rentals
+    if (req.body.lease_type) {
+      // Corrected from req.body.rentals
       pipeline.push({
         $match: { lease_type: req.body.lease_type },
       });
@@ -526,8 +531,6 @@ router.post("/filterlease_type", async (req, res) => {
   }
 });
 
-
-
 //search tenant table data like firstname , lastname
 
 router.post("/search_tenant", async (req, res) => {
@@ -543,7 +546,7 @@ router.post("/search_tenant", async (req, res) => {
         tenant_lastName: !isNaN(req.body.search)
           ? req.body.search
           : { $regex: req.body.search, $options: "i" },
-      },
+      }
     );
     var data = await Tenants.find({
       $or: newArray,
@@ -555,7 +558,7 @@ router.post("/search_tenant", async (req, res) => {
     res.json({
       statusCode: 200,
       data: data,
-      count: dataCount,  // Include the count in the response
+      count: dataCount, // Include the count in the response
       message: "Read All Tenants",
     });
   } catch (error) {
@@ -566,22 +569,16 @@ router.post("/search_tenant", async (req, res) => {
   }
 });
 
-
-
 //search RentRoll  table data like lease (rentale_address) , leasetype (type)
 router.post("/search-rentroll", async (req, res) => {
   try {
     let newArray = [];
     if (Number(req.body.search)) {
-     
-      newArray.push(
-        {
-          amount: !isNaN(req.body.search)
-            ? req.body.search
-            : { $regex: req.body.search, $options: "i" },
-        },
-       
-      );
+      newArray.push({
+        amount: !isNaN(req.body.search)
+          ? req.body.search
+          : { $regex: req.body.search, $options: "i" },
+      });
     } else {
       newArray.push(
         {
@@ -589,7 +586,7 @@ router.post("/search-rentroll", async (req, res) => {
         },
         {
           lease_type: { $regex: req.body.search, $options: "i" },
-        },
+        }
       );
     }
 
@@ -609,8 +606,6 @@ router.post("/search-rentroll", async (req, res) => {
   }
 });
 
-
-
 // Login tenant
 router.post("/login", async (req, res) => {
   try {
@@ -618,7 +613,9 @@ router.post("/login", async (req, res) => {
     if (!user) {
       return res.json({ statusCode: 403, message: "User doesn't exist" });
     }
-    const isMatch = await Tenants.findOne({tenant_password: req.body.tenant_password} );
+    const isMatch = await Tenants.findOne({
+      tenant_password: req.body.tenant_password,
+    });
     if (!isMatch) {
       return res.json({ statusCode: 402, message: "Enter Valid Password" });
     }
@@ -642,14 +639,17 @@ router.post("/login", async (req, res) => {
   }
 });
 
-//get tenant table in  rental_adress $ id   wise  data 
+//get tenant table in  rental_adress $ id   wise  data
 
 router.get("/tenant_summary/:rental_adress/:id", async (req, res) => {
   try {
     const rentalAdress = req.params.rental_adress;
     const userId = req.params.id;
 
-    var data = await Tenants.findOne({ rental_adress: rentalAdress, _id: userId });
+    var data = await Tenants.findOne({
+      rental_adress: rentalAdress,
+      _id: userId,
+    });
 
     if (data) {
       res.json({
@@ -671,11 +671,10 @@ router.get("/tenant_summary/:rental_adress/:id", async (req, res) => {
   }
 });
 
-
-//find account_name(accountname in lease form in account dropdoun) 
+//find account_name(accountname in lease form in account dropdoun)
 router.get("/account_name", async (req, res) => {
   try {
-    var data = await Tenants.find().select("account_name")
+    var data = await Tenants.find().select("account_name");
     res.json({
       statusCode: 200,
       data: data,
@@ -689,10 +688,10 @@ router.get("/account_name", async (req, res) => {
   }
 });
 
-//find rental_address(proparty in lease form) 
+//find rental_address(proparty in lease form)
 router.get("/property", async (req, res) => {
   try {
-    var data = await Tenants.find().select("rental_adress")
+    var data = await Tenants.find().select("rental_adress");
     res.json({
       statusCode: 200,
       data: data,
@@ -706,7 +705,7 @@ router.get("/property", async (req, res) => {
   }
 });
 
-// rental address wise get all data 
+// rental address wise get all data
 router.get("/renton_property/:rental_adress", async (req, res) => {
   try {
     const rentalAdress = req.params.rental_adress;
@@ -733,7 +732,7 @@ router.get("/renton_property/:rental_adress", async (req, res) => {
   }
 });
 
-//entry wise delete 
+//entry wise delete
 
 router.delete("/tenant/:tenantId/entry/:entryIndex", async (req, res) => {
   try {
@@ -750,7 +749,7 @@ router.delete("/tenant/:tenantId/entry/:entryIndex", async (req, res) => {
       });
       return;
     }
-    
+
     const entryIndexToDelete = tenant.entries.findIndex(
       (e) => e.entryIndex === entryIndex
     );
@@ -781,9 +780,7 @@ router.delete("/tenant/:tenantId/entry/:entryIndex", async (req, res) => {
   }
 });
 
-
-//update recored specific put api 
-//update recored specific put api 
+//update recored specific put api
 router.put("/tenants/:tenantId/entry/:entryIndex", async (req, res) => {
   try {
     const tenantId = req.params.tenantId;
@@ -807,26 +804,31 @@ router.put("/tenants/:tenantId/entry/:entryIndex", async (req, res) => {
       contact_name: req.body.contact_name,
       relationship_tenants: req.body.relationship_tenants,
       email: req.body.email,
-      emergency_PhoneNumber: req.body.emergency_PhoneNumber
-    };  
+      emergency_PhoneNumber: req.body.emergency_PhoneNumber,
+    };
 
     // Find the tenant by ID
     const tenant = await Tenants.findById(tenantId);
 
     if (!tenant) {
-      return res.status(404).json({ statusCode: 404, message: "Tenant not found" });
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Tenant not found" });
     }
 
-    const entryToUpdate = tenant.entries.find(entry => entry.entryIndex === entryIndex);
+    const entryToUpdate = tenant.entries.find(
+      (entry) => entry.entryIndex === entryIndex
+    );
 
     if (!entryToUpdate) {
-      return res.status(404).json({ statusCode: 404, message: "Entry not found" });
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Entry not found" });
     }
     tenant.set(updatedData);
     Object.assign(entryToUpdate, updatedTenantData);
 
     const result = await tenant.save();
-  
 
     res.json({
       statusCode: 200,
@@ -840,7 +842,6 @@ router.put("/tenants/:tenantId/entry/:entryIndex", async (req, res) => {
     });
   }
 });
-
 
 router.get("/tenant_summary/:tenantId/entry/:entryIndex", async (req, res) => {
   try {
@@ -892,8 +893,6 @@ router.get("/tenant_summary/:tenantId/entry/:entryIndex", async (req, res) => {
   }
 });
 
-
-
 router.get("/tenant/:tenantId/entries", async (req, res) => {
   try {
     const tenantId = req.params.tenantId;
@@ -937,7 +936,7 @@ router.get("/tenant/:tenantId/entries", async (req, res) => {
 });
 
 //get data specifice rental address wise & entry endex wise 
-router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
+router.get("/tenant-detail/tenants/:rental_address", async (req, res) => {
   try {
     const rental_adress = req.params.rental_adress;
     console.log("Rental Address:", rental_adress);
@@ -980,13 +979,96 @@ router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
 });
 
 
+// //get tenant name only rental address wise get data // working 
+// router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
+//   try {
+//     const rental_address = req.params.rental_address;
+//     console.log("Rental Address:", rental_address);
+
+//     const data = await Tenants.findOne({
+//       "entries.rental_adress": rental_address
+//     });
+
+//     if (!data) {
+//       res.status(404).json({
+//         statusCode: 404,
+//         message: "Entry not found",
+//       });
+//       return;
+//     }
+
+//     const tenantData = {
+//       tenant_firstName: data.tenant_firstName,
+//       tenant_lastName: data.tenant_lastName,
+//     };
+//     console.log("tenantData",tenantData)
+
+//     res.json({
+//       data: tenantData,
+//       statusCode: 200,
+//       message: "Tenant Name Details",
+//     });
+//   } catch (error) {
+//     // Handle errors properly
+//     console.error(error);
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: "Internal server error",
+//     });
+//   }
+// });
+
+
+
+// working this diffrent forment 
+// router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
+//   try {
+//     const rental_address = req.params.rental_address;
+//     console.log("Rental Address:", rental_address);
+
+//     const data = await Tenants.find({
+//       "entries.rental_adress": rental_address
+//     });
+
+//     if (!data || data.length === 0) {
+//       res.status(404).json({
+//         statusCode: 404,
+//         message: "Entries not found",
+//       });
+//       return;
+//     }
+
+//     const tenantData = data.map(entry => ({
+//       tenant_firstName: entry.tenant_firstName,
+//       tenant_lastName: entry.tenant_lastName,
+//     }));
+
+//     console.log("tenantData", tenantData);
+
+//     res.json({
+//       data: tenantData,
+//       statusCode: 200,
+//       message: "Tenant Name Details",
+//     });
+//   } catch (error) {
+//     // Handle errors properly
+//     console.error(error);
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: "Internal server error",
+//     });
+//   }
+// });
+
+
+
 router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
   try {
     const rental_address = req.params.rental_address;
     console.log("Rental Address:", rental_address);
 
     const data = await Tenants.find({
-      "entries.rental_adress": rental_address
+      "entries.rental_adress": rental_address,
     });
 
     if (!data || data.length === 0) {
@@ -998,11 +1080,11 @@ router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
     }
 
     // Extract the desired fields from the data
-    const tenantData = data.map(entry => ({
+    const tenantData = data.map((entry) => ({
       tenant_firstName: entry.tenant_firstName,
       tenant_lastName: entry.tenant_lastName,
       _id: entry._id,
-      entryIndex: entry.entries[0].entryIndex // Assuming there's only one entry
+      entryIndex: entry.entries[0].entryIndex, // Assuming there's only one entry
     }));
 
     console.log("tenantData", tenantData);
@@ -1022,9 +1104,8 @@ router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
   }
 });
 
-
 //get id wise rental address
-router.get('/rental-address/:id', async (req, res) => {
+router.get("/rental-address/:id", async (req, res) => {
   try {
     const tenantId = req.params.id;
 
@@ -1032,17 +1113,19 @@ router.get('/rental-address/:id', async (req, res) => {
     const tenant = await Tenants.findById(tenantId);
 
     if (!tenant) {
-      return res.status(404).json({ message: 'Tenant not found' });
+      return res.status(404).json({ message: "Tenant not found" });
     }
 
     // Extract and send the rental addresses
-    const rentalAddresses = tenant.entries.map(entry => entry.rental_adress);
+    const rentalAddresses = tenant.entries.map((entry) => entry.rental_adress);
 
     res.status(200).json({ rentalAddresses });
   } catch (err) {
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
+
 
 
 

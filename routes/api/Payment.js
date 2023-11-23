@@ -329,6 +329,128 @@ router.get(
   }
 );
 
+// GET payment data by mainId and paymentIndex
+router.get(
+  "/payment_summary/:mainId/payment/:paymentIndex",
+  async (req, res) => {
+    try {
+      const mainId = req.params.mainId;
+      const paymentIndex = req.params.paymentIndex;
+
+      const payment = await Payment.findOne({ _id: mainId });
+
+      if (!payment || !payment.entries) {
+        res.status(404).json({
+          statusCode: 404,
+          message: "payment not found or has no entries",
+        });
+        return;
+      }
+
+      const entry = payment.entries.find(
+        (e) => e.paymentIndex === paymentIndex
+      );
+
+      if (!entry) {
+        res.status(404).json({
+          statusCode: 404,
+          message: "Entry not found",
+        });
+        return;
+      }
+
+      // Include common fields of the charge in the response
+      const paymentDataWithEntry = {
+        tenant_id: payment.tenant_id,
+        entryIndex: payment.entryIndex,
+        type: payment.type,
+        payment_id: payment.payment_id,
+        rental_adress: payment.rental_adress,
+        date: payment.date,
+        amount: payment.amount,
+        payment_method: payment.payment_method,
+        tenant_firstName: payment.tenant_firstName,
+        memo: payment.memo,
+        attachment: payment.attachment,
+        entries: entry,
+      };
+
+      res.json({
+        data: paymentDataWithEntry,
+        statusCode: 200,
+        message: "Read payment Entry",
+      });
+    } catch (error) {
+      res.status(500).json({
+        statusCode: 500,
+        message: error.message,
+      });
+    }
+  }
+);
+
+//put api for payment
+router.put("/payments/:mainId/payment/:paymentIndex", async (req, res) => {
+  try {
+    const mainId = req.params.mainId;
+    const paymentIndex = req.params.paymentIndex;
+    const updatedPaymentData = req.body.entries[0]; // Assuming the request body contains the updated charge data
+
+    // Validate and build updated charge data
+    const updatedData = {
+      // Update only the necessary fields specific to charges
+      rental_adress: req.body.rental_adress,
+      date: req.body.date,
+      amount: req.body.amount,
+      memo: req.body.memo,
+      attachment: req.body.attachment,
+      type: req.body.type,
+      payment_method: req.body.payment_method,
+      tenant_firstName: req.body.tenant_firstName,
+      debitcard_number: req.body.debitcard_number,
+      // ...other necessary fields
+    };
+
+    // Find the charge by ID
+    const payment = await Payment.findById(mainId);
+
+    if (!payment) {
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Payment not found" });
+    }
+
+    // Assuming 'entries' is an array field within the charge model
+    const entryToUpdate = payment.entries.find(
+      (entry) => entry.paymentIndex === paymentIndex
+    );
+
+    if (!entryToUpdate) {
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Entry not found" });
+    }
+
+    // Update charge fields accordingly
+    // Example: Update charge data directly and update the specific entry, if needed
+    payment.set(updatedData);
+    Object.assign(entryToUpdate, updatedPaymentData); // Optionally update the specific entry
+
+    const result = await payment.save();
+
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Payment Entry Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 //charge collection in add
 // router.post("/add_charges", async (req, res) => {
 //   try {
@@ -345,6 +467,8 @@ router.get(
 //     });
 //   }
 // });
+
+//charge post api
 router.post("/add_charges", async (req, res) => {
   try {
     const { entries, ...restOfData } = req.body;
@@ -373,6 +497,8 @@ router.post("/add_charges", async (req, res) => {
     });
   }
 });
+
+//charge delete api
 router.delete("/delete_charge/:mainId/:chargeIndex", async (req, res) => {
   try {
     const { mainId, chargeIndex } = req.params;
@@ -401,6 +527,120 @@ router.delete("/delete_charge/:mainId/:chargeIndex", async (req, res) => {
     });
   }
 });
+
+// GET data by mainId and chargeIndex
+router.get("/charge_summary/:mainId/charge/:chargeIndex", async (req, res) => {
+  try {
+    const mainId = req.params.mainId;
+    const chargeIndex = req.params.chargeIndex;
+
+    const charges = await Charges.findOne({ _id: mainId });
+
+    if (!charges || !charges.entries) {
+      res.status(404).json({
+        statusCode: 404,
+        message: "Charge not found or has no entries",
+      });
+      return;
+    }
+
+    const entry = charges.entries.find((e) => e.chargeIndex === chargeIndex);
+
+    if (!entry) {
+      res.status(404).json({
+        statusCode: 404,
+        message: "Entry not found",
+      });
+      return;
+    }
+
+    // Include common fields of the charge in the response
+    const chargeDataWithEntry = {
+      tenant_id: charges.tenant_id,
+      type: chargeIndex.type,
+      entryIndex: charges.entryIndex,
+      rental_adress: charges.rental_adress,
+      charges_date: charges.charges_date,
+      charges_amount: charges.charges_amount,
+      tenant_firstName: charges.tenant_firstName,
+      charges_memo: charges.charges_memo,
+      charges_attachment: charges.charges_attachment,
+      entries: entry,
+    };
+
+    res.json({
+      data: chargeDataWithEntry,
+      statusCode: 200,
+      message: "Read Charge Entry",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+//put api
+router.put("/charges/:mainId/charge/:chargeIndex", async (req, res) => {
+  try {
+    const mainId = req.params.mainId;
+    const chargeIndex = req.params.chargeIndex;
+    const updatedChargeData = req.body.entries[0]; // Assuming the request body contains the updated charge data
+
+    // Validate and build updated charge data
+    const updatedData = {
+      // Update only the necessary fields specific to charges
+      type: req.body.type,
+      rental_adress: req.body.rental_adress,
+      charges_date: req.body.charges_date,
+      charges_amount: req.body.charges_amount,
+      charges_memo: req.body.charges_memo,
+      charges_attachment: req.body.charges_attachment,
+      tenant_firstName: req.body.tenant_firstName,
+      // ...other necessary fields
+    };
+
+    // Find the charge by ID
+    const charge = await Charges.findById(mainId);
+
+    if (!charge) {
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Charge not found" });
+    }
+
+    // Assuming 'entries' is an array field within the charge model
+    const entryToUpdate = charge.entries.find(
+      (entry) => entry.chargeIndex === chargeIndex
+    );
+
+    if (!entryToUpdate) {
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Entry not found" });
+    }
+
+    // Update charge fields accordingly
+    // Example: Update charge data directly and update the specific entry, if needed
+    charge.set(updatedData);
+    Object.assign(entryToUpdate, updatedChargeData); // Optionally update the specific entry
+
+    const result = await charge.save();
+
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Charge Entry Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 //payment charge api
 router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
   try {
@@ -408,11 +648,11 @@ router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
     const tenantId = req.params.tenant_id;
     console.log("Tenant ID:", tenantId);
 
-    // Fetch data from the Payment collection based on tenantId
+    // Fetch data from the Payment collection based on tenantId and sort by date
     const paymentData = await Payment.find({ tenant_id: tenantId });
     console.log("Payment Data:", paymentData);
 
-    // Fetch data from the Charges collection based on tenantId
+    // Fetch data from the Charges collection based on tenantId and sort by date
     const chargesData = await Charges.find({ tenant_id: tenantId });
     console.log("Charges Data:", chargesData);
 
@@ -421,16 +661,28 @@ router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
       console.log("No payment records found.");
     }
 
-    // Check if there are no charges records
-    if (chargesData.length === 0) {
-      console.log("No Charges records found.");
-    }
 
-    // Create a merged object using both payment and charges data
-    const mergedData = {
-      payments: paymentData,
-      charges: chargesData,
-    };
+    // Combine payment and charges arrays into a single array
+    const mergedData = [...paymentData, ...chargesData];
+
+    // Sort the merged data by the 'date' field
+    // mergedData.sort((a, b) => {
+    //   const dateA = new Date(a.date);
+    //   const dateB = new Date(b.date);
+    //   return dateA - dateB;
+    // });
+    // console.log("mergeddata", mergedData);
+    
+    // // Check if there are no charges records
+    // if (chargesData.length === 0) {
+    //   console.log("No Charges records found.");
+    // }
+
+    // // Create a merged object using both payment and charges data
+    // const mergedData = {
+    //   payments: paymentData,
+    //   charges: chargesData,
+    // };
 
     res.json({
       data: mergedData,
@@ -445,5 +697,6 @@ router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;
