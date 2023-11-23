@@ -12,116 +12,15 @@ var JWT = require("jsonwebtoken");
 var JWTD = require("jwt-decode");
 const nodemailer = require("nodemailer");
 
-//add tenant working  API
-// router.post("/tenant", async (req, res) => {
-//   try {
-//     var count = await Tenants.count();
-//     function pad(num) {
-//       num = num.toString();
-//       while (num.length < 2) num = "0" + num;
-//       return num;
-//     }
-//     req.body["tenant_id"] = pad(count + 1);
-
-//     const {
-//       tenant_id,
-//       tenant_firstName,
-//       tenant_lastName,
-//       tenant_unitNumber,
-//       tenant_mobileNumber,
-//       tenant_workNumber,
-//       tenant_homeNumber,
-//       tenant_faxPhoneNumber,
-//       tenant_email,
-//       tenant_password,
-//       alternate_email,
-//       tenant_residentStatus,
-//       birth_date,
-//       textpayer_id,
-//       comments,
-//       contact_name,
-//       relationship_tenants,
-//       email,
-//       emergency_PhoneNumber,
-//       entries,
-//     } = req.body;
-
-//     const currentDate = new Date();
-//     const endDate = new Date(req.body.end_date);
-
-//     if (endDate <= currentDate) {
-//       req.body["propertyOnRent"] = true;
-//     } else {
-//       req.body["propertyOnRent"] = false;
-//     }
-
-//     entries.forEach((entry, index) => {
-//       entry.entryIndex = (index + 1).toString().padStart(2, "0");
-//     });
-
-//     const data = await Tenants.create({
-//       tenant_id,
-//       tenant_firstName,
-//       tenant_lastName,
-//       tenant_unitNumber,
-//       tenant_mobileNumber,
-//       tenant_workNumber,
-//       tenant_homeNumber,
-//       tenant_faxPhoneNumber,
-//       tenant_email,
-//       tenant_password,
-//       alternate_email,
-//       tenant_residentStatus,
-//       birth_date,
-//       textpayer_id,
-//       comments,
-//       contact_name,
-//       relationship_tenants,
-//       email,
-//       emergency_PhoneNumber,
-//       entries,
-//     });
-
-//     data.entries = entries;
-
-//     const tenantRentalAddress = req.body.rental_adress;
-
-//     console.log("Attempting to find matching rental for address:", tenantRentalAddress);
-
-//     const matchingRental = await Rentals.findOne({
-//       "entries.rental_adress": tenantRentalAddress,
-//     });
-    
-//     console.log("Matching Rental:", matchingRental);
-    
-//     if (matchingRental) {
-//       const matchingEntry = matchingRental.entries.find(
-//         (entry) => entry.rental_adress === tenantRentalAddress
-//       );
-    
-//       console.log("Matching Entry:", matchingEntry);
-    
-//       if (matchingEntry) {
-//         console.log("Setting isrenton to true");
-//         matchingEntry.isrenton = true;
-//         await matchingRental.save();
-//       }
-//     }
-    
-    
-
-//     res.json({
-//       statusCode: 200,
-//       data: data,
-//       message: "Add Tenants Successfully",
-//     });
-//   } catch (error) {
-//     res.json({
-//       statusCode: false,
-//       message: error.message,
-//     });
-//   }
-// })
+const transporter = nodemailer.createTransport({
+  host: "smtp.socketlabs.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: 'server39897', 
+    pass: 'c9J3Wwm5N4Bj',
+  },
+});
 
 router.post("/tenant", async (req, res) => {
   try {
@@ -131,7 +30,6 @@ router.post("/tenant", async (req, res) => {
       while (num.length < 2) num = "0" + num;
       return num;
     }
-
     req.body["tenant_id"] = pad(count + 1);
 
     const {
@@ -225,6 +123,26 @@ router.post("/tenant", async (req, res) => {
       } 
     }
 
+    // const mailOptions = {
+    //   from: 'mansiandharia13@gmail.com', 
+    //   to: tenant_email,
+    //   subject: 'Welcome to 302 Properties',
+    //   text: 'Hello',
+    // };
+
+    // await transporter.sendMail(mailOptions);
+
+    // const info = await transporter.sendMail({
+    //   from: '"302 Properties" <dinesh@keybrainstech.com>', // sender address
+    //   to: tenant_email, // list of receivers
+    //   subject: "Welcome Mail", // Subject line
+    //   text: "Hello, Welcome to 302 Properties.", // plain text body
+      
+    // });
+  
+    // console.log("Message sent: %s", info.messageId,'mnnnn');
+    // console.log('mnnnn');
+
     res.json({
       statusCode: 200,
       data: data,
@@ -238,11 +156,8 @@ router.post("/tenant", async (req, res) => {
   }
 })
 
-
-
-
 //get tenant
-  router.get("/tenant", async (req, res) => {
+router.get("/tenant", async (req, res) => {
   try {
     var data = await Tenants.find();
     data.reverse();
@@ -291,7 +206,7 @@ router.get("/tenants", async (req, res) => {
           email: tenant.email,
           emergency_PhoneNumber: tenant.emergency_PhoneNumber,
 
-          entry: {
+          entries: {
             entryIndex: entry.entryIndex,
             rental_adress: entry.rental_adress,
             lease_type: entry.lease_type,
@@ -349,7 +264,7 @@ router.get("/tenants", async (req, res) => {
           },
         };
       });
-    }).flat(); // Flatten the nested arrays
+    }).flat(); 
 
     res.json({
       data: data,
@@ -1022,13 +937,13 @@ router.get("/tenant/:tenantId/entries", async (req, res) => {
 });
 
 //get data specifice rental address wise & entry endex wise 
-router.get("/tenant-detail/tenants/:rental_address", async (req, res) => {
+router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
   try {
-    const rental_address = req.params.rental_address;
-    console.log("Rental Address:", rental_address);
+    const rental_adress = req.params.rental_adress;
+    console.log("Rental Address:", rental_adress);
 
     const data = await Tenants.find({
-      "entries.rental_adress": rental_address // Fix the typo here
+      "entries.rental_adress": rental_adress, 
     });
 
     if (!data || data.length === 0) {
@@ -1039,7 +954,6 @@ router.get("/tenant-detail/tenants/:rental_address", async (req, res) => {
       return;
     }
 
-    // Optionally, you can map the data to extract the desired fields if needed.
     const tenantDataWithEntries = data.map((tenant) => ({
       _id: tenant._id,
       tenant_id: tenant.tenant_id,
@@ -1048,7 +962,7 @@ router.get("/tenant-detail/tenants/:rental_address", async (req, res) => {
       tenant_mobileNumber: tenant.tenant_mobileNumber,
       tenant_email: tenant.tenant_email,
       tenant_password: tenant.tenant_password,
-      entries: tenant.entries,
+      entries: tenant.entries.filter(entry => entry.rental_adress === rental_adress), 
     }));
 
     res.json({
@@ -1057,97 +971,13 @@ router.get("/tenant-detail/tenants/:rental_address", async (req, res) => {
       message: "Read Tenant Entries",
     });
   } catch (error) {
-    // Handle errors properly
-    console.error(error); // Log the error for debugging purposes
+    console.error(error); 
     res.status(500).json({
       statusCode: 500,
       message: "Internal server error",
     });
   }
 });
-
-
-// //get tenant name only rental address wise get data // working 
-// router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
-//   try {
-//     const rental_address = req.params.rental_address;
-//     console.log("Rental Address:", rental_address);
-
-//     const data = await Tenants.findOne({
-//       "entries.rental_adress": rental_address
-//     });
-
-//     if (!data) {
-//       res.status(404).json({
-//         statusCode: 404,
-//         message: "Entry not found",
-//       });
-//       return;
-//     }
-
-//     const tenantData = {
-//       tenant_firstName: data.tenant_firstName,
-//       tenant_lastName: data.tenant_lastName,
-//     };
-//     console.log("tenantData",tenantData)
-
-//     res.json({
-//       data: tenantData,
-//       statusCode: 200,
-//       message: "Tenant Name Details",
-//     });
-//   } catch (error) {
-//     // Handle errors properly
-//     console.error(error);
-//     res.status(500).json({
-//       statusCode: 500,
-//       message: "Internal server error",
-//     });
-//   }
-// });
-
-
-
-// working this diffrent forment 
-// router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
-//   try {
-//     const rental_address = req.params.rental_address;
-//     console.log("Rental Address:", rental_address);
-
-//     const data = await Tenants.find({
-//       "entries.rental_adress": rental_address
-//     });
-
-//     if (!data || data.length === 0) {
-//       res.status(404).json({
-//         statusCode: 404,
-//         message: "Entries not found",
-//       });
-//       return;
-//     }
-
-//     const tenantData = data.map(entry => ({
-//       tenant_firstName: entry.tenant_firstName,
-//       tenant_lastName: entry.tenant_lastName,
-//     }));
-
-//     console.log("tenantData", tenantData);
-
-//     res.json({
-//       data: tenantData,
-//       statusCode: 200,
-//       message: "Tenant Name Details",
-//     });
-//   } catch (error) {
-//     // Handle errors properly
-//     console.error(error);
-//     res.status(500).json({
-//       statusCode: 500,
-//       message: "Internal server error",
-//     });
-//   }
-// });
-
 
 
 router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
@@ -1213,8 +1043,6 @@ router.get('/rental-address/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
-
 
 
 

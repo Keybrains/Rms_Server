@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 var Rentals = require("../../modals/Rentals");
 var Tenants = require("../../modals/Tenants");
+var Applicant = require("../../modals/Applicants");
 // var {verifyToken} = require("../authentication");
 
 // Post api working
@@ -85,10 +86,122 @@ router.post("/rentals", async (req, res) => {
   }
 });
 
+router.post("/unit",async (req, res) => {
+  try {
+
+    const {
+      rentalOwner_firstName,
+      rentalOwner_lastName,
+      rentalOwner_primaryEmail,
+      rentalOwner_companyName,
+      rentalOwner_homeNumber,
+      rentalOwner_phoneNumber,
+      rentalOwner_businessNumber,
+      entries,
+    } = req.body;
+
+    entries.forEach((entry, index) => {
+      entry.entryIndex = (index + 1).toString().padStart(2, "0");
+    });
+
+    // Create the rental entry
+    const data = await Rentals.create({
+      rentalOwner_firstName,
+      rentalOwner_lastName,
+      rentalOwner_primaryEmail,
+      rentalOwner_companyName,
+      rentalOwner_homeNumber,
+      rentalOwner_phoneNumber,
+      rentalOwner_businessNumber,
+      entries,
+    });
+
+    data.entries = entries;
+    
+    // Remove the _id fields from the entries
+    const responseData = { ...data.toObject() };
+    responseData.entries = responseData.entries.map((entryItem) => {
+      delete entryItem._id;
+      return entryItem;
+    });
+
+    res.json({
+      statusCode: 200,
+      data: responseData,
+      message: "Add Rentals Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+})
 
 router.get("/rentals", async (req, res) => {
   try {
     var data = await Rentals.find();
+    data.reverse();
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read All Rentals",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/rental", async (req, res) => {
+  try {
+    var rentalsWithData = await Rentals.find(
+      { entries: { $not: { $size: 0 } } }
+    );
+
+    const data = rentalsWithData.map((tenant) => {
+      return tenant.entries.map((entry) => {
+        return {
+          _id: tenant._id,
+          rentalOwner_firstName: tenant.rentalOwner_firstName,
+          rentalOwner_lastName: tenant.rentalOwner_lastName,
+          rentalOwner_companyName: tenant.rentalOwner_companyName,
+          rentalOwner_primaryEmail: tenant.rentalOwner_primaryEmail,
+          rentalOwner_phoneNumber: tenant.rentalOwner_phoneNumber,
+          rentalOwner_homeNumber: tenant.rentalOwner_homeNumber,
+          rentalOwner_businessNumber: tenant.rentalOwner_businessNumber,
+          
+
+          entries: {
+            entryIndex: entry.entryIndex,
+            rental_adress: entry.rental_adress,
+            property_type: entry.property_type,
+            isrenton: entry.isrenton,
+            rental_city: entry.rental_city,
+            rental_country: entry.rental_country,
+            rental_postcode: entry.rental_postcode,
+            rentalOwner_operatingAccount: entry.rentalOwner_operatingAccount,
+            rentalOwner_propertyReserve: entry.rentalOwner_propertyReserve,
+            staffMember: entry.staffMember,
+            rental_bed: entry.rental_bed,
+            rental_bath: entry.rental_bath,
+            propertyres_image: entry.propertyres_image,
+            rental_soft: entry.rental_soft,
+            rental_units: entry.rental_units,
+            rental_unitsAdress: entry.rental_unitsAdress,
+            rentalcom_soft: entry.rentalcom_soft,
+            rentalcom_units: entry.rentalcom_units,
+            rentalcom_unitsAdress: entry.rentalcom_unitsAdress,
+            property_image: entry.property_image,
+            entry_id: entry._id,
+           
+          },
+        };
+      });
+    }).flat(); 
+
     data.reverse();
     res.json({
       data: data,
@@ -122,7 +235,7 @@ router.delete("/rentals", async (req, res) => {
   
       const assignedProperty = await Tenants.find({
         rental_adress: { $in: propNamesToDelete },
-      }); 
+      });
   
       if (assignedProperty.length > 0) {
         return res.status(201).json({
@@ -188,11 +301,15 @@ router.delete("/rental/:rentalId/entry/:entryIndex", async (req, res) => {
     const assignedProperty = await Tenants.find({
       "entries.rental_adress": { $in: propNamesToDelete },
     });
+
+    const assignedProperty1 = await Applicant.find({
+       rental_adress : { $in: propNamesToDelete },
+    });
     console.log(assignedProperty,"xyz")
 
     console.log(assignedProperty.includes(propNamesToDelete), "abc")
 
-    if (assignedProperty.length > 0) {
+    if (assignedProperty.length > 0 && assignedProperty1.length > 0) {
       return res.status(201).json({
         statusCode: 201,
         message: "Property Type is already assigned. Deletion not allowed.",
@@ -497,32 +614,12 @@ router.get("/property_onrent", async (req, res) => {
   }
 }); 
 
-// find all rental_address
-router.get("/rental_allproperty", async (req, res) => {
-  try {
-    var data = await Rentals.find().select("rental_adress")
-    
-    res.json({
-      statusCode: 200,
-      data: data,
-      message: "read all property",
-    });
-  } catch (error) {
-    res.json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-}); 
-
 router.get("/allproperty", async (req, res) => {
   try {
-    // Use the .find() method to retrieve all rental addresses and _id
-    const data = await Rentals.find({}, '_id entries.rental_adress');
 
-    // Extract rental addresses and _id from the data
+    const data = await Rentals.find({}, '_id entries.rental_adress');
     const rentalAddresses = data
-      .filter(entry => entry.entries && entry.entries[0] && entry.entries[0].rental_adress)
+      .filter(entry => entry.entries && entry.entries[0].rental_adress)
       .map(entry => ({
         _id: entry._id,
         rental_adress: entry.entries[0].rental_adress
@@ -530,7 +627,7 @@ router.get("/allproperty", async (req, res) => {
 
     res.json({
       statusCode: 200,
-      data: rentalAddresses,
+      data: data,
       message: "Read all rental addresses",
     });
   } catch (error) {
