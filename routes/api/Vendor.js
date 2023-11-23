@@ -188,5 +188,25 @@ router.get("/vendor_name", async (req, res) => {
   }
 }); 
   
+router.get('/vendor/:id', async (req, res) => {
+  try {
+    const vendorId = req.params.id;
 
+    // Find the vendor by _id
+    const vendor = await Vendor.findById(vendorId);
+
+    if (!vendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+
+    // Extract vendor_name from the retrieved vendor document
+    const vendorName = vendor.vendor_name;
+
+    res.json({
+      vendor_name: vendorName,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
   module.exports = router;
