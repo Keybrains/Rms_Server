@@ -289,7 +289,7 @@ router.get("/tenants", async (req, res) => {
             email: tenant.email,
             emergency_PhoneNumber: tenant.emergency_PhoneNumber,
 
-            entry: {
+            entries: {
               entryIndex: entry.entryIndex,
               rental_adress: entry.rental_adress,
               lease_type: entry.lease_type,
@@ -1024,7 +1024,7 @@ router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
     console.log("Rental Address:", rental_adress);
 
     const data = await Tenants.find({
-      "entries.rental_adress": rental_adress, 
+      "entries.rental_adress": rental_adress,
     });
 
     if (!data || data.length === 0) {
@@ -1043,7 +1043,7 @@ router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
       tenant_mobileNumber: tenant.tenant_mobileNumber,
       tenant_email: tenant.tenant_email,
       tenant_password: tenant.tenant_password,
-      entries: tenant.entries.filter(entry => entry.rental_adress === rental_adress), 
+      entries: tenant.entries.filter(entry => entry.rental_adress === rental_adress),
     }));
 
     res.json({
@@ -1052,7 +1052,7 @@ router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
       message: "Read Tenant Entries",
     });
   } catch (error) {
-    console.error(error); 
+    console.error(error);
     res.status(500).json({
       statusCode: 500,
       message: "Internal server error",
