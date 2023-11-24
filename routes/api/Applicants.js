@@ -2,63 +2,133 @@ var express = require("express");
 var router = express.Router();
 var Applicant = require("../../modals/Applicants");
 
-  //   Add  applicant
+//   Add  applicant
 router.post("/applicant", async (req, res) => {
-    try {
-  
-      var data = await Applicant.create(req.body);
-      res.json({
-        statusCode: 200,
-        data: data,
-        message: "Add Applicant Successfully",
-      });
-    } catch (error) {
-      res.json({
-        statusCode: 500,
-        message: error.message,
-      });
+  try {
+    var data = await Applicant.create(req.body);
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Add Applicant Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+// get  applicant
+router.get("/applicant", async (req, res) => {
+  try {
+    var data = await Applicant.find();
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read All applicant",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+//appicants data get mobile number wise and stutus wise  like  approved
+
+router.get("/applicant_get", async (req, res) => {
+  try {
+    // Extract tenant_mobileNumber and status from query parameters
+    const { tenant_mobileNumber, status } = req.query;
+
+    // Build a filter object based on provided parameters
+    const filter = {};
+    if (tenant_mobileNumber) {
+      filter.tenant_mobileNumber = tenant_mobileNumber;
     }
-  });
+    if (status) {
+      filter.status = status;
+    }
+
+    // Use the filter object in the MongoDB query
+    var data = await Applicant.find(filter);
+
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read All applicants",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 
-  // get  applicant
-  router.get("/applicant", async (req, res) => {
-    try {
-      var data = await Applicant.find();
-      res.json({
-        data: data,
-        statusCode: 200,
-        message: "Read All applicant",
-      });
-    } catch (error) {
-      res.json({
-        statusCode: 500,
-        message: error.message,
+//put api by mansi
+router.put("/applicant/:id/status", async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const status = req.body.status;
+
+    if (!applicantId || !status) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Invalid request. Please provide 'status'.",
       });
     }
-  });
+
+    const updatedApplicant = await Applicant.findByIdAndUpdate(
+      applicantId,
+      { status: status },
+      { new: true }
+    );
+
+    if (!updatedApplicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedApplicant,
+      message: "Applicant Status Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
 
 // delete Applicant
-  router.delete("/applicant", async (req, res) => {
-    try {
-      let result = await Applicant.deleteMany({
-        _id: { $in: req.body },
-      });
-      res.json({
-        statusCode: 200,
-        data: result,
-        message: "applicant Deleted Successfully",
-      });
-    } catch (err) {
-      res.json({
-        statusCode: 500,
-        message: err.message,
-      });
-    }
-  });
+router.delete("/applicant", async (req, res) => {
+  try {
+    let result = await Applicant.deleteMany({
+      _id: { $in: req.body },
+    });
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "applicant Deleted Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
 
-   //edit rentals 
- router.put("/applicant/:id", async (req, res) => {
+//edit rentals
+router.put("/applicant/:id", async (req, res) => {
   try {
     let result = await Applicant.findByIdAndUpdate(req.params.id, req.body);
     res.json({
@@ -74,9 +144,8 @@ router.post("/applicant", async (req, res) => {
   }
 });
 
-
- //get applicant summary
- router.get("/applicant_summary/:id", async (req, res) => {
+//get applicant summary
+router.get("/applicant_summary/:id", async (req, res) => {
   try {
     const userId = req.params.id;
     var data = await Applicant.findById(userId);
@@ -100,46 +169,44 @@ router.post("/applicant", async (req, res) => {
   }
 });
 
+// Add a new route to update the applicant checklist
+router.put("/applicant/:id/checklist", async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const checklist = req.body.applicant_checklist;
 
-  // Add a new route to update the applicant checklist
-  router.put("/applicant/:id/checklist", async (req, res) => {
-    try {
-      const applicantId = req.params.id;
-      const checklist = req.body.applicant_checklist;
-
-      if (!applicantId || !checklist) {
-        return res.status(400).json({
-          statusCode: 400,
-          message: "Invalid request. Please provide 'applicant_checklist'.",
-        });
-      }
-
-      const updatedApplicant = await Applicant.findByIdAndUpdate(
-        applicantId,
-        { applicant_checklist: checklist },
-        { new: true }
-      );
-
-      if (!updatedApplicant) {
-        return res.status(404).json({
-          statusCode: 404,
-          message: "Applicant not found.",
-        });
-      }
-
-      res.json({
-        statusCode: 200,
-        data: updatedApplicant,
-        message: "Applicant Checklist Updated Successfully",
-      });
-    } catch (err) {
-      res.status(500).json({
-        statusCode: 500,
-        message: err.message,
+    if (!applicantId || !checklist) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Invalid request. Please provide 'applicant_checklist'.",
       });
     }
-  });
 
+    const updatedApplicant = await Applicant.findByIdAndUpdate(
+      applicantId,
+      { applicant_checklist: checklist },
+      { new: true }
+    );
+
+    if (!updatedApplicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedApplicant,
+      message: "Applicant Checklist Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
 
 router.get("/applicant_summary/rental/:rental_adress", async (req, res) => {
   try {
@@ -165,7 +232,6 @@ router.get("/applicant_summary/rental/:rental_adress", async (req, res) => {
     });
   }
 });
-
 
 // router.get("/rentals_summary/:rental_adress", async (req, res) => {
 //   try {
