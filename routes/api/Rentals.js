@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 var Rentals = require("../../modals/Rentals");
 var Tenants = require("../../modals/Tenants");
+var PropertyUnit = require("../../modals/PropertyUnit");
 // var {verifyToken} = require("../authentication");
 
 // Post api working
@@ -22,59 +23,192 @@ var Tenants = require("../../modals/Tenants");
 //   }
 // });
 
+//updated for exixting rental owener and store in array
+// router.post("/rentals", async (req, res) => {
+//   try {
+//     // Generate a unique rental_id
+//     var count = await Rentals.countDocuments();
+//     function pad(num) {
+//       num = num.toString();
+//       while (num.length < 2) num = "0" + num;
+//       return num;
+//     }
+//     req.body["rental_id"] = pad(count + 1);
 
-//updated for exixting rental owener and store in array 
+//     const {
+//       rentalOwner_firstName,
+//       rentalOwner_lastName,
+//       rentalOwner_primaryEmail,
+//       rentalOwner_companyName,
+//       rentalOwner_homeNumber,
+//       rentalOwner_phoneNumber,
+//       rentalOwner_businessNumber,
+//       entries,
+//     } = req.body;
+
+//     entries.forEach((entry, index) => {
+//       entry.entryIndex = (index + 1).toString().padStart(2, "0");
+//     });
+
+//     // Create the rental entry
+//     const data = await Rentals.create({
+//       rentalOwner_firstName,
+//       rentalOwner_lastName,
+//       rentalOwner_primaryEmail,
+//       rentalOwner_companyName,
+//       rentalOwner_homeNumber,
+//       rentalOwner_phoneNumber,
+//       rentalOwner_businessNumber,
+//       entries,
+//     });
+
+//     data.entries = entries;
+
+//     // Remove the _id fields from the entries
+//     const responseData = { ...data.toObject() };
+//     responseData.entries = responseData.entries.map((entryItem) => {
+//       delete entryItem._id;
+//       return entryItem;
+//     });
+
+//     res.json({
+//       statusCode: 200,
+//       data: responseData,
+//       message: "Add Rentals Successfully",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+
+//updated by shivam
+//updated by shivam (With entryIndex)
 router.post("/rentals", async (req, res) => {
   try {
-    // Generate a unique rental_id
-    var count = await Rentals.countDocuments();
-    function pad(num) {
-      num = num.toString();
-      while (num.length < 2) num = "0" + num;
-      return num;
-    }
-    req.body["rental_id"] = pad(count + 1);
-
     const {
       rentalOwner_firstName,
       rentalOwner_lastName,
-      rentalOwner_primaryEmail,
       rentalOwner_companyName,
-      rentalOwner_homeNumber,
+      rentalOwner_primaryEmail,
       rentalOwner_phoneNumber,
+      rentalOwner_homeNumber,
       rentalOwner_businessNumber,
       entries,
     } = req.body;
 
-
-    entries.forEach((entry, index) => {
-      entry.entryIndex = (index + 1).toString().padStart(2, "0");
-    });
-
-    // Create the rental entry
-    const data = await Rentals.create({
+    // Try to find the existing rental record
+    let existingRental = await Rentals.findOne({
       rentalOwner_firstName,
       rentalOwner_lastName,
-      rentalOwner_primaryEmail,
       rentalOwner_companyName,
-      rentalOwner_homeNumber,
+      rentalOwner_primaryEmail,
       rentalOwner_phoneNumber,
+      rentalOwner_homeNumber,
       rentalOwner_businessNumber,
-      entries,
     });
 
-    data.entries = entries;
+    if (!existingRental) {
+      // If the record is not found, create a new one
+      existingRental = await Rentals.create({
+        rentalOwner_firstName,
+        rentalOwner_lastName,
+        rentalOwner_companyName,
+        rentalOwner_primaryEmail,
+        rentalOwner_phoneNumber,
+        rentalOwner_homeNumber,
+        rentalOwner_businessNumber,
+        entries: [],
+      });
+    }
 
-    // Remove the _id fields from the entries
-    const responseData = { ...data.toObject() };
-    responseData.entries = responseData.entries.map((entryItem) => {
-      delete entryItem._id;
-      return entryItem;
-    });
+    // Process entries and add to the existing or newly created rental
+    for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
+      const entry = entries[entryIndex];
+      const {
+        property_type,
+        rental_adress,
+        isrenton,
+        rental_city,
+        rental_country,
+        rental_state,
+        rental_postcode,
+        staffMember,
+        commercial,
+        residential,
+      } = entry;
+
+      // Check if the entry already exists in the rental
+      const existingEntry = existingRental.entries.find(
+        e => e.property_type === property_type &&
+          e.rental_adress === rental_adress &&
+          e.isrenton === isrenton &&
+          e.rental_city === rental_city &&
+          e.rental_country === rental_country &&
+          e.rental_state === rental_state &&
+          e.rental_postcode === rental_postcode &&
+          e.staffMember === staffMember
+      );
+
+      if (!existingEntry) {
+        // If the entry does not exist, push the new entry
+        const newEntry = {
+          property_type,
+          rental_adress,
+          isrenton,
+          rental_city,
+          rental_country,
+          rental_state,
+          rental_postcode,
+          staffMember,
+          entryIndex: (entryIndex + 1).toString().padStart(2, '0'), // Add entryIndex
+        };
+
+        existingRental.entries.push(newEntry);
+
+        // Save the updated or newly created rental to get the _id of the new entry
+        await existingRental.save();
+
+        // Get the _id of the new entry
+        const newEntryId = existingRental.entries[existingRental.entries.length - 1]._id;
+
+        // Process commercial or residential entries and create PropertyUnits
+        const unitDataArray = commercial || residential || [];
+
+        if (Array.isArray(unitDataArray)) {
+          for (const unitData of unitDataArray) {
+            const propertyUnitData = {
+              rental_adress,
+              rental_city,
+              rental_country,
+              rental_state,
+              rental_postcode,
+              rentalId: existingRental._id,
+              description: "",
+              market_rent: isrenton ? unitData.rental_soft : entry.rentalcom_soft,
+              rental_bed: unitData.rental_bed,
+              rental_bath: unitData.rental_bath,
+              propertyres_image: unitData.propertyres_image,
+              rental_sqft: unitData.rental_sqft || entry.rentalcom_sqft,
+              rental_units: unitData.rental_units || entry.rentalcom_units,
+              rental_unitsAdress: unitData.rental_unitsAdress || entry.rentalcom_unitsAdress,
+              property_image: unitData.property_image,
+              propertyId: newEntryId, // Assigning the _id of the new entry to propertyId
+            };
+
+            const propertyUnit = await PropertyUnit.create(propertyUnitData);
+          }
+        }
+      }
+    }
 
     res.json({
       statusCode: 200,
-      data: responseData,
+      data: {
+        rental_id: existingRental._id.toString(),
+      },
       message: "Add Rentals Successfully",
     });
   } catch (error) {
@@ -84,7 +218,6 @@ router.post("/rentals", async (req, res) => {
     });
   }
 });
-
 
 router.get("/rentals", async (req, res) => {
   try {
@@ -105,50 +238,50 @@ router.get("/rentals", async (req, res) => {
 
 router.get("/rental", async (req, res) => {
   try {
-    var rentalsWithData = await Rentals.find(
-      { entries: { $not: { $size: 0 } } }
-    );
+    var rentalsWithData = await Rentals.find({
+      entries: { $not: { $size: 0 } },
+    });
 
-    const data = rentalsWithData.map((tenant) => {
-      return tenant.entries.map((entry) => {
-        return {
-          _id: tenant._id,
-          rentalOwner_firstName: tenant.rentalOwner_firstName,
-          rentalOwner_lastName: tenant.rentalOwner_lastName,
-          rentalOwner_companyName: tenant.rentalOwner_companyName,
-          rentalOwner_primaryEmail: tenant.rentalOwner_primaryEmail,
-          rentalOwner_phoneNumber: tenant.rentalOwner_phoneNumber,
-          rentalOwner_homeNumber: tenant.rentalOwner_homeNumber,
-          rentalOwner_businessNumber: tenant.rentalOwner_businessNumber,
+    const data = rentalsWithData
+      .map((tenant) => {
+        return tenant.entries.map((entry) => {
+          return {
+            _id: tenant._id,
+            rentalOwner_firstName: tenant.rentalOwner_firstName,
+            rentalOwner_lastName: tenant.rentalOwner_lastName,
+            rentalOwner_companyName: tenant.rentalOwner_companyName,
+            rentalOwner_primaryEmail: tenant.rentalOwner_primaryEmail,
+            rentalOwner_phoneNumber: tenant.rentalOwner_phoneNumber,
+            rentalOwner_homeNumber: tenant.rentalOwner_homeNumber,
+            rentalOwner_businessNumber: tenant.rentalOwner_businessNumber,
 
-
-          entries: {
-            entryIndex: entry.entryIndex,
-            rental_adress: entry.rental_adress,
-            property_type: entry.property_type,
-            isrenton: entry.isrenton,
-            rental_city: entry.rental_city,
-            rental_country: entry.rental_country,
-            rental_postcode: entry.rental_postcode,
-            rentalOwner_operatingAccount: entry.rentalOwner_operatingAccount,
-            rentalOwner_propertyReserve: entry.rentalOwner_propertyReserve,
-            staffMember: entry.staffMember,
-            rental_bed: entry.rental_bed,
-            rental_bath: entry.rental_bath,
-            propertyres_image: entry.propertyres_image,
-            rental_soft: entry.rental_soft,
-            rental_units: entry.rental_units,
-            rental_unitsAdress: entry.rental_unitsAdress,
-            rentalcom_soft: entry.rentalcom_soft,
-            rentalcom_units: entry.rentalcom_units,
-            rentalcom_unitsAdress: entry.rentalcom_unitsAdress,
-            property_image: entry.property_image,
-            entry_id: entry._id,
-
-          },
-        };
-      });
-    }).flat();
+            entries: {
+              entryIndex: entry.entryIndex,
+              rental_adress: entry.rental_adress,
+              property_type: entry.property_type,
+              isrenton: entry.isrenton,
+              rental_city: entry.rental_city,
+              rental_country: entry.rental_country,
+              rental_postcode: entry.rental_postcode,
+              rentalOwner_operatingAccount: entry.rentalOwner_operatingAccount,
+              rentalOwner_propertyReserve: entry.rentalOwner_propertyReserve,
+              staffMember: entry.staffMember,
+              rental_bed: entry.rental_bed,
+              rental_bath: entry.rental_bath,
+              propertyres_image: entry.propertyres_image,
+              rental_soft: entry.rental_soft,
+              rental_units: entry.rental_units,
+              rental_unitsAdress: entry.rental_unitsAdress,
+              rentalcom_soft: entry.rentalcom_soft,
+              rentalcom_units: entry.rentalcom_units,
+              rentalcom_unitsAdress: entry.rentalcom_unitsAdress,
+              property_image: entry.property_image,
+              entry_id: entry._id,
+            },
+          };
+        });
+      })
+      .flat();
 
     data.reverse();
     res.json({
@@ -164,7 +297,6 @@ router.get("/rental", async (req, res) => {
   }
 });
 
-
 router.delete("/rentals", async (req, res) => {
   try {
     const propIdsToDelete = req.body;
@@ -175,7 +307,7 @@ router.delete("/rentals", async (req, res) => {
     const propertyToDelete = await Rentals.find({
       _id: { $in: propIdsToDelete },
     }).select("rental_adress");
-    console.log("propertyToDelete after variable", propertyToDelete)
+    console.log("propertyToDelete after variable", propertyToDelete);
 
     const propNamesToDelete = propertyToDelete.map(
       (staff) => staff.rental_adress
@@ -188,8 +320,7 @@ router.delete("/rentals", async (req, res) => {
     if (assignedProperty.length > 0) {
       return res.status(201).json({
         statusCode: 201,
-        message:
-          "Property is already assigned. Deletion not allowed.",
+        message: "Property is already assigned. Deletion not allowed.",
       });
     }
 
@@ -210,8 +341,7 @@ router.delete("/rentals", async (req, res) => {
   }
 });
 
-
-// delete recored entry wise new updated 
+// delete recored entry wise new updated
 router.delete("/rental/:rentalId/entry/:entryIndex", async (req, res) => {
   try {
     const rentalId = req.params.rentalId;
@@ -221,7 +351,6 @@ router.delete("/rental/:rentalId/entry/:entryIndex", async (req, res) => {
 
     const rentals = await Rentals.find();
     const rental = rentals.find((t) => t._id.toString() === rentalId);
-
 
     if (!rental || !rental.entries) {
       return res.status(404).json({
@@ -244,14 +373,14 @@ router.delete("/rental/:rentalId/entry/:entryIndex", async (req, res) => {
 
     const propNamesToDelete = rental.entries[entryIndexToDelete].rental_adress;
 
-    console.log("propNamesToDelete:", propNamesToDelete)
+    console.log("propNamesToDelete:", propNamesToDelete);
 
     const assignedProperty = await Tenants.find({
       "entries.rental_adress": { $in: propNamesToDelete },
     });
-    console.log(assignedProperty, "xyz")
+    console.log(assignedProperty, "xyz");
 
-    console.log(assignedProperty.includes(propNamesToDelete), "abc")
+    console.log(assignedProperty.includes(propNamesToDelete), "abc");
 
     if (assignedProperty.length > 0) {
       return res.status(201).json({
@@ -278,7 +407,7 @@ router.delete("/rental/:rentalId/entry/:entryIndex", async (req, res) => {
   }
 });
 
-//edit rentals 
+//edit rentals
 router.put("/rentals/:id", async (req, res) => {
   try {
     let result = await Rentals.findByIdAndUpdate(req.params.id, req.body);
@@ -295,8 +424,7 @@ router.put("/rentals/:id", async (req, res) => {
   }
 });
 
-
-//put api add new entry in existing rentalowner 
+//put api add new entry in existing rentalowner
 
 router.put("/rental/:id", async (req, res) => {
   try {
@@ -305,18 +433,27 @@ router.put("/rental/:id", async (req, res) => {
     const rentals = await Rentals.findById(rentalId);
 
     if (!rentals) {
-      return res.status(404).json({ statusCode: 404, message: "Rental not found" });
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Rental not found" });
     }
 
     if (updateData.entries && Array.isArray(updateData.entries)) {
       // Find the last entry in the existing entries
-      const lastEntry = rentals.entries.length > 0 ? rentals.entries[rentals.entries.length - 1] : null;
-      let nextEntryIndex = lastEntry ? (parseInt(lastEntry.entryIndex) + 1).toString().padStart(2, "0") : "01";
+      const lastEntry =
+        rentals.entries.length > 0
+          ? rentals.entries[rentals.entries.length - 1]
+          : null;
+      let nextEntryIndex = lastEntry
+        ? (parseInt(lastEntry.entryIndex) + 1).toString().padStart(2, "0")
+        : "01";
 
       // Loop through the entries and set entryIndex
       updateData.entries.forEach((entry) => {
         entry.entryIndex = nextEntryIndex;
-        nextEntryIndex = (parseInt(nextEntryIndex) + 1).toString().padStart(2, "0");
+        nextEntryIndex = (parseInt(nextEntryIndex) + 1)
+          .toString()
+          .padStart(2, "0");
       });
 
       rentals.entries.push(...updateData.entries);
@@ -355,14 +492,16 @@ router.get("/listings", async (req, res) => {
   }
 });
 
-
 //get rentalproperty and rental owners
 
-router.get('/rentalproperty', async (req, res) => {
+router.get("/rentalproperty", async (req, res) => {
   try {
     // Use the .find() method to retrieve data and select specific fields
-    const propertyData = await Rentals.find({}, 'rental_adress');
-    const ownerData = await Rentals.find({}, 'rentalOwner_firstName rentalOwner_lastName');
+    const propertyData = await Rentals.find({}, "rental_adress");
+    const ownerData = await Rentals.find(
+      {},
+      "rentalOwner_firstName rentalOwner_lastName"
+    );
 
     res.json({
       statusCode: 200,
@@ -370,7 +509,7 @@ router.get('/rentalproperty', async (req, res) => {
         "Rental property": propertyData,
         "Rental owners": ownerData,
       },
-      message: 'Read Rental Address and Rental Owner Names',
+      message: "Read Rental Address and Rental Owner Names",
     });
   } catch (error) {
     res.json({
@@ -380,7 +519,7 @@ router.get('/rentalproperty', async (req, res) => {
   }
 });
 
-//get rentals table  summary data id wise 
+//get rentals table  summary data id wise
 
 router.get("/rentals_summary/:id", async (req, res) => {
   try {
@@ -406,15 +545,12 @@ router.get("/rentals_summary/:id", async (req, res) => {
   }
 });
 
-
-
-
-
 //fillter api property_type wise
 router.post("/filterproperty_type", async (req, res) => {
   try {
     let pipeline = [];
-    if (req.body.rental_adress) { // Corrected from req.body.rentals
+    if (req.body.rental_adress) {
+      // Corrected from req.body.rentals
       pipeline.push({
         $match: { rental_adress: req.body.rental_adress },
       });
@@ -445,14 +581,14 @@ router.post("/filterproperty_type", async (req, res) => {
     });
   }
 });
-
 
 //fillter api  rentalproperty and rental owners
 
 router.post("/filterproperty/owners", async (req, res) => {
   try {
     let pipeline = [];
-    if (req.body.rental_adress) { // Corrected from req.body.rentals
+    if (req.body.rental_adress) {
+      // Corrected from req.body.rentals
       pipeline.push({
         $match: { rental_adress: req.body.rental_adress },
       });
@@ -484,7 +620,7 @@ router.post("/filterproperty/owners", async (req, res) => {
   }
 });
 
-// find rental_address(proparty in lease form) 
+// find rental_address(proparty in lease form)
 // router.get("/property", async (req, res) => {
 //   try {
 //     var data = await Rentals.find({isrenton:false}).select("rental_adress")
@@ -501,15 +637,19 @@ router.post("/filterproperty/owners", async (req, res) => {
 //       message: error.message,
 //     });
 //   }
-// }); 
-
+// });
 
 router.get("/property", async (req, res) => {
   try {
-    const data = await Rentals.find({ "entries.isrenton": false }, "entries.rental_adress");
+    const data = await Rentals.find(
+      { "entries.isrenton": false },
+      "entries.rental_adress"
+    );
 
     if (data.length > 0) {
-      const rentalAddresses = data.map(entry => entry.entries[0].rental_adress);
+      const rentalAddresses = data.map(
+        (entry) => entry.entries[0].rental_adress
+      );
       res.json({
         statusCode: 200,
         data: rentalAddresses,
@@ -529,16 +669,18 @@ router.get("/property", async (req, res) => {
   }
 });
 
-
-
-
-//find rental_address(proparty in lease form) 
+//find rental_address(proparty in lease form)
 router.get("/property_onrent", async (req, res) => {
   try {
-    const data = await Rentals.find({ "entries.isrenton": true }, "entries.rental_adress");
+    const data = await Rentals.find(
+      { "entries.isrenton": true },
+      "entries.rental_adress"
+    );
 
     if (data.length > 0) {
-      const rentalAddresses = data.map(entry => entry.entries[0].rental_adress);
+      const rentalAddresses = data.map(
+        (entry) => entry.entries[0].rental_adress
+      );
       res.json({
         statusCode: 200,
         data: rentalAddresses,
@@ -561,7 +703,7 @@ router.get("/property_onrent", async (req, res) => {
 // find all rental_address
 router.get("/rental_allproperty", async (req, res) => {
   try {
-    var data = await Rentals.find().select("rental_adress")
+    var data = await Rentals.find().select("rental_adress");
 
     res.json({
       statusCode: 200,
@@ -578,15 +720,15 @@ router.get("/rental_allproperty", async (req, res) => {
 
 router.get("/allproperty", async (req, res) => {
   try {
-    const data = await Rentals.find({}, 'entries.rental_adress');
+    const data = await Rentals.find({}, "entries.rental_adress");
 
     const rentalAddresses = data.reduce((addresses, rental) => {
       if (rental.entries && rental.entries.length > 0) {
-        rental.entries.forEach(entry => {
+        rental.entries.forEach((entry) => {
           if (entry.rental_adress) {
             addresses.push({
               _id: rental._id,
-              rental_adress: entry.rental_adress
+              rental_adress: entry.rental_adress,
             });
           }
         });
@@ -607,13 +749,12 @@ router.get("/allproperty", async (req, res) => {
   }
 });
 
-
-
-//fillter api rentel_address wise in outstanding balance in lease 
+//fillter api rentel_address wise in outstanding balance in lease
 router.post("/filter_lease", async (req, res) => {
   try {
     let pipeline = [];
-    if (req.body.rental_adress) { // Corrected from req.body.rentals
+    if (req.body.rental_adress) {
+      // Corrected from req.body.rentals
       pipeline.push({
         $match: { rental_adress: req.body.rental_adress },
       });
@@ -644,7 +785,6 @@ router.post("/filter_lease", async (req, res) => {
     });
   }
 });
-
 
 //search properties table data like rental_address etc
 
@@ -676,7 +816,7 @@ router.post("/search_Properties", async (req, res) => {
         property_type: !isNaN(req.body.search)
           ? req.body.search
           : { $regex: req.body.search, $options: "i" },
-      },
+      }
     );
     var data = await Rentals.find({
       $or: newArray,
@@ -688,7 +828,7 @@ router.post("/search_Properties", async (req, res) => {
     res.json({
       statusCode: 200,
       data: data,
-      count: dataCount,  // Include the count in the response
+      count: dataCount, // Include the count in the response
       message: "Read All Rentals",
     });
   } catch (error) {
@@ -699,33 +839,31 @@ router.post("/search_Properties", async (req, res) => {
   }
 });
 
+// router.get("/rentals_property/:rental_adress", async (req, res) => {
+//   try {
+//     const adress = req.params.rental_adress;
+//     var data = await Rentals.findOne({ rental_adress: adress });
+//     if (data) {
+//       res.json({
+//         data: data,
+//         statusCode: 200,
+//         message: "Rental property details retrieved successfully",
+//       });
+//     } else {
+//       res.status(404).json({
+//         statusCode: 404,
+//         message: "Rental property details not found",
+//       });
+//     }
+//   } catch (error) {
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 
-router.get("/rentals_property/:rental_adress", async (req, res) => {
-  try {
-    const adress = req.params.rental_adress;
-    var data = await Rentals.findOne({ rental_adress: adress });
-    if (data) {
-      res.json({
-        data: data,
-        statusCode: 200,
-        message: "Rental property details retrieved successfully",
-      });
-    } else {
-      res.status(404).json({
-        statusCode: 404,
-        message: "Rental property details not found",
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
-
-
-///working this code 
+///working this code
 
 // router.put("/rental/:id/entry/:entryId", async (req, res) => {
 //   try {
@@ -759,7 +897,6 @@ router.get("/rentals_property/:rental_adress", async (req, res) => {
 //   }
 // });
 
-
 router.put("/rental/:id/entry/:entryIndex", async (req, res) => {
   try {
     const id = req.params.id;
@@ -772,20 +909,26 @@ router.put("/rental/:id/entry/:entryIndex", async (req, res) => {
       rentalOwner_primaryEmail: req.body.rentalOwner_primaryEmail,
       rentalOwner_phoneNumber: req.body.rentalOwner_phoneNumber,
       rentalOwner_homeNumber: req.body.rentalOwner_homeNumber,
-      rentalOwner_businessNumber: req.body.rentalOwner_businessNumber
+      rentalOwner_businessNumber: req.body.rentalOwner_businessNumber,
     };
 
     // Find the rental by ID
     const rental = await Rentals.findById(id);
 
     if (!rental) {
-      return res.status(404).json({ statusCode: 404, message: "Rental not found" });
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Rental not found" });
     }
 
-    const entryToUpdate = rental.entries.find(entry => entry.entryIndex === entryIndex);
+    const entryToUpdate = rental.entries.find(
+      (entry) => entry.entryIndex === entryIndex
+    );
 
     if (!entryToUpdate) {
-      return res.status(404).json({ statusCode: 404, message: "Entry not found" });
+      return res
+        .status(404)
+        .json({ statusCode: 404, message: "Entry not found" });
     }
     rental.set(updatedData);
     Object.assign(entryToUpdate, updatedEntryData);
@@ -829,6 +972,5 @@ router.get("/Rentals_summary/tenant/:rental_address", async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;

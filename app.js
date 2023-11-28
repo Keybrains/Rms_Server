@@ -12,19 +12,21 @@ var RegisterRouter = require("./routes/api/Register");
 var RentalsRouter = require("./routes/api/Rentals");
 var NewPropartyRouter = require("./routes/api/NewPropaty");
 var TenantsRouter = require("./routes/api/Tenants");
-var AddStaffMember = require ("./routes/api/AddStaffMember");
-var RentalOwners = require ("./routes/api/RentalOwners");
-var ApplicantRouter = require ("./routes/api/Applicants");
-var AgentRouter = require ("./routes/api/Addagent")
-var VendorRouter = require ("./routes/api/Vendor");
-var WorkorderRouter = require ("./routes/api/Workorder");
-var AccountRouter = require ("./routes/api/AddAccount");
-var LedgerRouter = require ("./routes/api/Ledger");
-var NotificationRouter = require ("./routes/api/Notification");
-var AddRicuringAcc = require ("./routes/api/AddRecuringAcc");
-var OneTimeChargeAcc = require ("./routes/api/OneTimeAcc");
-var PaymentRouter = require ("./routes/api/Payment");
+var AddStaffMember = require("./routes/api/AddStaffMember");
+var RentalOwners = require("./routes/api/RentalOwners");
+var ApplicantRouter = require("./routes/api/Applicants");
+var AgentRouter = require("./routes/api/Addagent");
+var VendorRouter = require("./routes/api/Vendor");
+var WorkorderRouter = require("./routes/api/Workorder");
+var AccountRouter = require("./routes/api/AddAccount");
+var LedgerRouter = require("./routes/api/Ledger");
+var NotificationRouter = require("./routes/api/Notification");
+var AddRicuringAcc = require("./routes/api/AddRecuringAcc");
+var OneTimeChargeAcc = require("./routes/api/OneTimeAcc");
+var PaymentRouter = require("./routes/api/Payment");
 // var UploadFile = require ("./routes/UploadFile");
+var PropertyUnitRouter = require("./routes/api/PropertyUnit");
+
 var app = express();
 
 // view engine setup
@@ -39,25 +41,26 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api", indexRouter);
-app.use("/api/users", usersRouter); 
+app.use("/api/users", usersRouter);
 app.use("/api/register", RegisterRouter);
 app.use("/api/rentals", RentalsRouter);
 app.use("/api/newproparty", NewPropartyRouter);
 app.use("/api/tenant", TenantsRouter);
-app.use("/api/addstaffmember",AddStaffMember);
-app.use("/api/rentalowner",RentalOwners);
-app.use("/api/applicant",ApplicantRouter);
-app.use("/api/addagent",AgentRouter);
-app.use("/api/addaccount",AccountRouter);
-app.use("/api/vendor",VendorRouter);
-app.use("/api/workorder",WorkorderRouter);
-app.use("/api/ledger",LedgerRouter);
-app.use("/api/notification",NotificationRouter);
+app.use("/api/addstaffmember", AddStaffMember);
+app.use("/api/rentalowner", RentalOwners);
+app.use("/api/applicant", ApplicantRouter);
+app.use("/api/addagent", AgentRouter);
+app.use("/api/addaccount", AccountRouter);
+app.use("/api/vendor", VendorRouter);
+app.use("/api/workorder", WorkorderRouter);
+app.use("/api/ledger", LedgerRouter);
+app.use("/api/notification", NotificationRouter);
 // app.use("/uploadfile",UploadFile);
-app.use("/api/recurringAcc",AddRicuringAcc);
-app.use("/api/onetimecharge",OneTimeChargeAcc);
-app.use("/api/payment",PaymentRouter);
+app.use("/api/recurringAcc", AddRicuringAcc);
+app.use("/api/onetimecharge", OneTimeChargeAcc);
+app.use("/api/payment", PaymentRouter);
 // catch 404 and forward to error handler
+app.use("/api/propertyunit",PropertyUnitRouter);
 app.use(function (req, res, next) {
   next(createError(404));
 });
@@ -68,7 +71,7 @@ app.use(function (err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
-  // render the error page  
+  // render the error page
   res.status(err.status || 500);
   res.render("error");
 });
