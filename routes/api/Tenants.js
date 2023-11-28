@@ -239,17 +239,140 @@ var JWTD = require("jwt-decode");
 // });
 
 const nodemailer = require("nodemailer");
-const { createTransport } = require('nodemailer');
+const { createTransport } = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.socketlabs.com",
   port: 587,
   secure: false,
   auth: {
-    user: 'server39897', 
-    pass: 'c9J3Wwm5N4Bj',
+    user: "server39897",
+    pass: "c9J3Wwm5N4Bj",
   },
 });
+
+// router.post("/tenant", async (req, res) => {
+//   try {
+//     var count = await Tenants.count();
+//     function pad(num) {
+//       num = num.toString();
+//       while (num.length < 2) num = "0" + num;
+//       return num;
+//     }
+//     req.body["tenant_id"] = pad(count + 1);
+
+//     const {
+//       tenant_id,
+//       tenant_firstName,
+//       tenant_lastName,
+//       tenant_unitNumber,
+//       tenant_mobileNumber,
+//       tenant_workNumber,
+//       tenant_homeNumber,
+//       tenant_faxPhoneNumber,
+//       tenant_email,
+//       tenant_password,
+//       alternate_email,
+//       tenant_residentStatus,
+//       birth_date,
+//       textpayer_id,
+//       comments,
+//       contact_name,
+//       relationship_tenants,
+//       email,
+//       emergency_PhoneNumber,
+//       entries,
+//     } = req.body;
+
+//     const currentDate = new Date();
+//     const endDate = new Date(req.body.end_date);
+
+//     if (endDate <= currentDate) {
+//       req.body["propertyOnRent"] = true;
+//     } else {
+//       req.body["propertyOnRent"] = false;
+//     }
+
+//     entries.forEach((entry, index) => {
+//       entry.entryIndex = (index + 1).toString().padStart(2, "0");
+//     });
+
+//     const data = await Tenants.create({
+//       tenant_id,
+//       tenant_firstName,
+//       tenant_lastName,
+//       tenant_unitNumber,
+//       tenant_mobileNumber,
+//       tenant_workNumber,
+//       tenant_homeNumber,
+//       tenant_faxPhoneNumber,
+//       tenant_email,
+//       tenant_password,
+//       alternate_email,
+//       tenant_residentStatus,
+//       birth_date,
+//       textpayer_id,
+//       comments,
+//       contact_name,
+//       relationship_tenants,
+//       email,
+//       emergency_PhoneNumber,
+//       entries,
+//     });
+
+//     data.entries = entries;
+
+//     const tenantRentalAddress = entries[0].rental_adress;
+
+//     console.log(
+//       "Attempting to find matching rental for address:",
+//       tenantRentalAddress
+//     );
+
+//     const matchingRental = await Rentals.findOne({
+//       "entries.rental_adress": tenantRentalAddress,
+//     });
+
+//     console.log("Matching Rental:", matchingRental);
+
+//     if (matchingRental) {
+//       const matchingEntry = matchingRental.entries.find(
+//         (entry) => entry.rental_adress === tenantRentalAddress
+//       );
+
+//       console.log("Matching Entry:", matchingEntry);
+
+//       if (
+//         matchingEntry &&
+//         matchingEntry.rental_adress.trim() === tenantRentalAddress.trim()
+//       ) {
+//         console.log("Setting isrenton to true");
+//         matchingEntry.isrenton = true;
+//         await matchingRental.save();
+//       } else {
+//         console.log("Conditions not met for setting isrenton to true.");
+//       }
+//     }
+
+//     const info = await transporter.sendMail({
+//       from: '"302 Properties" <mailto:info@cloudpress.host>',
+//       to: tenant_email,
+//       subject: "Welcome Mail",
+//       text: 'Hello, Welcome to 302 Properties.',
+//     });
+
+//     res.json({
+//       statusCode: 200,
+//       data: data,
+//       message: "Add Tenants Successfully",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: false,
+//       message: error.message,
+//     });
+//   }
+// })
 
 router.post("/tenant", async (req, res) => {
   try {
@@ -259,6 +382,7 @@ router.post("/tenant", async (req, res) => {
       while (num.length < 2) num = "0" + num;
       return num;
     }
+
     req.body["tenant_id"] = pad(count + 1);
 
     const {
@@ -282,6 +406,8 @@ router.post("/tenant", async (req, res) => {
       email,
       emergency_PhoneNumber,
       entries,
+      recurringChargeSchema,
+      oneTimeChargeSchema,
     } = req.body;
 
     const currentDate = new Date();
@@ -318,6 +444,8 @@ router.post("/tenant", async (req, res) => {
       email,
       emergency_PhoneNumber,
       entries,
+      recurringChargeSchema,
+      oneTimeChargeSchema,
     });
 
     data.entries = entries;
@@ -354,13 +482,6 @@ router.post("/tenant", async (req, res) => {
       }
     }
 
-    const info = await transporter.sendMail({
-      from: '"302 Properties" <mailto:info@cloudpress.host>', 
-      to: tenant_email, 
-      subject: "Welcome Mail", 
-      text: 'Hello, Welcome to 302 Properties.',    
-    });
-
     res.json({
       statusCode: 200,
       data: data,
@@ -372,8 +493,7 @@ router.post("/tenant", async (req, res) => {
       message: error.message,
     });
   }
-})
-
+});
 
 //get tenant
 router.get("/tenant", async (req, res) => {
@@ -428,6 +548,7 @@ router.get("/tenants", async (req, res) => {
 
             entries: {
               entryIndex: entry.entryIndex,
+              rental_units: entry.rental_units,
               rental_adress: entry.rental_adress,
               lease_type: entry.lease_type,
               start_date: entry.start_date,
@@ -444,15 +565,15 @@ router.get("/tenants", async (req, res) => {
               propertyOnRent: entry.propertyOnRent,
               Due_date: entry.Due_date,
               Security_amount: entry.Security_amount,
-              recuring_amount: entry.recuring_amount,
-              recuring_account: entry.recuring_account,
-              recuringnextDue_date: entry.recuringnextDue_date,
-              recuringmemo: entry.recuringmemo,
-              recuringfrequency: entry.recuringfrequency,
-              onetime_account: entry.onetime_account,
-              onetime_amount: entry.onetime_amount,
-              onetime_Due_date: entry.onetime_Due_date,
-              onetime_memo: entry.onetime_memo,
+              // recuring_amount: entry.recuring_amount,
+              // recuring_account: entry.recuring_account,
+              // recuringnextDue_date: entry.recuringnextDue_date,
+              // recuringmemo: entry.recuringmemo,
+              // recuringfrequency: entry.recuringfrequency,
+              // onetime_account: entry.onetime_account,
+              // onetime_amount: entry.onetime_amount,
+              // onetime_Due_date: entry.onetime_Due_date,
+              // onetime_memo: entry.onetime_memo,
 
               // add cosigner
               cosigner_firstName: entry.cosigner_firstName,
@@ -481,6 +602,19 @@ router.get("/tenants", async (req, res) => {
               cash_flow: entry.cash_flow,
               notes: entry.notes,
               entry_id: entry._id,
+              recurring_charges: entry.recurring_charges.map((recuringCharge) => ({
+                recuring_amount: recuringCharge.recuring_amount,
+                recuring_account: recuringCharge.recuring_account,
+                recuringnextDue_date: recuringCharge.recuringnextDue_date,
+                recuringmemo: recuringCharge.recuringmemo,
+                recuringfrequency: recuringCharge.recuringfrequency,
+              })),
+              one_time_charges: entry.one_time_charges.map((oneTimeCharge) => ({
+                onetime_account: oneTimeCharge.onetime_account,
+                onetime_amount: oneTimeCharge.onetime_amount,
+                onetime_Due_date: oneTimeCharge.onetime_Due_date,
+                onetime_memo: oneTimeCharge.onetime_memo,
+              })),
             },
           };
         });
@@ -1154,7 +1288,7 @@ router.get("/tenant/:tenantId/entries", async (req, res) => {
 });
 
 //get data specifice rental address wise & entry endex wise
-//get data specifice rental address wise & entry endex wise 
+//get data specifice rental address wise & entry endex wise
 router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
   try {
     const rental_adress = req.params.rental_adress;
@@ -1180,7 +1314,9 @@ router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
       tenant_mobileNumber: tenant.tenant_mobileNumber,
       tenant_email: tenant.tenant_email,
       tenant_password: tenant.tenant_password,
-      entries: tenant.entries.filter(entry => entry.rental_adress === rental_adress),
+      entries: tenant.entries.filter(
+        (entry) => entry.rental_adress === rental_adress
+      ),
     }));
 
     res.json({
@@ -1196,7 +1332,6 @@ router.get("/tenant-detail/tenants/:rental_adress", async (req, res) => {
     });
   }
 });
-
 
 // //get tenant name only rental address wise get data // working
 // router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
