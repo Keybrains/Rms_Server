@@ -96,17 +96,44 @@ router.get("/newproparty", async (req, res) => {
 
 
 // get proparty type and sub type(dropdoun)
+//old working 
+// router.get("/propropartytype", async (req, res) => {
+//   try {
+//     var data = await NewProparty.find({});
+//     // Create an object to store property types and their subtypes
+//     const formattedData = {};
+//     data.forEach((property) => {
+//       const { property_type, propertysub_type } = property;
+//       if (!formattedData[property_type]) {
+//         formattedData[property_type] = [];
+//       }
+//       formattedData[property_type].push({ propertysub_type });
+//     });
+//     res.json({
+//       statusCode: 200,
+//       data: formattedData,
+//       message: "Read All property type and subtype",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+
+
 router.get("/propropartytype", async (req, res) => {
   try {
     var data = await NewProparty.find({});
-    // Create an object to store property types and their subtypes
+    // Create an object to store property types and their subtypes along with ismultiunit
     const formattedData = {};
     data.forEach((property) => {
-      const { property_type, propertysub_type } = property;
+      const { property_type, propertysub_type, ismultiunit } = property;
       if (!formattedData[property_type]) {
         formattedData[property_type] = [];
       }
-      formattedData[property_type].push({ propertysub_type });
+      formattedData[property_type].push({ propertysub_type, ismultiunit });
     });
     res.json({
       statusCode: 200,

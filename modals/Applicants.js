@@ -16,6 +16,8 @@ const applicantSchema = new Schema({
   status: { type: String, default: "" },
   rental_units: { type: String },
   applicant_checklist: { type: Array },
+  applicant_notes: [{ type: String }],
+  applicant_attachment: [{ type: Array }],
 });
 
 module.exports = mongoose.model("applicant", applicantSchema);
