@@ -29,6 +29,7 @@ const entrySchema = new Schema({
   rentalcom_units: { type: String },
   rentalcom_unitsAdress: { type: String },
   property_image: { type: Array },
+  createdAt: { type: String },
 });
 
 

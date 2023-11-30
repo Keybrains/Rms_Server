@@ -208,6 +208,50 @@ router.put("/applicant/:id/checklist", async (req, res) => {
   }
 });
 
+router.put("/applicant/note_attachment/:id", async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { applicant_notes, applicant_attachment } = req.body;
+
+    if (!applicantId || (!applicant_notes && !applicant_attachment)) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Invalid request. Please provide 'applicant_notes' and/or 'applicant_attachment'.",
+      });
+    }
+
+    const updateFields = {};
+    if (applicant_notes) updateFields.applicant_notes = Array.isArray(applicant_notes)
+      ? applicant_notes
+      : [applicant_notes];
+    if (applicant_attachment) updateFields.applicant_attachment = applicant_attachment;
+
+    const updatedApplicant = await Applicant.findByIdAndUpdate(
+      applicantId,
+      updateFields,
+      { new: true }
+    );
+
+    if (!updatedApplicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedApplicant,
+      message: "Applicant Notes and/or Attachment Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 router.get("/applicant_summary/rental/:rental_adress", async (req, res) => {
   try {
     const rental = req.params.rental_adress; // Retrieve the rental address from the request parameters
@@ -227,6 +271,35 @@ router.get("/applicant_summary/rental/:rental_adress", async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+// Duplicate Applicant not show (Get Applicant using tenant_mobileNumber and if same so show only First Record)
+router.get("/existing/applicant", async (req, res) => {
+  try {
+    // Group records by tenant_mobileNumber and select one record for each group
+    const uniqueRecords = await Applicant.aggregate([
+      {
+        $group: {
+          _id: "$tenant_mobileNumber",
+          record: { $first: "$$ROOT" }, // Select the first record in each group
+        },
+      },
+      {
+        $replaceRoot: { newRoot: "$record" }, // Replace the root with the selected record
+      },
+    ]);
+
+    res.json({
+      data: uniqueRecords,
+      statusCode: 200,
+      message: "Read All Applicant",
+    });
+  } catch (error) {
+    res.json({
       statusCode: 500,
       message: error.message,
     });
