@@ -513,6 +513,34 @@ router.get("/tenant", async (req, res) => {
   }
 });
 
+router.get("/existing/tenant", async (req, res) => {
+  try {
+    // Group records by tenant_mobileNumber and select one record for each group
+    const uniqueRecords = await Tenants.aggregate([
+      {
+        $group: {
+          _id: "$tenant_mobileNumber",
+          record: { $first: "$$ROOT" } // Select the first record in each group
+        }
+      },
+      {
+        $replaceRoot: { newRoot: "$record" } // Replace the root with the selected record
+      }
+    ]);
+
+    res.json({
+      data: uniqueRecords,
+      statusCode: 200,
+      message: "Read All Tenants",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 //new api to get
 router.get("/tenants", async (req, res) => {
   try {
@@ -602,13 +630,15 @@ router.get("/tenants", async (req, res) => {
               cash_flow: entry.cash_flow,
               notes: entry.notes,
               entry_id: entry._id,
-              recurring_charges: entry.recurring_charges.map((recuringCharge) => ({
-                recuring_amount: recuringCharge.recuring_amount,
-                recuring_account: recuringCharge.recuring_account,
-                recuringnextDue_date: recuringCharge.recuringnextDue_date,
-                recuringmemo: recuringCharge.recuringmemo,
-                recuringfrequency: recuringCharge.recuringfrequency,
-              })),
+              recurring_charges: entry.recurring_charges.map(
+                (recuringCharge) => ({
+                  recuring_amount: recuringCharge.recuring_amount,
+                  recuring_account: recuringCharge.recuring_account,
+                  recuringnextDue_date: recuringCharge.recuringnextDue_date,
+                  recuringmemo: recuringCharge.recuringmemo,
+                  recuringfrequency: recuringCharge.recuringfrequency,
+                })
+              ),
               one_time_charges: entry.one_time_charges.map((oneTimeCharge) => ({
                 onetime_account: oneTimeCharge.onetime_account,
                 onetime_amount: oneTimeCharge.onetime_amount,
@@ -1226,9 +1256,22 @@ router.get("/tenant_summary/:tenantId/entry/:entryIndex", async (req, res) => {
       tenant_id: tenant.tenant_id,
       tenant_firstName: tenant.tenant_firstName,
       tenant_lastName: tenant.tenant_lastName,
+      tenant_unitNumber: tenant.tenant_unitNumber,
       tenant_mobileNumber: tenant.tenant_mobileNumber,
+      tenant_workNumber: tenant.tenant_workNumber,
+      tenant_homeNumber: tenant.tenant_homeNumber,
+      tenant_faxPhoneNumber: tenant.tenant_faxPhoneNumber,
       tenant_email: tenant.tenant_email,
       tenant_password: tenant.tenant_password,
+      alternate_email: tenant.alternate_email,
+      tenant_residentStatus: tenant.tenant_residentStatus,
+      birth_date: tenant.birth_date,
+      textpayer_id: tenant.textpayer_id,
+      comments: tenant.comments,
+      contact_name: tenant.contact_name,
+      relationship_tenants: tenant.relationship_tenants,
+      email: tenant.email,
+      emergency_PhoneNumber: tenant.emergency_PhoneNumber,
       entries: entry,
     };
 

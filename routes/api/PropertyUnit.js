@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var PropertyUnit = require("../../modals/PropertyUnit");
+var Tenants = require("../../modals/Tenants")
 
 router.post("/propertyunit", async (req, res) => {
   try {
@@ -149,32 +150,6 @@ router.put("/propertyunit/:id", async (req, res) => {
   //   }
   // });
   
-  router.get("/propertyunit/:rentalId", async (req, res) => {
-    try {
-      const rentalId = req.params.rentalId;
-  
-      if (!rentalId) {
-        res.json({
-          statusCode: 400,
-          message: " Data not found",
-        });
-      }
-      var data = await PropertyUnit.find({ rentalId });
-      res.json({
-        data: data,
-        statusCode: 200,
-        message: "Read All PropertyUnit",
-      });
-    } catch (error) {
-      res.json({
-        statusCode: 500,
-        message: error.message,
-      });
-    }
-  });
-
-
-// Teneant Name Get
   // router.get("/propertyunit/:rentalId", async (req, res) => {
   //   try {
   //     const rentalId = req.params.rentalId;
@@ -182,38 +157,12 @@ router.put("/propertyunit/:id", async (req, res) => {
   //     if (!rentalId) {
   //       res.json({
   //         statusCode: 400,
-  //         message: "Data not found",
+  //         message: " Data not found",
   //       });
   //     }
-  
-  //     // Find PropertyUnit data
-  //     const propertyUnitData = await PropertyUnit.find({ rentalId });
-  
-  //     // Find Tenant data
-  //     const tenantData = await Tenants.findOne({
-  //       "entries.rental_adress": propertyUnitData[0].rental_adress,
-  //       "entries.rental_units": propertyUnitData[0].rental_units,
-  //     });
-  
-  //     // Extract relevant information from Tenant data
-  //     const tenantInfo = tenantData
-  //       ? {
-  //           tenant_firstName: tenantData.tenant_firstName,
-  //           tenant_lastName: tenantData.tenant_lastName,
-  //         }
-  //       : {
-  //           tenant_firstName: null,
-  //           tenant_lastName: null,
-  //         };
-  
-  //     // Add tenant information to PropertyUnit response
-  //     const responseData = propertyUnitData.map((propertyUnit) => ({
-  //       ...propertyUnit.toObject(),
-  //       ...tenantInfo,
-  //     }));
-  
+  //     var data = await PropertyUnit.find({ rentalId });
   //     res.json({
-  //       data: responseData,
+  //       data: data,
   //       statusCode: 200,
   //       message: "Read All PropertyUnit",
   //     });
@@ -224,6 +173,58 @@ router.put("/propertyunit/:id", async (req, res) => {
   //     });
   //   }
   // });
+
+
+// Teneant Name Get
+router.get("/propertyunit/:rentalId", async (req, res) => {
+  try {
+    const rentalId = req.params.rentalId;
+
+    if (!rentalId) {
+      res.json({
+        statusCode: 400,
+        message: "Data not found",
+      });
+    }
+
+    // Find PropertyUnit data
+    const propertyUnitData = await PropertyUnit.find({ rentalId });
+
+    // Find Tenant data
+    const tenantData = await Tenants.findOne({
+      "entries.rental_adress": propertyUnitData[0].rental_adress,
+      "entries.rental_units": propertyUnitData[0].rental_units,
+    });
+
+    // Extract relevant information from Tenant data
+    const tenantInfo = tenantData
+      ? {
+          tenant_firstName: tenantData.tenant_firstName,
+          tenant_lastName: tenantData.tenant_lastName,
+        }
+      : {
+          tenant_firstName: null,
+          tenant_lastName: null,
+        };
+
+    // Add tenant information to PropertyUnit response
+    const responseData = propertyUnitData.map((propertyUnit) => ({
+      ...propertyUnit.toObject(),
+      ...tenantInfo,
+    }));
+
+    res.json({
+      data: responseData,
+      statusCode: 200,
+      message: "Read All PropertyUnit",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
   
   // Delete Property-Unit
   router.delete("/propertyunit/:id", async (req, res) => {
