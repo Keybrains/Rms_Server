@@ -1,6 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var Applicant = require("../../modals/Applicants");
+const nodemailer = require("nodemailer");
+const { createTransport } = require("nodemailer");
+const moment = require("moment")
 
 //   Add  applicant
 router.post("/applicant", async (req, res) => {
@@ -170,6 +173,43 @@ router.get("/applicant_summary/:id", async (req, res) => {
 });
 
 // Add a new route to update the applicant checklist
+// router.put("/applicant/:id/checklist", async (req, res) => {
+//   try {
+//     const applicantId = req.params.id;
+//     const checklist = req.body.applicant_checklist;
+
+//     if (!applicantId || !checklist) {
+//       return res.status(400).json({
+//         statusCode: 400,
+//         message: "Invalid request. Please provide 'applicant_checklist'.",
+//       });
+//     }
+
+//     const updatedApplicant = await Applicant.findByIdAndUpdate(
+//       applicantId,
+//       { applicant_checklist: checklist },
+//       { new: true }
+//     );
+
+//     if (!updatedApplicant) {
+//       return res.status(404).json({
+//         statusCode: 404,
+//         message: "Applicant not found.",
+//       });
+//     }
+
+//     res.json({
+//       statusCode: 200,
+//       data: updatedApplicant,
+//       message: "Applicant Checklist Updated Successfully",
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: err.message,
+//     });
+//   }
+// });
 router.put("/applicant/:id/checklist", async (req, res) => {
   try {
     const applicantId = req.params.id;
@@ -182,31 +222,74 @@ router.put("/applicant/:id/checklist", async (req, res) => {
       });
     }
 
-    const updatedApplicant = await Applicant.findByIdAndUpdate(
+    let statusToUpdate = "Rejected";
+
+    if (checklist.includes("Approved")) {
+      statusToUpdate = "Approved";
+    }
+
+    const applicant = await Applicant.findByIdAndUpdate(
       applicantId,
-      { applicant_checklist: checklist },
+      { applicant_checklist: checklist, status: statusToUpdate },
       { new: true }
     );
 
-    if (!updatedApplicant) {
+    if (!applicant) {
       return res.status(404).json({
         statusCode: 404,
         message: "Applicant not found.",
       });
     }
 
+    if (applicant.status === "Approved") {
+      // Find tenant information
+      const {
+        tenant_firstName,
+        tenant_lastName,
+        tenant_email,
+        tenant_mobileNumber,
+        tenant_workNumber,
+        tenant_homeNumber,
+        tenant_faxPhoneNumber,
+      } = applicant;
+
+      // Update the status of other records with the same tenant information and status=""
+      await Applicant.updateMany(
+        {
+          _id: { $ne: applicantId }, // Exclude the current record
+          tenant_firstName,
+          tenant_lastName,
+          tenant_email,
+          tenant_mobileNumber,
+          tenant_workNumber,
+          tenant_homeNumber,
+          tenant_faxPhoneNumber,
+          status: "",
+        },
+        { $set: { status: "Rejected" } }
+      );
+    } else {
+      // If status is not Approved, assume it is Rejected
+      // Update only the current record without affecting other records
+      await Applicant.updateOne(
+        { _id: applicantId },
+        { $set: { status: "Rejected" } }
+      );
+    }
+
     res.json({
+      updatedApplicant: applicant,
       statusCode: 200,
-      data: updatedApplicant,
-      message: "Applicant Checklist Updated Successfully",
+      message: `Applicant checklist updated successfully. Status set to: ${statusToUpdate}`,
     });
-  } catch (err) {
+  } catch (error) {
     res.status(500).json({
       statusCode: 500,
-      message: err.message,
+      message: error.message,
     });
   }
 });
+
 
 router.put("/applicant/note_attachment/:id", async (req, res) => {
   try {
@@ -329,5 +412,86 @@ router.get("/existing/applicant", async (req, res) => {
 //     });
 //   }
 // });
+
+// for application ==============================================================================
+const transporter = nodemailer.createTransport({
+  host: "smtp.socketlabs.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "server39897",
+    pass: "c9J3Wwm5N4Bj",
+  },
+});
+
+router.get("/applicant/mail/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch data from the Applicant database using the provided id
+    const applicantData = await Applicant.findById(id);
+
+    if (!applicantData) {
+      return res.json({
+        statusCode: 404,
+        message: "Applicant not found",
+      });
+    }
+
+    // Destructure the needed data
+    const { tenant_email, tenant_firstName, tenant_lastName, rental_adress, rental_units } = applicantData;
+
+    // Update the document with the current date
+    applicantData.applicant_emailsend_date = moment()
+    .add(1, "seconds")
+    .format("YYYY-MM-DD HH:mm:ss");;
+    await applicantData.save();
+
+    // const applicationURL = `http://localhost:3000/admin/Applicants/${id}`;
+    const applicationURL = `https://propertymanager.cloudpress.host/admin/Applicants/${id}`;
+
+    const htmlContent = `
+      <p>You're invited to apply!</p>
+      <p>Hi ${tenant_firstName} ${tenant_lastName},</p>
+      <p>Thanks for your interest in Garden Row (multi-building complex) - 2D! Click below to get started.</p>
+      <a href="${applicationURL}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: #fff; text-decoration: none; border-radius: 5px;">Start Application</a>
+    `;
+
+    // Send mail using Nodemailer
+    const info = await transporter.sendMail({
+      from: '"donotreply" <mailto:info@cloudpress.host>',
+      to: tenant_email,
+      subject: `${rental_adress} - ${rental_units}`,
+      html: htmlContent,
+    });
+
+    res.json({
+      statusCode: 200,
+      data: applicantData,
+      message: "Mail Sent Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/application/:id", async (req, res) => {
+  try {
+    let result = await Applicant.findByIdAndUpdate(req.params.id, req.body);
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Application Added Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
 
 module.exports = router;
