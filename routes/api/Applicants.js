@@ -6,9 +6,28 @@ const { createTransport } = require("nodemailer");
 const moment = require("moment")
 
 //   Add  applicant
+
 router.post("/applicant", async (req, res) => {
   try {
-    var data = await Applicant.create(req.body);
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    const createdAt = moment().add(1, "seconds").format("YYYY-MM-DD HH:mm:ss");
+
+    const { statusUpdatedBy, ...restOfReqBody } = req.body;
+
+    const applicantData = {
+      ...restOfReqBody,
+      createAt: createdAt,
+      applicant_status: [
+        {
+          statusUpdatedBy: statusUpdatedBy || "", // Use statusUpdatedBy from body or an empty string if not provided
+          status: "New",
+          updateAt: updatedAt,
+        },
+      ],
+    };
+
+    const data = await Applicant.create(applicantData);
+
     res.json({
       statusCode: 200,
       data: data,
@@ -26,6 +45,14 @@ router.post("/applicant", async (req, res) => {
 router.get("/applicant", async (req, res) => {
   try {
     var data = await Applicant.find();
+
+    // Reverse the applicant_status array for each applicant
+    data.forEach(applicant => {
+      if (applicant.applicant_status) {
+        applicant.applicant_status.reverse();
+      }
+    });
+
     res.json({
       data: data,
       statusCode: 200,
@@ -38,6 +65,7 @@ router.get("/applicant", async (req, res) => {
     });
   }
 });
+
 
 //appicants data get mobile number wise and stutus wise  like  approved
 
@@ -76,18 +104,29 @@ router.get("/applicant_get", async (req, res) => {
 router.put("/applicant/:id/status", async (req, res) => {
   try {
     const applicantId = req.params.id;
-    const status = req.body.status;
+    const newStatus = req.body.status;
+    const statusUpdatedBy = req.body.statusUpdatedBy;
 
-    if (!applicantId || !status) {
+    if (!applicantId || !newStatus) {
       return res.status(400).json({
         statusCode: 400,
         message: "Invalid request. Please provide 'status'.",
       });
     }
 
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
     const updatedApplicant = await Applicant.findByIdAndUpdate(
       applicantId,
-      { status: status },
+      {
+        $push: {
+          applicant_status: {
+            statusUpdatedBy: statusUpdatedBy,
+            status: newStatus,
+            updateAt: updatedAt,
+          },
+        },
+      },
       { new: true }
     );
 
@@ -419,7 +458,7 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: "server39897",
+    user: "server39897",  
     pass: "c9J3Wwm5N4Bj",
   },
 });
@@ -448,7 +487,7 @@ router.get("/applicant/mail/:id", async (req, res) => {
     await applicantData.save();
 
     // const applicationURL = `http://localhost:3000/admin/Applicants/${id}`;
-    const applicationURL = `https://propertymanager.cloudpress.host/admin/Applicants/${id}`;
+    const applicationURL = `http://localhost:4000/admin/Applicants/${id}`;
 
     const htmlContent = `
       <p>You're invited to apply!</p>

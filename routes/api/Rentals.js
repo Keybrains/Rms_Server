@@ -718,9 +718,43 @@ router.get("/rental_allproperty", async (req, res) => {
   }
 });
 
+// router.get("/allproperty", async (req, res) => {
+//   try {
+//     const data = await Rentals.find({}, "entries.rental_adress");
+
+//     const rentalAddresses = data.reduce((addresses, rental) => {
+//       if (rental.entries && rental.entries.length > 0) {
+//         rental.entries.forEach((entry) => {
+//           if (entry.rental_adress) {
+//             addresses.push({
+//               _id: rental._id,
+//               rental_adress: entry.rental_adress,
+//             });
+//           }
+//         });
+//       }
+//       return addresses;
+//     }, []);
+
+//     res.json({
+//       statusCode: 200,
+//       data: rentalAddresses,
+//       message: "Read all rental addresses",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 router.get("/allproperty", async (req, res) => {
   try {
-    const data = await Rentals.find({}, "entries.rental_adress");
+    const data = await Rentals.find(
+      {},
+      "entries.rental_adress rentalOwner_firstName rentalOwner_lastName rentalOwner_companyName rentalOwner_primaryEmail rentalOwner_phoneNumber rentalOwner_homeNumber rentalOwner_businessNumber"
+    );
+    console.log(data, "data");
 
     const rentalAddresses = data.reduce((addresses, rental) => {
       if (rental.entries && rental.entries.length > 0) {
@@ -729,6 +763,13 @@ router.get("/allproperty", async (req, res) => {
             addresses.push({
               _id: rental._id,
               rental_adress: entry.rental_adress,
+              rentalOwner_firstName: rental.rentalOwner_firstName,
+              rentalOwner_lastName: rental.rentalOwner_lastName,
+              rentalOwner_companyName: rental.rentalOwner_companyName,
+              rentalOwner_primaryEmail: rental.rentalOwner_primaryEmail,
+              rentalOwner_phoneNumber: rental.rentalOwner_phoneNumber,
+              rentalOwner_homeNumber: rental.rentalOwner_homeNumber,
+              rentalOwner_businessNumber: rental.rentalOwner_businessNumber,
             });
           }
         });

@@ -16,7 +16,17 @@ const applicantSchema = new Schema({
   status: { type: String, default: "" },
   rental_units: { type: String },
   applicant_checklist: { type: Array },
+  applicant_checkedChecklist: { type: Array },
   applicant_emailsend_date: { type: String},
+  createAt: { type: String },
+
+  applicant_status: [
+    {
+      status: String,
+      updateAt: String,
+      statusUpdatedBy: String,
+    },
+  ],
 
 
 
