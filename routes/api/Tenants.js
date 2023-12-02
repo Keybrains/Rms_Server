@@ -618,7 +618,7 @@ router.post("/tenant", async (req, res) => {
     - Check out the resident center video library to see everything the site has to offer.
     
     Activate your account now:
-    ${"https://propertymanager.cloudpress.host/auth/login"}
+    ${"http://localhost:4000/auth/login"}
     
     Username: ${tenant_email}
     password: ${tenant_password}
@@ -982,7 +982,7 @@ router.put("/tenant/:id", async (req, res) => {
       - Check out the resident center video library to see everything the site has to offer.
       
       Activate your account now:
-      ${"https://propertymanager.cloudpress.host/auth/login"}
+      ${"http://localhost:4000/auth/login"}
       
       Username: ${tenant.tenant_email}
       password: ${tenant.tenant_password}
