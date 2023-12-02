@@ -18,6 +18,15 @@ const applicantSchema = new Schema({
   applicant_checklist: { type: Array },
   applicant_checkedChecklist: { type: Array },
   applicant_emailsend_date: { type: String},
+  createAt: { type: String },
+
+  applicant_status: [
+    {
+      status: String,
+      updateAt: String,
+      statusUpdatedBy: String,
+    },
+  ],
 
 
 

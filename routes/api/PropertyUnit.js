@@ -179,6 +179,7 @@ router.put("/propertyunit/:id", async (req, res) => {
 router.get("/propertyunit/:rentalId", async (req, res) => {
   try {
     const rentalId = req.params.rentalId;
+    console.log(rentalId, "rentalId");
 
     if (!rentalId) {
       res.json({
@@ -190,28 +191,38 @@ router.get("/propertyunit/:rentalId", async (req, res) => {
     // Find PropertyUnit data
     const propertyUnitData = await PropertyUnit.find({ rentalId });
 
-    // Find Tenant data
-    const tenantData = await Tenants.findOne({
-      "entries.rental_adress": propertyUnitData[0].rental_adress,
-      "entries.rental_units": propertyUnitData[0].rental_units,
-    });
+    // Initialize an array to store the final response data
+    const responseData = [];
 
-    // Extract relevant information from Tenant data
-    const tenantInfo = tenantData
-      ? {
-          tenant_firstName: tenantData.tenant_firstName,
-          tenant_lastName: tenantData.tenant_lastName,
-        }
-      : {
-          tenant_firstName: null,
-          tenant_lastName: null,
-        };
+    // Iterate through each property unit
+    for (const propertyUnit of propertyUnitData) {
+      // Find Tenant data for the current property unit
+      const tenantData = await Tenants.findOne({
+        "entries.rental_adress": propertyUnit.rental_adress,
+        "entries.rental_units": propertyUnit.rental_units,
+      });
 
-    // Add tenant information to PropertyUnit response
-    const responseData = propertyUnitData.map((propertyUnit) => ({
-      ...propertyUnit.toObject(),
-      ...tenantInfo,
-    }));
+      // Extract relevant information from Tenant data
+      const tenantInfo =
+        tenantData && tenantData.tenant_firstName && tenantData.tenant_lastName
+          ? {
+              tenant_firstName: tenantData.tenant_firstName,
+              tenant_lastName: tenantData.tenant_lastName,
+            }
+          : {
+              tenant_firstName: null,
+              tenant_lastName: null,
+            };
+
+      // Add tenant information to PropertyUnit response only for the matched unit
+      const unitDataWithTenantInfo = {
+        ...propertyUnit.toObject(),
+        ...(tenantInfo ? tenantInfo : {}), // Add tenant info only if it's available
+      };
+
+      // Push the combined data to the response array
+      responseData.push(unitDataWithTenantInfo);
+    }
 
     res.json({
       data: responseData,
@@ -225,7 +236,6 @@ router.get("/propertyunit/:rentalId", async (req, res) => {
     });
   }
 });
-  
   // Delete Property-Unit
   router.delete("/propertyunit/:id", async (req, res) => {
     try {

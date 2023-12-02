@@ -1,4 +1,4 @@
- var JWTD = require("jwt-decode");
+var JWTD = require("jwt-decode");
 var jwtDecode = require("jwt-decode");
 var bcrypt = require("bcryptjs");
 var JWT = require("jsonwebtoken");
@@ -17,11 +17,12 @@ var hashCompare = async (pwd, hash) => {
   return result;
 };
 
-var createToken = async ({ _id, Designation }) => {
+var createToken = async ({ _id, userName, email }) => {
   let token = await JWT.sign(
     {
-      _id: _id,
-      Designation: Designation,
+      id: _id,
+      userName: userName,
+      email: email,
     },
     SECRET_KEY,
     {
