@@ -487,7 +487,7 @@ router.get("/applicant/mail/:id", async (req, res) => {
     await applicantData.save();
 
     // const applicationURL = `http://localhost:3000/admin/Applicants/${id}`;
-    const applicationURL = `http://localhost:4000/admin/Applicants/${id}`;
+    const applicationURL = `https://propertymanager.cloudpress.host/admin/Applicants/${id}`;
 
     const htmlContent = `
       <p>You're invited to apply!</p>
