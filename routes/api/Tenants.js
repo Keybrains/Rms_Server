@@ -603,7 +603,7 @@ router.post("/tenant", async (req, res) => {
     if (entries[0].tenant_residentStatus) {
       const info = await transporter.sendMail({
         from: '"donotreply" <mailto:info@cloudpress.host>',
-        to: "patelyug210702@gmail.com",
+        to: `${tenant.tenant_email}`,
         subject: "Welcome to your new resident center with 302 Properties",
         text: `
     Hello ${tenant_firstName},
@@ -969,7 +969,7 @@ router.put("/tenant/:id", async (req, res) => {
       if (updateData.entries[0].tenant_residentStatus) {
         const info = await transporter.sendMail({
           from: '"donotreply" <mailto:info@cloudpress.host>',
-          to: "patelyug210702@gmail.com",
+          to: `${tenant.tenant_email}`,
           subject: "Welcome to your new resident center with 302 Properties",
           text: `
       Hello ${tenant.tenant_firstName},
