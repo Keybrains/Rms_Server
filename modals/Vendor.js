@@ -7,6 +7,8 @@ const vendorSchema = new Schema({
   vendor_phoneNumber: { type: Number },
   vendor_email: { type: String },
   vendor_password: { type: String },
+  updateAt: { type: String },
+  createdAt: { type: String },
 });
 
 module.exports = mongoose.model("vendor", vendorSchema);
