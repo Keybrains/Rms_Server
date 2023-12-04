@@ -2,24 +2,24 @@ var express = require("express");
 var router = express.Router();
 var NewProparty = require("../../modals/NewProparty");
 var Rentals = require ("../../modals/Rentals");
-
+var moment = require("moment")
 
 router.post("/newproparty", async (req, res) => {
-    try {
-  
-      var data = await NewProparty.create(req.body);
-      res.json({
-        statusCode: 200,
-        data: data,
-        message: "Add newproparty Successfully",
-      });
-    } catch (error) {
-      res.json({
-        statusCode: 500,
-        message: error.message,
-      });
-    }
-  });
+  try {
+    req.body["createAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    var data = await NewProparty.create(req.body);
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Add newproparty Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 // // Add proparty
 // router.post("/newproparty", async (req, res) => {
@@ -242,21 +242,22 @@ router.delete("/newproparty", async (req, res) => {
 
 
   //edit proparty type Data
-router.put("/proparty-type/:id", async (req, res) => {
-  try {
-    let result = await NewProparty.findByIdAndUpdate(req.params.id, req.body);
-    res.json({
-      statusCode: 200,
-      data: result,
-      message: "Proparty_type Data Updated Successfully",
-    });
-  } catch (err) {
-    res.json({
-      statusCode: 500,
-      message: err.message,
-    });
-  }
-});
+  router.put("/proparty-type/:id", async (req, res) => {
+    try {
+      req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+      let result = await NewProparty.findByIdAndUpdate(req.params.id, req.body);
+      res.json({
+        statusCode: 200,
+        data: result,
+        message: "Proparty_type Data Updated Successfully",
+      });
+    } catch (err) {
+      res.json({
+        statusCode: 500,
+        message: err.message,
+      });
+    }
+  });
   
   //get property  table  summary data id wise 
 

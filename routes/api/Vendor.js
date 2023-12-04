@@ -10,12 +10,12 @@ var {
 } = require("../../authentication");
 var JWT = require("jsonwebtoken");
 var JWTD = require("jwt-decode");
-
-
+var moment = require("moment")
 // Add Vendor
 router.post("/vendor", async (req, res) => {
     try {
   
+      req.body["createdAt"] =  moment().format("YYYY-MM-DD HH:mm:ss");
       var data = await Vendor.create(req.body);
       res.json({
         statusCode: 200,
@@ -96,6 +96,7 @@ router.delete("/delete_vendor", async (req, res) => {
       //edit  Vendor 
 router.put("/vendor/:id", async (req, res) => {
     try {
+      req.body["updateAt"] =  moment().format("YYYY-MM-DD HH:mm:ss");
       let result = await Vendor.findByIdAndUpdate(req.params.id, req.body);
       res.json({
         statusCode: 200,

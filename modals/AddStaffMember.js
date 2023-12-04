@@ -8,6 +8,8 @@ const staffmemberSchema = new Schema({
   staffmember_phoneNumber: { type: Number },
   staffmember_email: { type: String },
   staffmember_password: { type: String },
+  createAt: { type: String },
+  updateAt: { type: String },
 });
 
 module.exports = mongoose.model("add_staffmember", staffmemberSchema);

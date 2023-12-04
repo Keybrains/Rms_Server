@@ -10,6 +10,8 @@ const entrySchema = new Schema({
   rental_city: { type: String },
   rental_country: { type: String },
   rental_postcode: { type: Number },
+  prop_image:{ type: String, default: "" },
+  rental_state: { type: String },
 
   rentalOwner_operatingAccount: { type: String },
   rentalOwner_propertyReserve: { type: Number },
@@ -30,6 +32,7 @@ const entrySchema = new Schema({
   rentalcom_unitsAdress: { type: String },
   property_image: { type: Array },
   createdAt: { type: String },
+  updateAt: { type: String },
 });
 
 

@@ -17,6 +17,8 @@ const oneTimeChargeSchema = new Schema({
 });
 
 const entrySchema = new Schema({
+  updateAt: { type: String },
+  createdAt: { type: String },
   entryIndex: { type: String },
   rental_adress: { type: String },
   lease_type: { type: String },
@@ -64,6 +66,9 @@ const entrySchema = new Schema({
   cosigner_country: { type: String },
   cosigner_postalcode: { type: String },
 
+  tenant_residentStatus: { type: Boolean },
+
+
   // add recuring charge
 
   // recuring_amount: { type: Number },
@@ -92,6 +97,9 @@ const entrySchema = new Schema({
 
   recurring_charges: [recurringChargeSchema],
   one_time_charges: [oneTimeChargeSchema],
+
+  moveout_date: { type: String },
+  moveout_notice_given_date: { type: String },
 });
 
 const tenantsSchema = new Schema({
@@ -109,7 +117,6 @@ const tenantsSchema = new Schema({
   tenant_email: { type: String },
   tenant_password: { type: String },
   alternate_email: { type: String },
-  tenant_residentStatus: { type: String },
 
   // personal information
   birth_date: { type: String },

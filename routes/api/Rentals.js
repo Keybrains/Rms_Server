@@ -3,6 +3,7 @@ var router = express.Router();
 var Rentals = require("../../modals/Rentals");
 var Tenants = require("../../modals/Tenants");
 var PropertyUnit = require("../../modals/PropertyUnit");
+var moment = require("moment")
 // var {verifyToken} = require("../authentication");
 
 // Post api working
@@ -163,7 +164,9 @@ router.post("/rentals", async (req, res) => {
           rental_state,
           rental_postcode,
           staffMember,
-          entryIndex: (entryIndex + 1).toString().padStart(2, '0'), // Add entryIndex
+          // entryIndex: (entryIndex + 1).toString().padStart(2, '0'), // Add entryIndex
+          entryIndex: (existingRental.entries.length + 1).toString().padStart(2, '0'), 
+          createdAt: moment().format("YYYY-MM-DD HH:mm:ss"), 
         };
 
         existingRental.entries.push(newEntry);
@@ -277,6 +280,8 @@ router.get("/rental", async (req, res) => {
               rentalcom_unitsAdress: entry.rentalcom_unitsAdress,
               property_image: entry.property_image,
               entry_id: entry._id,
+              createdAt: entry.createdAt,
+              updateAt: entry.updateAt,
             },
           };
         });
@@ -970,7 +975,8 @@ router.put("/rental/:id/entry/:entryIndex", async (req, res) => {
       return res
         .status(404)
         .json({ statusCode: 404, message: "Entry not found" });
-    }
+    }  
+    updatedEntryData["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     rental.set(updatedData);
     Object.assign(entryToUpdate, updatedEntryData);
 
@@ -1010,6 +1016,39 @@ router.get("/Rentals_summary/tenant/:rental_address", async (req, res) => {
     res.status(500).json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+router.put("/proparty_image/:id/:entryId", async (req, res) => {
+  try {
+    const { id: mainId, entryId } = req.params;
+    console.log(req.params, "=========================");
+    const { prop_image } = req.body;
+
+    // Update only the prop_image field in the specified entry
+    let result = await Rentals.updateOne(
+      { _id: mainId, "entries._id": entryId },
+      { $set: { "entries.$.prop_image": prop_image } }
+    );
+
+    console.log(result); // Log the result to inspect the response
+
+    if (result.modifiedCount === 1) {
+      res.json({
+        statusCode: 200,
+        data: result,
+        message: "Property Image Added Successfully",
+      });
+    } else {
+      res.json({
+        statusCode: 404,
+        message: "No document or entry matched the update criteria.",
+      });
+    }
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
     });
   }
 });
