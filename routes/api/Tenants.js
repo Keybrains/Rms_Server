@@ -10,6 +10,7 @@ var {
 } = require("../../authentication");
 var JWT = require("jsonwebtoken");
 var JWTD = require("jwt-decode");
+var moment = require("moment");
 // const nodemailer = require("nodemailer");
 
 //add tenant working  API
@@ -503,6 +504,7 @@ router.post("/tenant", async (req, res) => {
       return num;
     }
     req.body["tenant_id"] = pad(count + 1);
+    req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
 
     const {
       tenant_id,
@@ -552,7 +554,7 @@ router.post("/tenant", async (req, res) => {
       tenant_email,
       tenant_password,
       alternate_email,
-      tenant_residentStatus,
+      // tenant_residentStatus,
       birth_date,
       textpayer_id,
       comments,
@@ -597,15 +599,13 @@ router.post("/tenant", async (req, res) => {
       }
     }
     console.log(tenant_residentStatus);
-   
-      if(tenant_residentStatus){
-
-        const info = await transporter.sendMail({
-          from: '"donotreply" <mailto:info@cloudpress.host>',
-          to: "patelyug210702@gmail.com",
-          subject: "Welcome to your new resident center with 302 Properties",
-          text: 
-          `
+    console.log(entries[0].tenant_residentStatus, "entries");
+    if (entries[0].tenant_residentStatus) {
+      const info = await transporter.sendMail({
+        from: '"donotreply" <mailto:info@cloudpress.host>',
+        to: `${tenant.tenant_email}`,
+        subject: "Welcome to your new resident center with 302 Properties",
+        text: `
     Hello ${tenant_firstName},
         
     Thank you for registering with 302 Properties. Your account has been created.
@@ -618,7 +618,7 @@ router.post("/tenant", async (req, res) => {
     - Check out the resident center video library to see everything the site has to offer.
     
     Activate your account now:
-    ${"http://localhost:4000/auth/login"}
+    ${"https://propertymanager.cloudpress.host/auth/login"}
     
     Username: ${tenant_email}
     password: ${tenant_password}
@@ -628,10 +628,9 @@ router.post("/tenant", async (req, res) => {
     Best regards,
     The 302 Properties Team
     `,
-  });
+      });
+    }
 
-}
-  
     res.json({
       statusCode: 200,
       data: data,
@@ -670,12 +669,12 @@ router.get("/existing/tenant", async (req, res) => {
       {
         $group: {
           _id: "$tenant_mobileNumber",
-          record: { $first: "$$ROOT" } // Select the first record in each group
-        }
+          record: { $first: "$$ROOT" }, // Select the first record in each group
+        },
       },
       {
-        $replaceRoot: { newRoot: "$record" } // Replace the root with the selected record
-      }
+        $replaceRoot: { newRoot: "$record" }, // Replace the root with the selected record
+      },
     ]);
 
     res.json({
@@ -743,6 +742,8 @@ router.get("/tenants", async (req, res) => {
               propertyOnRent: entry.propertyOnRent,
               Due_date: entry.Due_date,
               Security_amount: entry.Security_amount,
+              createdAt: entry.createdAt,
+              updateAt: entry.updateAt,
               // recuring_amount: entry.recuring_amount,
               // recuring_account: entry.recuring_account,
               // recuringnextDue_date: entry.recuringnextDue_date,
@@ -929,7 +930,8 @@ router.put("/tenant/:id", async (req, res) => {
     const tenantId = req.params.id;
     const updateData = req.body;
     const tenant = await Tenants.findById(tenantId);
-    console.log(tenant,"tenant")
+    console.log(updateData, "updateData");
+    console.log(tenant, "tenant=======================");
     if (!tenant) {
       return res
         .status(404)
@@ -961,28 +963,28 @@ router.put("/tenant/:id", async (req, res) => {
         nextEntryIndex = (parseInt(nextEntryIndex) + 1)
           .toString()
           .padStart(2, "0");
+        entry.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
       });
 
-
+      if (updateData.entries[0].tenant_residentStatus) {
         const info = await transporter.sendMail({
           from: '"donotreply" <mailto:info@cloudpress.host>',
-          to: "patelyug210702@gmail.com",
+          to: `${tenant.tenant_email}`,
           subject: "Welcome to your new resident center with 302 Properties",
-          text: 
-      `
+          text: `
       Hello ${tenant.tenant_firstName},
           
       Thank you for registering with 302 Properties. Your account has been created.
-          
+      
       You're invited to join our Resident Center! After signing in, you can enjoy many benefits including the ability to:
-          
+      
       - Pay rent online and set up autopay
       - Submit maintenance requests and general inquiries
       - Record information about your renters insurance policy
       - Check out the resident center video library to see everything the site has to offer.
       
       Activate your account now:
-      ${"http://localhost:4000/auth/login"}
+      ${"https://propertymanager.cloudpress.host/auth/login"}
       
       Username: ${tenant.tenant_email}
       password: ${tenant.tenant_password}
@@ -992,11 +994,11 @@ router.put("/tenant/:id", async (req, res) => {
       Best regards,
       The 302 Properties Team
       `,
-    });
-  
-      tenant.entries.push(...updateData.entries);
-    }
+        });
 
+        tenant.entries.push(...updateData.entries);
+      }
+    }
     // Update the main tenant data and entries array
     const result = await tenant.save();
 
@@ -1444,6 +1446,7 @@ router.put("/tenants/:tenantId/entry/:entryIndex", async (req, res) => {
         .status(404)
         .json({ statusCode: 404, message: "Entry not found" });
     }
+    updatedTenantData["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     tenant.set(updatedData);
     Object.assign(entryToUpdate, updatedTenantData);
 
@@ -1793,6 +1796,39 @@ router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
   }
 });
 
+router.put("/moveout/:id/:entryIndex", async (req, res) => {
+  try {
+    const { id, entryIndex } = req.params;
+
+    let result = await Tenants.findOneAndUpdate(
+      {
+        "_id": id,
+        "entries.entryIndex": entryIndex
+      },
+      {
+        $set: {
+          "entries.$.moveout_date": req.body.moveout_date,
+          "entries.$.moveout_notice_given_date": req.body.moveout_notice_given_date,
+          "entries.$.end_date": req.body.end_date,
+          // Add other fields you want to update
+        }
+      },
+      { new: true }
+    );
+
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Entry Updated Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 //get id wise rental address
 router.get("/rental-address/:id", async (req, res) => {
   try {
@@ -1811,6 +1847,38 @@ router.get("/rental-address/:id", async (req, res) => {
     res.status(200).json({ rentalAddresses });
   } catch (err) {
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+router.put("/moveout/:id/:entryIndex", async (req, res) => {
+  try {
+    const { id, entryIndex } = req.params;
+
+    let result = await Tenants.findOneAndUpdate(
+      {
+        _id: id,
+        "entries.entryIndex": entryIndex,
+      },
+      {
+        $set: {
+          "entries.$.moveout_date": req.body.moveout_date,
+          "entries.$.moveout_notice_given_date":
+            req.body.moveout_notice_given_date,
+          // Add other fields you want to update
+        },
+      },
+      { new: true }
+    );
+
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Entry Updated Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
   }
 });
 

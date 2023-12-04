@@ -6,6 +6,8 @@ const newpropartySchema = new Schema({
   property_type: { type: String },
   propertysub_type: { type: String },
   ismultiunit: { type:Boolean,default: false },
+  createAt: { type: String },
+  updateAt: { type: String },
 });
 
 module.exports = mongoose.model("newproparties", newpropartySchema);

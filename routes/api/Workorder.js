@@ -1,13 +1,16 @@
 var express = require("express");
 var router = express.Router();
 var Workorder = require("../../modals/Workorder");
+var moment = require("moment");
 // var {verifyToken} = require("../authentication");
 
 // Add workorder api
 // Add workorder API
 router.post("/workorder", async (req, res) => {
   try {
+    
     const {
+      // createdAt = moment().format("YYYY-MM-DD HH:mm:ss"),
       workorder_id,
       work_subject,
       rental_adress,
@@ -35,6 +38,7 @@ router.post("/workorder", async (req, res) => {
       workorder_id,
       work_subject,
       rental_adress,
+      // createdAt,
       unit_no,
       work_category,
       vendor_name,
@@ -117,6 +121,7 @@ router.delete("/delete_workorder", async (req, res) => {
       //edit workorder
       router.put("/workorder/:workorder_id", async (req, res) => {
         try {
+          // req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
           let result = await Workorder.updateOne({ workorder_id: req.params.workorder_id }, req.body);
           res.json({
             statusCode: 200,
