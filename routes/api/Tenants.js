@@ -996,8 +996,8 @@ router.put("/tenant/:id", async (req, res) => {
       `,
         });
 
-        tenant.entries.push(...updateData.entries);
       }
+      tenant.entries.push(...updateData.entries);
     }
     // Update the main tenant data and entries array
     const result = await tenant.save();

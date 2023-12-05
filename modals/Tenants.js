@@ -35,16 +35,14 @@ const entrySchema = new Schema({
   rent_paid: { type: Boolean, default: false },
   propertyOnRent: { type: Boolean, default: false },
   rental_units: { type: String },
-  ownerDetail:{
-    rentalOwner_firstName: { type: String },
-    rentalOwner_lastName: { type: String },
-    rentalOwner_homeNumber: { type: Number },
-    rental_adress: { type: String },
-    rentalOwner_phoneNumber: { type: Number },
-    rentalOwner_primaryEmail: { type: String },
-    rentalOwner_businessNumber: { type: Number },
-    rentalOwner_companyName: { type: String },
-  },
+  rentalOwner_firstName: { type: String },
+  rentalOwner_lastName: { type: String },
+  rentalOwner_homeNumber: { type: Number },
+  rental_adress: { type: String },
+  rentalOwner_phoneNumber: { type: Number },
+  rentalOwner_primaryEmail: { type: String },
+  rentalOwner_businessNumber: { type: Number },
+  rentalOwner_companyName: { type: String },
 
   //security deposite
   Due_date: { type: String },
@@ -67,7 +65,6 @@ const entrySchema = new Schema({
   cosigner_postalcode: { type: String },
 
   tenant_residentStatus: { type: Boolean },
-
 
   // add recuring charge
 
