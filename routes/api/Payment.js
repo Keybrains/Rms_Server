@@ -560,7 +560,7 @@ router.get("/charge_summary/:mainId/charge/:chargeIndex", async (req, res) => {
       type: chargeIndex.type,
       entryIndex: charges.entryIndex,
       rental_adress: charges.rental_adress,
-      charges_date: charges.charges_date,
+      date: charges.date,
       charges_amount: charges.charges_amount,
       tenant_firstName: charges.tenant_firstName,
       charges_memo: charges.charges_memo,
@@ -593,7 +593,7 @@ router.put("/charges/:mainId/charge/:chargeIndex", async (req, res) => {
       // Update only the necessary fields specific to charges
       type: req.body.type,
       rental_adress: req.body.rental_adress,
-      charges_date: req.body.charges_date,
+      date: req.body.date,
       charges_amount: req.body.charges_amount,
       charges_memo: req.body.charges_memo,
       charges_attachment: req.body.charges_attachment,
