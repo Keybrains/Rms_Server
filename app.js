@@ -26,6 +26,7 @@ var OneTimeChargeAcc = require("./routes/api/OneTimeAcc");
 var PaymentRouter = require("./routes/api/Payment");
 // var UploadFile = require ("./routes/UploadFile");
 var PropertyUnitRouter = require("./routes/api/PropertyUnit");
+var AddChargeAndPaymentRouter = require("./routes/api/AddChargeAndPayment")
 
 var app = express();
 
@@ -61,6 +62,7 @@ app.use("/api/onetimecharge", OneTimeChargeAcc);
 app.use("/api/payment", PaymentRouter);
 // catch 404 and forward to error handler
 app.use("/api/propertyunit",PropertyUnitRouter);
+app.use("/api/payment_charge",AddChargeAndPaymentRouter);
 app.use(function (req, res, next) {
   next(createError(404));
 });

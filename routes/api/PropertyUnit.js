@@ -57,6 +57,31 @@ router.get("/rentals_property/:rental_adress", async (req, res) => {
     }
   });
 
+  router.get("/prop_id/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      var data = await PropertyUnit.find({ _id: id })
+      if (data) {
+        res.json({
+          data: data,
+          statusCode: 200,
+          message: "Rental property details retrieved successfully",
+        });
+      } else {
+        res.status(404).json({
+          statusCode: 404,
+          message: "Rental property details not found",
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        statusCode: 500,
+        message: error.message,
+      });
+    }
+  });
+
+
   
 router.put("/propertyunit/:id", async (req, res) => {
     try {
@@ -108,31 +133,31 @@ router.put("/propertyunit/:id", async (req, res) => {
   });
   
   
-  router.get("/rentals_property/:rental_adress", async (req, res) => {
-    try {
-      const adress = req.params.rental_adress;
-      var data = await PropertyUnit.find({ rental_adress: adress }).select(
-        "rental_units"
-      );
-      if (data) {
-        res.json({
-          data: data,
-          statusCode: 200,
-          message: "Rental property details retrieved successfully",
-        });
-      } else {
-        res.status(404).json({
-          statusCode: 404,
-          message: "Rental property details not found",
-        });
-      }
-    } catch (error) {
-      res.status(500).json({
-        statusCode: 500,
-        message: error.message,
-      });
-    }
-  });
+  // router.get("/rentals_property/:rental_adress", async (req, res) => {
+  //   try {
+  //     const adress = req.params.rental_adress;
+  //     var data = await PropertyUnit.find({ rental_adress: adress }).select(
+  //       "rental_units"
+  //     );
+  //     if (data) {
+  //       res.json({
+  //         data: data,
+  //         statusCode: 200,
+  //         message: "Rental property details retrieved successfully",
+  //       });
+  //     } else {
+  //       res.status(404).json({
+  //         statusCode: 404,
+  //         message: "Rental property details not found",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     res.status(500).json({
+  //       statusCode: 500,
+  //       message: error.message,
+  //     });
+  //   }
+  // });
   
   // router.get("/propertyunit", async (req, res) => {
   //   try {
