@@ -416,156 +416,7 @@ router.get("/financial", async (req, res) => {
 //     }
 // });
 
-// router.get("/financial_unit", async (req, res) => {
-//   try {
-//     const { rental_adress, property_id, unit, tenant_id } = req.query;
-//     console.log(req.query, "-------------------------");
-
-//     const data = await AddPaymentAndCharge.aggregate([
-//       {
-//         $match: {
-//           "properties.rental_adress": rental_adress,
-//           "properties.property_id": property_id,
-//         },
-//       },
-//       {
-//         $unwind: "$unit",
-//       },
-//       {
-//         $match: {
-//           "unit.unit": unit,
-//         },
-//       },
-//       {
-//         $addFields: {
-//           "unit.paymentAndCharges": {
-//             $filter: {
-//               input: "$unit.paymentAndCharges",
-//               as: "charge",
-//               cond: {
-//                 $eq: ["$$charge.tenant_id", tenant_id],
-//               },
-//             },
-//           },
-//         },
-//       },
-//       {
-//         $match: {
-//           "unit.paymentAndCharges": { $ne: [] },
-//         },
-//       },
-//       {
-//         $addFields: {
-//           "unit.paymentAndCharges": {
-//             $map: {
-//               input: "$unit.paymentAndCharges",
-//               as: "charge",
-//               in: {
-//                 $mergeObjects: [
-//                   "$$charge",
-//                   {
-//                     // Index: { $add: ["$$charge.Index", 1] }, // Index starts from 1
-//                     Total: 0, // Initialize Total to 0
-//                   },
-//                 ],
-//               },
-//             },
-//           },
-//         },
-//       },
-//       {
-//         $addFields: {
-//           "unit.paymentAndCharges": {
-//             $map: {
-//               input: "$unit.paymentAndCharges",
-//               as: "charge",
-//               in: {
-//                 $mergeObjects: [
-//                   "$$charge",
-//                   {
-//                     Balance: {
-//                       $cond: {
-//                         if: { $eq: ["$$charge.type", "Charge"] },
-//                         then: "$$charge.amount",
-//                         else: { $subtract: [0, "$$charge.amount"] }, // for Payment type
-//                       },
-//                     },
-//                   },
-//                 ],
-//               },
-//             },
-//           },
-//         },
-//       },
-//       {
-//         $addFields: {
-//           "unit.paymentAndCharges": {
-//             $map: {
-//               input: "$unit.paymentAndCharges",
-//               as: "charge",
-//               in: {
-//                 $mergeObjects: [
-//                   "$$charge",
-//                   {
-//                     Total: {
-//                       $add: ["$$charge.Total", "$$charge.Balance"], // Update Total with Balance
-//                     },
-//                   },
-//                 ],
-//               },
-//             },
-//           },
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: "$_id",
-//           properties: { $first: "$properties" },
-//           unit: { $push: "$unit" },
-//         },
-//       },
-//     ]);
-
-//     // Iterate through the result and calculate "Total" and "RunningTotal" for each element
-//     data.forEach((item) => {
-//       item.unit.forEach((unit) => {
-//         let runningTotal = 0;
-
-//         unit.paymentAndCharges.forEach((charge) => {
-//           charge.RunningTotal = runningTotal;
-//           charge.Total = runningTotal + charge.Balance;
-//           runningTotal = charge.Total;
-//         });
-//       });
-//     });
-
-//     const sortedData = data.map((item) => ({
-//       ...item,
-//       unit: item.unit.map((unitItem) => ({
-//         ...unitItem,
-//         paymentAndCharges: unitItem.paymentAndCharges.sort(
-//           (a, b) => new Date(b.date) - new Date(a.date)
-//         ),
-//       })),
-//     }));
-
-//     res.json({
-//       statusCode: 200,
-//       data: sortedData,
-//       message: "Read Filtered PaymentAndCharge",
-//     });
-//   } catch (error) {
-//     res.json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
-
-
-
-
-router.get("/sds", async (req, res) => {
+router.get("/financial_unit", async (req, res) => {
   try {
     const { rental_adress, property_id, unit, tenant_id } = req.query;
     console.log(req.query, "-------------------------");
@@ -710,5 +561,9 @@ router.get("/sds", async (req, res) => {
     });
   }
 });
+
+
+
+
 
 module.exports = router;
