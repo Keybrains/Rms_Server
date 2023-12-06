@@ -43,6 +43,7 @@ const entrySchema = new Schema({
   rentalOwner_primaryEmail: { type: String },
   rentalOwner_businessNumber: { type: Number },
   rentalOwner_companyName: { type: String },
+  unit_id: { type: String },
 
   //security deposite
   Due_date: { type: String },
