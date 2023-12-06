@@ -980,7 +980,7 @@ router.put("/rental/:id/entry/:entryIndex", async (req, res) => {
     rental.set(updatedData);
     Object.assign(entryToUpdate, updatedEntryData);
 
-    const result = await rental.save();
+    const result = await rental.save();;
 
     res.json({
       statusCode: 200,
