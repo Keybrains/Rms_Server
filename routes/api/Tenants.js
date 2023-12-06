@@ -781,6 +781,8 @@ router.get("/tenants", async (req, res) => {
               cash_flow: entry.cash_flow,
               notes: entry.notes,
               entry_id: entry._id,
+
+
               recurring_charges: entry.recurring_charges.map(
                 (recuringCharge) => ({
                   recuring_amount: recuringCharge.recuring_amount,
@@ -801,7 +803,7 @@ router.get("/tenants", async (req, res) => {
         });
       })
       .flat(); // Flatten the nested arrays
-
+     
     res.json({
       data: data,
       statusCode: 200,
