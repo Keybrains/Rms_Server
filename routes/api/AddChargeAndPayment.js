@@ -464,7 +464,6 @@ router.get("/financial_unit", async (req, res) => {
                 $mergeObjects: [
                   "$$charge",
                   {
-                    // Index: { $add: ["$$charge.Index", 1] }, // Index starts from 1
                     Total: 0, // Initialize Total to 0
                   },
                 ],
@@ -527,17 +526,33 @@ router.get("/financial_unit", async (req, res) => {
     ]);
 
     // Iterate through the result and calculate "Total" and "RunningTotal" for each element
-    data.forEach((item) => {
-      item.unit.forEach((unit) => {
-        let runningTotal = 0;
+    // for (let i = 0; i < data.length; i++) {
+    //   const item = data[i];
+    //   let runningTotal = 0;
 
-        unit.paymentAndCharges.forEach((charge) => {
-          charge.RunningTotal = runningTotal;
-          charge.Total = runningTotal + charge.Balance;
-          runningTotal = charge.Total;
-        });
-      });
-    });
+    //   for (let j = 0; j < item.unit.length; j++) {
+    //     const unit = item.unit[j];
+
+    //     for (let k = 0; k < unit.paymentAndCharges.length; k++) {
+    //       const charge = unit.paymentAndCharges[k];
+    //       charge.RunningTotal = runningTotal;
+    //       charge.Total = runningTotal + charge.Balance;
+    //       runningTotal = charge.Total;
+    //     }
+    //   }
+    // }
+
+    // const sortedData = data.map((item) => ({
+    //   ...item,
+    //   unit: item.unit.map((unitItem) => ({
+    //     ...unitItem,
+    //     paymentAndCharges: unitItem.paymentAndCharges.sort(
+    //       (a, b) => new Date(b.date) - new Date(a.date)
+    //     ),
+    //   })),
+    // }));
+
+
 
     const sortedData = data.map((item) => ({
       ...item,
@@ -548,6 +563,25 @@ router.get("/financial_unit", async (req, res) => {
         ),
       })),
     }));
+    
+    // Iterate through the sortedData and set the last RunningTotal to 0
+    sortedData.forEach((item) => {
+      item.unit.forEach((unitItem) => {
+        let runningTotal = 0;
+    
+        unitItem.paymentAndCharges.reverse().forEach((charge) => {
+          charge.RunningTotal = runningTotal;
+          charge.Total = runningTotal + charge.Balance;
+          runningTotal = charge.Total;
+        });
+    
+        // Reverse the paymentAndCharges array back to its original order
+        unitItem.paymentAndCharges.reverse();
+      });
+    });
+    
+
+
 
     res.json({
       statusCode: 200,
