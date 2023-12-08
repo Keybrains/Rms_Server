@@ -44,7 +44,7 @@ const entrySchema = new Schema({
   rentalOwner_businessNumber: { type: Number },
   rentalOwner_companyName: { type: String },
   unit_id: { type: String },
-
+  property_id: { type: String },
   //security deposite
   Due_date: { type: String },
   Security_amount: { type: Number },
