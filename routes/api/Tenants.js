@@ -11,6 +11,312 @@ var {
 var JWT = require("jsonwebtoken");
 var JWTD = require("jwt-decode");
 var moment = require("moment");
+const cron = require("node-cron");
+const PaymentCharges = require('../../modals/AddPaymentAndCharge'); 
+
+cron.schedule("16 20 * * *", async () => {
+  try {
+    console.log("Cron hitt...!!!");
+    const currentDate = new Date().toISOString().split("T")[0]; // Get current date in yyyy-mm-dd format
+
+    const tenants = await Tenants.find();
+
+    tenants.forEach(async (tenant) => {
+      tenant.entries.forEach(async (entry) => {
+        const startDate = entry.start_date
+          ? new Date(entry.start_date).toISOString().split("T")[0]
+          : null;
+        const endDate = entry.end_date
+          ? new Date(entry.end_date).toISOString().split("T")[0]
+          : null;
+        const nextDueDate = entry.nextDue_date
+          ? new Date(entry.nextDue_date).toISOString().split("T")[0]
+          : null;
+        const rentCycle = entry.rent_cycle;
+        console.log(
+          "start-end-due",
+          startDate + " " + endDate + " " + nextDueDate
+        );
+        console.log("currentDate", currentDate);
+        console.log("rentCycle", rentCycle);
+        console.log(" Cron middle hitt ...!!!");
+
+        // Monthly cronjob condition
+        if (
+          startDate &&
+          endDate &&
+          nextDueDate && // Ensure these dates exist
+          currentDate >= startDate &&
+          currentDate <= endDate &&
+          currentDate === nextDueDate &&
+          rentCycle === "Monthly"
+        ) {
+          console.log("Monthly Cron hitt...!!!");
+
+          // Update the nextDue_date to current date + 1 month
+          const nextDueDatePlusOneMonth = new Date(currentDate);
+          nextDueDatePlusOneMonth.setMonth(
+            nextDueDatePlusOneMonth.getMonth() + 1
+          );
+
+          entry.nextDue_date = nextDueDatePlusOneMonth
+            .toISOString()
+            .split("T")[0]; // Update nextDue_date
+
+          console.log("Monthly Cron end...!!!");
+          // Save the changes to the database
+          await tenant.save();
+
+       console.log('property_id', tenant.entries[0].property_id) 
+
+          // Prepare the data to be posted to the payment-charges collection
+          const postData = {
+            properties: {
+              rental_adress: tenant.entries[0].rental_adress, // Assuming there's only one entry for each tenant
+              property_id: tenant.entries[0].property_id              
+            },
+            unit: [
+              {
+                unit: tenant.entries[0].rental_units,
+                unit_id: tenant.entries.unit_id,
+                paymentAndCharges: [
+                  {
+                    type: "Payment",
+                    account: "Security Deposit Liability",
+                    amount: 40,
+                    rental_adress: tenant.entries[0].rental_adress,
+                    tenant_firstName:
+                      tenant.tenant_firstName + " " + tenant.tenant_lastName,
+                    tenant_id: tenant.tenant_id,
+                    memo: "test",
+                    date: currentDate, // Current date when the condition was triggered
+                    month_year:
+                      currentDate.split("-")[1] +
+                      "-" +
+                      currentDate.split("-")[0], // Month-Year format
+                    rent_cycle: "Daily", // Change this accordingly
+                  },
+                ],
+              },
+            ],
+          };
+
+          //Data Post Logic Here for Monthly
+          try {
+            const paymentCharge = new PaymentCharges(postData); // Create a new instance of the PaymentCharges model
+            await paymentCharge.save(); // Save the data to the collection
+            console.log("Data saved to payment-charges collection.");
+          } catch (error) {
+            console.error(
+              "Error saving data to payment-charges collection:",
+              error
+            );
+          }
+        }
+
+        // Weekly cronjob condition
+        if (
+          startDate &&
+          endDate &&
+          nextDueDate && // Ensure these dates exist
+          currentDate >= startDate &&
+          currentDate <= endDate &&
+          currentDate === nextDueDate &&
+          rentCycle === "Weekly"
+        ) {
+          console.log("Weekly Cron hitt...!!!");
+
+          // Update the nextDue_date to current date + 1 week
+          const nextDueDatePlusOneWeek = new Date(currentDate);
+          nextDueDatePlusOneWeek.setDate(nextDueDatePlusOneWeek.getDate() + 7);
+
+          entry.nextDue_date = nextDueDatePlusOneWeek
+            .toISOString()
+            .split("T")[0]; // Update nextDue_date
+          console.log("Weekly Cron hitt...!!!");
+          // Save the changes to the database
+          await tenant.save();
+
+          //Data Post Logic Here for Weekly
+        }
+
+        // Daily cronjob condition
+        if (
+          startDate &&
+          endDate &&
+          nextDueDate && // Ensure these dates exist
+          currentDate >= startDate &&
+          currentDate <= endDate &&
+          currentDate === nextDueDate &&
+          rentCycle === "Daily"
+        ) {
+          console.log("Daily Cron hitt...!!!");
+
+          // Update the nextDue_date to current date + 1 day
+          const nextDueDatePlusOneDay = new Date(currentDate);
+          nextDueDatePlusOneDay.setDate(nextDueDatePlusOneDay.getDate() + 1);
+
+          entry.nextDue_date = nextDueDatePlusOneDay
+            .toISOString()
+            .split("T")[0]; // Update nextDue_date
+
+          console.log("Daily Cron end...!!!");
+          // Save the changes to the database
+          await tenant.save();
+        }
+
+        // Every Two months cronjob condition
+        if (
+          startDate &&
+          endDate &&
+          nextDueDate && // Ensure these dates exist
+          currentDate >= startDate &&
+          currentDate <= endDate &&
+          currentDate === nextDueDate &&
+          rentCycle === "Every two months"
+        ) {
+          console.log("Every two months Cron hitt...!!!");
+
+          // Update the nextDue_date to current date + 2 months
+          const nextDueDatePlusTwoMonths = new Date(currentDate);
+          nextDueDatePlusTwoMonths.setMonth(
+            nextDueDatePlusTwoMonths.getMonth() + 2
+          );
+
+          entry.nextDue_date = nextDueDatePlusTwoMonths
+            .toISOString()
+            .split("T")[0]; // Update nextDue_date
+          console.log("Every two months Cron end...!!!");
+          // Save the changes to the database
+          await tenant.save();
+        }
+
+        // Every Two Week cronjob condition
+        if (
+          startDate &&
+          endDate &&
+          nextDueDate && // Ensure these dates exist
+          currentDate >= startDate &&
+          currentDate <= endDate &&
+          currentDate === nextDueDate &&
+          rentCycle === "Every two weeks"
+        ) {
+          console.log("Every two weeks Cron hitt...!!!");
+
+          // Update the nextDue_date to current date + 2 weeks
+          const nextDueDatePlusTwoWeeks = new Date(currentDate);
+          nextDueDatePlusTwoWeeks.setDate(
+            nextDueDatePlusTwoWeeks.getDate() + 14
+          );
+
+          entry.nextDue_date = nextDueDatePlusTwoWeeks
+            .toISOString()
+            .split("T")[0]; // Update nextDue_date
+          console.log("Every two weeks Cron end...!!!");
+          // Save the changes to the database
+          await tenant.save();
+        }
+
+        // quarterly cronjob condition
+        if (
+          startDate &&
+          endDate &&
+          nextDueDate && // Ensure these dates exist
+          currentDate >= startDate &&
+          currentDate <= endDate &&
+          currentDate === nextDueDate &&
+          rentCycle === "Quarterly"
+        ) {
+          console.log("Quarterly Cron hitt...!!!");
+
+          // Update the nextDue_date to current date + 3 months
+          const nextDueDatePlusThreeMonths = new Date(currentDate);
+          nextDueDatePlusThreeMonths.setMonth(
+            nextDueDatePlusThreeMonths.getMonth() + 3
+          );
+
+          entry.nextDue_date = nextDueDatePlusThreeMonths
+            .toISOString()
+            .split("T")[0]; // Update nextDue_date
+
+          console.log("Quarterly Cron end...!!!");
+          // Save the changes to the database
+          await tenant.save();
+        }
+
+        // Yearly cronjob condition
+        if (
+          startDate &&
+          endDate &&
+          nextDueDate && // Ensure these dates exist
+          currentDate >= startDate &&
+          currentDate <= endDate &&
+          currentDate === nextDueDate &&
+          rentCycle === "Yearly"
+        ) {
+          console.log("Yearly Cron hitt...!!!");
+
+          // Update the nextDue_date to current date + 1 year
+          const nextDueDatePlusOneYear = new Date(currentDate);
+          nextDueDatePlusOneYear.setFullYear(
+            nextDueDatePlusOneYear.getFullYear() + 1
+          );
+
+          entry.nextDue_date = nextDueDatePlusOneYear
+            .toISOString()
+            .split("T")[0]; // Update nextDue_date
+
+          console.log("Yearly Cron end...!!!");
+          // Save the changes to the database
+          await tenant.save();
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Error:", error);
+  }
+});
+
+// cron.schedule('06 15 * * *', async () => {
+//   try {
+//     console.log('Cron hitt...!!!')
+//     const currentDate = new Date().toISOString().split('T')[0]; // Get current date in yyyy-mm-dd format
+
+//     const tenants = await Tenants.find();
+
+//     tenants.forEach(async (tenant) => {
+//       tenant.entries.forEach(async (entry) => {
+//         const startDate = new Date(entry.start_date).toISOString().split('T')[0];
+//         const endDate = new Date(entry.end_date).toISOString().split('T')[0];
+//         const nextDueDate = new Date(entry.nextDue_date).toISOString().split('T')[0];
+//         console.log('start-end-due', startDate + " " + endDate + " " + nextDueDate)
+//         console.log('currentDate', currentDate)
+//         console.log('Cron middle 1...!!!')
+
+//         if (
+//           currentDate >= startDate &&
+//           currentDate <= endDate &&
+//           currentDate === nextDueDate
+//         ) {
+//         console.log('Cron middle 2...!!!')
+
+//           // Update the nextDue_date to current date + 1 month
+//           const nextDueDatePlusOneMonth = new Date(currentDate);
+//           nextDueDatePlusOneMonth.setMonth(nextDueDatePlusOneMonth.getMonth() + 1);
+
+//           entry.nextDue_date = nextDueDatePlusOneMonth.toISOString().split('T')[0]; // Update nextDue_date
+
+//           console.log('Cron end...!!!')
+//           // Save the changes to the database
+//           await tenant.save();
+//         }
+//       });
+//     });
+//   } catch (error) {
+//     console.error('Error:', error);
+//   }
+// });
+
 // const nodemailer = require("nodemailer");
 
 //add tenant working  API
@@ -782,7 +1088,6 @@ router.get("/tenants", async (req, res) => {
               notes: entry.notes,
               entry_id: entry._id,
 
-
               recurring_charges: entry.recurring_charges.map(
                 (recuringCharge) => ({
                   recuring_amount: recuringCharge.recuring_amount,
@@ -803,7 +1108,7 @@ router.get("/tenants", async (req, res) => {
         });
       })
       .flat(); // Flatten the nested arrays
-     
+
     res.json({
       data: data,
       statusCode: 200,
@@ -997,7 +1302,6 @@ router.put("/tenant/:id", async (req, res) => {
       The 302 Properties Team
       `,
         });
-
       }
       tenant.entries.push(...updateData.entries);
     }
@@ -1804,16 +2108,17 @@ router.put("/moveout/:id/:entryIndex", async (req, res) => {
 
     let result = await Tenants.findOneAndUpdate(
       {
-        "_id": id,
-        "entries.entryIndex": entryIndex
+        _id: id,
+        "entries.entryIndex": entryIndex,
       },
       {
         $set: {
           "entries.$.moveout_date": req.body.moveout_date,
-          "entries.$.moveout_notice_given_date": req.body.moveout_notice_given_date,
+          "entries.$.moveout_notice_given_date":
+            req.body.moveout_notice_given_date,
           "entries.$.end_date": req.body.end_date,
           // Add other fields you want to update
-        }
+        },
       },
       { new: true }
     );
