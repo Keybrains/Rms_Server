@@ -781,6 +781,14 @@ router.get("/tenants", async (req, res) => {
               cash_flow: entry.cash_flow,
               notes: entry.notes,
               entry_id: entry._id,
+              tenant_residentStatus: entry.tenant_residentStatus,
+              rentalOwner_firstName: entry.rentalOwner_firstName,
+              rentalOwner_lastName: entry.rentalOwner_lastName,
+              rentalOwner_primaryemail: entry.rentalOwner_email,
+              rentalOwner_phoneNumber: entry.rentalOwner_phoneNumber,
+              rentalOwner_businessNumber: entry.rentalOwner_businessNumber,
+              rentalOwner_homeNumber: entry.rentalOwner_homeNumber,
+              rentalOwner_companyName: entry.rentalOwner_companyName,
 
 
               recurring_charges: entry.recurring_charges.map(

@@ -17,8 +17,17 @@ const applicantSchema = new Schema({
   rental_units: { type: String },
   applicant_checklist: { type: Array },
   applicant_checkedChecklist: { type: Array },
-  applicant_emailsend_date: { type: String},
+  applicant_emailsend_date: { type: String },
   createAt: { type: String },
+  rentalOwner_firstName: { type: String },
+  rentalOwner_lastName: { type: String },
+  rentalOwner_primaryemail:{ type: String } ,
+  rentalOwner_phoneNumber:{ type: String } ,
+  rentalOwner_businessNumber:{ type: String } ,
+  rentalOwner_homeNumber:{ type: String } ,
+  rentalOwner_companyName:{ type: String },
+  property_id: { type: String },
+  unit_id: { type: String },    
 
   applicant_status: [
     {
@@ -27,8 +36,6 @@ const applicantSchema = new Schema({
       statusUpdatedBy: String,
     },
   ],
-
-
 
   applicant: {
     applicant_firstName: { type: String },
@@ -49,7 +56,6 @@ const applicantSchema = new Schema({
     applicant_emergencyContact_email: { type: String },
     applicant_emergencyContact_phone: { type: Number },
 
-
     rental_country: { type: String },
     rental_adress: { type: String },
     rental_city: { type: String },
@@ -63,7 +69,6 @@ const applicantSchema = new Schema({
     rental_landlord_lasttName: { type: String },
     rental_landlord_phoneNumber: { type: String },
     rental_landlord_email: { type: String },
-
 
     // Employment
     employment_name: { type: String },
@@ -81,7 +86,6 @@ const applicantSchema = new Schema({
     employment_supervisor_first: { type: String },
     employment_supervisor_last: { type: String },
     employment_supervisor_title: { type: String },
-
   },
 });
 
