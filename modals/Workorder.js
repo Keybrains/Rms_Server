@@ -16,7 +16,7 @@ const workorderSchema = new Schema({
 workorder_id:{type: String},
 work_subject:{ type: String },
 rental_adress:{ type: String },
-unit_no:{ type: String },
+rental_units:{ type: String },
 work_category:{ type: String },
 vendor_name:{ type: String },
 invoice_number: { type: Number },
