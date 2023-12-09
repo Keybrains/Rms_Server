@@ -45,7 +45,7 @@ router.post("/applicant", async (req, res) => {
 router.get("/applicant", async (req, res) => {
   try {
     var data = await Applicant.find();
-
+    data.reverse();
     // Reverse the applicant_status array for each applicant
     data.forEach(applicant => {
       if (applicant.applicant_status) {
