@@ -2,6 +2,71 @@ var express = require("express");
 var router = express.Router();
 var AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
 
+// router.post("/payment_charge", async (req, res) => {
+//   try {
+//     const { properties, unit } = req.body;
+
+//     // Check if a record with the provided property_id and rental_adress exists
+//     const existingRecord = await AddPaymentAndCharge.findOne({
+//       "properties.property_id": properties.property_id,
+//       "properties.rental_adress": properties.rental_adress,
+//     });
+//     const existingRecord1 = await AddPaymentAndCharge.findById(existingRecordId);
+//     console.log("Existing Record:", existingRecord1);
+
+//     if (!existingRecord) {
+//       // If the record does not exist, create a new one
+//       const newData = await AddPaymentAndCharge.create(req.body);
+//       res.json({
+//         statusCode: 200,
+//         data: newData,
+//         message: "Add payment Successfully",
+//       });
+//     } else {
+//       if (unit && unit.length > 0) {
+//         // Find the existing unit by unit and unit_id
+//         const existingUnit = existingRecord.unit.find(
+//           (u) => u.unit === unit[0].unit && u.unit_id === unit[0].unit_id
+//         );
+
+//         if (existingUnit) {
+//           // If the unit exists, push the new paymentAndCharges data into it
+//           existingUnit.paymentAndCharges.push(...unit[0].paymentAndCharges);
+//         } else {
+//           // If the unit does not exist, create a new unit
+//           existingRecord.unit.push({
+//             unit: unit[0].unit,
+//             unit_id: unit[0].unit_id,
+//             paymentAndCharges: unit[0].paymentAndCharges,
+//           });
+//         }
+//       } else {
+//         // If unit information is not present, create a new record without unit
+//         const newRecord = await AddPaymentAndCharge.create(req.body);
+//         res.json({
+//           statusCode: 200,
+//           data: newRecord,
+//           message: "Add payment Successfully",
+//         });
+//         return; // Return to prevent the code below from executing
+//       }
+
+//       const updatedData = await existingRecord.save();
+
+//       res.json({
+//         statusCode: 200,
+//         data: updatedData,
+//         message: "Update payment Successfully",
+//       });
+//     }
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+
 router.post("/payment_charge", async (req, res) => {
   try {
     const { properties, unit } = req.body;
@@ -64,6 +129,9 @@ router.post("/payment_charge", async (req, res) => {
     });
   }
 });
+
+
+
 
 // // Unit pass and get Data - Sorting and Calculating (All Working ok)
 
