@@ -8,7 +8,6 @@ var moment = require("moment");
 // Add workorder API
 router.post("/workorder", async (req, res) => {
   try {
-    
     const {
       // createdAt = moment().format("YYYY-MM-DD HH:mm:ss"),
       workorder_id,
@@ -79,93 +78,154 @@ router.post("/workorder", async (req, res) => {
   }
 });
 
+//get workorder
+router.get("/workorder", async (req, res) => {
+  try {
+    var data = await Workorder.find();
+    data.reverse();
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read All workorder",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+// get workorder
+router.get("/findworkorderbyId/:workorder_id", async (req, res) => {
+  try {
+    const workorder_id = req.params.workorder_id;
+    var data = await Workorder.find({ workorder_id });
+    data.reverse();
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read All workorder",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+// delete workorder byId
+router.delete("/deleteworkorderbyId/:workorder_id", async (req, res) => {
+  try {
+    const workorder_id = req.params.workorder_id;
+    console.log("Deleting workorder with ID:", workorder_id);
+    // Use mongoose to find and delete the workorder by workorder_id
+    const deletedWorkorder = await Workorder.findOneAndDelete({ workorder_id });
+    if (!deletedWorkorder) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Workorder not found",
+      });
+    }
+    res.json({
+      statusCode: 200,
+      message: "Workorder deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/updateworkorder/:id", async (req, res) => {
+  try {
+    let result = await Workorder.findByIdAndUpdate(req.params.id, req.body);
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "account Data Updated Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
 
 
-  //get workorder
-  router.get("/workorder", async (req, res) => {
-    try {
-      var data = await Workorder.find();
-      data.reverse();
+
+// delete workorder
+router.delete("/delete_workorder", async (req, res) => {
+  try {
+    let result = await Workorder.deleteOne({
+      _id: { $in: req.body },
+    });
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "workorder Deleted Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+//edit workorder
+router.put("/workorder/:workorder_id", async (req, res) => {
+  try {
+    // req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    let result = await Workorder.updateOne(
+      { workorder_id: req.params.workorder_id },
+      req.body
+    );
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Workorder Data Updated Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+//get workorder table  summary data id wise
+
+router.get("/workorder_summary/:workorder_id", async (req, res) => {
+  try {
+    const userId = req.params.workorder_id;
+    var data = await Workorder.findOne({ workorder_id: userId });
+    if (data) {
       res.json({
         data: data,
         statusCode: 200,
-        message: "Read All workorder",
+        message: "summaryGet Successfully",
       });
-    } catch (error) {
-      res.json({
-        statusCode: 500,
-        message: error.message,
-      });
-    }
-  });
-
-  // delete workorder 
-router.delete("/delete_workorder", async (req, res) => {
-    try {
-      let result = await Workorder.deleteOne({
-        _id: { $in: req.body },
-      });
-      res.json({
-        statusCode: 200,
-        data: result,
-        message: "workorder Deleted Successfully",
-      });
-    } catch (err) {
-      res.json({
-        statusCode: 500,
-        message: err.message,
+    } else {
+      res.status(404).json({
+        statusCode: 404,
+        message: "summary not found",
       });
     }
-  });
-
-      //edit workorder
-      router.put("/workorder/:workorder_id", async (req, res) => {
-        try {
-          // req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-          let result = await Workorder.updateOne({ workorder_id: req.params.workorder_id }, req.body);
-          res.json({
-            statusCode: 200,
-            data: result,
-            message: "Workorder Data Updated Successfully",
-          });
-        } catch (err) {
-          res.json({
-            statusCode: 500,
-            message: err.message,
-          });
-        }
-      });
-      
-
-    //get workorder table  summary data id wise 
-
-    router.get("/workorder_summary/:workorder_id", async (req, res) => {
-      try {
-        const userId = req.params.workorder_id; 
-        var data = await Workorder.findOne({ workorder_id: userId }); 
-        if (data) {
-          res.json({
-            data: data,
-            statusCode: 200,
-            message: "summaryGet Successfully",
-          });
-        } else {
-          res.status(404).json({
-            statusCode: 404,
-            message: "summary not found",
-          });
-        }
-      } catch (error) {
-        res.status(500).json({
-          statusCode: 500,
-          message: error.message,
-        });
-      }
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
     });
-    
+  }
+});
 
-// get workorder data as per rental address 
- // get workorder data as per rental address
+// get workorder data as per rental address
+// get workorder data as per rental address
 router.get("/workorder/:rental_adress", async (req, res) => {
   try {
     const address = req.params.rental_adress;
@@ -191,38 +251,36 @@ router.get("/workorder/:rental_adress", async (req, res) => {
   }
 });
 
-
-    // get workorder data as per work_assigned
+// get workorder data as per work_assigned
 router.get("/workorder/by-staff-member/:staffmember_name", async (req, res) => {
-      try {
-        const name = req.params.staffmember_name;
-        const data = await Workorder.find({ staffmember_name: name });
-        if (data) {
-          res.json({
-            data: data,
-            statusCode: 200,
-            message: "Workorder details retrieved successfully",
-          });
-        } else {
-          res.status(404).json({
-            statusCode: 404,
-            message: "Workorder details not found",
-          });
-        }
-      } catch (error) {
-        res.status(500).json({
-          statusCode: 500,
-          message: error.message,
-        });
-      }
+  try {
+    const name = req.params.staffmember_name;
+    const data = await Workorder.find({ staffmember_name: name });
+    if (data) {
+      res.json({
+        data: data,
+        statusCode: 200,
+        message: "Workorder details retrieved successfully",
+      });
+    } else {
+      res.status(404).json({
+        statusCode: 404,
+        message: "Workorder details not found",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
     });
+  }
+});
 
-    
-     // get workorder data as per rental address
+// get workorder data as per rental address
 router.get("/workorder/tenant/:rental_addresses", async (req, res) => {
   try {
-    const rentalAddresses = req.params.rental_addresses.split('-');
-    
+    const rentalAddresses = req.params.rental_addresses.split("-");
+
     if (rentalAddresses.length === 1) {
       // Handle a single rental address
       const singleAddress = rentalAddresses[0];
@@ -241,17 +299,21 @@ router.get("/workorder/tenant/:rental_addresses", async (req, res) => {
       }
     } else {
       // Handle multiple rental addresses
-      const data = await Workorder.find({ rental_adress: { $in: rentalAddresses } });
+      const data = await Workorder.find({
+        rental_adress: { $in: rentalAddresses },
+      });
       if (data && data.length > 0) {
         res.json({
           data: data,
           statusCode: 200,
-          message: "Workorder details retrieved successfully for multiple rental addresses",
+          message:
+            "Workorder details retrieved successfully for multiple rental addresses",
         });
       } else {
         res.status(404).json({
           statusCode: 404,
-          message: "Workorder details not found for the multiple rental addresses",
+          message:
+            "Workorder details not found for the multiple rental addresses",
         });
       }
     }
@@ -262,8 +324,8 @@ router.get("/workorder/tenant/:rental_addresses", async (req, res) => {
     });
   }
 });
-  
-router.get('/workorder/vendor/:id', async (req, res) => {
+
+router.get("/workorder/vendor/:id", async (req, res) => {
   try {
     const workorderId = req.params.id;
 
@@ -271,7 +333,7 @@ router.get('/workorder/vendor/:id', async (req, res) => {
     const workorder = await Workorder.findOne({ workorder_id: workorderId });
 
     if (!workorder) {
-      return res.status(404).json({ message: 'Workorder not found' });
+      return res.status(404).json({ message: "Workorder not found" });
     }
 
     // Extract vendor_name from the retrieved workorder document
