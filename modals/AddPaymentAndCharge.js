@@ -16,11 +16,14 @@ const paymentAndChargeSchema = new mongoose.Schema({
   type: {
     type: String,
   },
+  charge_type:{
+    type: String,
+  },
   account: {
     type: String,
   },
   amount: {
-    type: Number, 
+    type: Number,
   },
   rental_adress: {
     type: String,
@@ -58,4 +61,7 @@ const paymentAndChargeCombinedSchema = new mongoose.Schema({
   unit: [unitSchema],
 });
 
-module.exports = mongoose.model("payment-charge", paymentAndChargeCombinedSchema);
+module.exports = mongoose.model(
+  "payment-charge",
+  paymentAndChargeCombinedSchema
+);
