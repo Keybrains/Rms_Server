@@ -1,11 +1,13 @@
 var createError = require("http-errors");
 var express = require("express");
+require("dotenv").config();
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
 
 var dbCollation = require("./db");
+var webhookRoutes = require('./routes/api/webhook')
 var indexRouter = require("./routes/api/index");
 var usersRouter = require("./routes/api/users");
 var RegisterRouter = require("./routes/api/Register");
@@ -65,6 +67,7 @@ app.use("/api/payment", PaymentRouter);
 app.use("/api/propertyunit",PropertyUnitRouter);
 app.use("/api/payment_charge",AddChargeAndPaymentRouter);
 app.use("/api/nmipayment",NmiPaymentRouter);
+app.use('/api/webhook', webhookRoutes)
 app.use(function (req, res, next) {
   next(createError(404));
 });
