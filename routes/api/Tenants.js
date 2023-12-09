@@ -618,7 +618,7 @@ router.post("/tenant", async (req, res) => {
     - Check out the resident center video library to see everything the site has to offer.
     
     Activate your account now:
-    ${"http://localhost:4000/auth/login"}
+    ${"https://propertymanager.cloudpress.host/auth/login"}
     
     Username: ${tenant_email}
     password: ${tenant_password}
@@ -781,6 +781,14 @@ router.get("/tenants", async (req, res) => {
               cash_flow: entry.cash_flow,
               notes: entry.notes,
               entry_id: entry._id,
+              tenant_residentStatus: entry.tenant_residentStatus,
+              rentalOwner_firstName: entry.rentalOwner_firstName,
+              rentalOwner_lastName: entry.rentalOwner_lastName,
+              rentalOwner_primaryemail: entry.rentalOwner_email,
+              rentalOwner_phoneNumber: entry.rentalOwner_phoneNumber,
+              rentalOwner_businessNumber: entry.rentalOwner_businessNumber,
+              rentalOwner_homeNumber: entry.rentalOwner_homeNumber,
+              rentalOwner_companyName: entry.rentalOwner_companyName,
 
 
               recurring_charges: entry.recurring_charges.map(
@@ -986,7 +994,7 @@ router.put("/tenant/:id", async (req, res) => {
       - Check out the resident center video library to see everything the site has to offer.
       
       Activate your account now:
-      ${"http://localhost:4000/auth/login"}
+      ${"https://propertymanager.cloudpress.host/auth/login"}
       
       Username: ${tenant.tenant_email}
       password: ${tenant.tenant_password}
