@@ -2,85 +2,176 @@ var express = require("express");
 var router = express.Router();
 var NmiPayment = require("../../modals/NmiPayment");
 var axios = require("axios");
-const bodyParser = require('body-parser');
+var crypto = require("crypto");
+var querystring = require("querystring");
 
 
-//#region sahil
-// const hmsApiEndpoint = "https://gymsoft.cloudpress.host/api/webhook/nmi"; // Replace with the actual HMS API endpoint
-// const apiKey = "b6F87GPCBSYujtQFW26583EM8H34vM5r"; // Replace with your actual API key
+// router.post("/purchase", async (req, res) => {
+//   try {
+//     // Extract necessary data from the request body
+//     const { paymentDetails, planId } = req.body;
 
-// const headers = {
-//   "Content-Type": "application/json",
-//   Authorization: `Bearer ${apiKey}`,
-// };
+//     // Assuming paymentDetails include necessary information like first_name, last_name, card_number, etc.
 
-// const paymentData = {
-//   // Replace with the actual payment data required by HMS
-//   amount: 100,
-//   cardNumber: "4111111111111111",
-//   expirationDate: "12/2024",
-//   cvv: "123",
-//   first_name: "Shivam",
-//   last_name: "Shukla",
-//   email_name: "shivam@gmail.com",
-//   // Add other required fields
-// };
+//     // Save the payment details to MongoDB
+//     const nmiPayment = await NmiPayment.create({
+//       first_name: paymentDetails.first_name,
+//       last_name: paymentDetails.last_name,
+//       email_name: paymentDetails.email_name,
+//       card_number: paymentDetails.card_number,
+//       amount: paymentDetails.amount,
+//       expiration_date: paymentDetails.expiration_date,
+//       cvv: paymentDetails.cvv,
+//       // tenantId: paymentDetails.tenantId,
+//       // propertyId: paymentDetails.propertyId,
+//     });
 
-// axios
-//   .post(`${hmsApiEndpoint}/process-payment`, paymentData, { headers })
-//   .then((response) => {
-//     console.log("HMS API Response:", response.data);
-//     // Process the response as needed
-//     if (response.data.result === "approved") {
-//       console.log("Payment was successful");
-//       // Your additional logic for a successful payment
+//     // Save the payment details to the database
+   
+
+//     // Additional processing if needed
+
+//     // Integrate with NMI transaction API to process the payment
+//     const nmiConfig = {
+//       recurring: "process_sale",
+//       amount: paymentDetails.amount,
+//       plan_id: planId, // Assuming you have the planId available
+//       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r", // Replace with your actual NMI security key
+//     };
+
+//     const nmiResponse = await sendNmiRequest(nmiConfig, paymentDetails);
+
+//     // Check the response from NMI
+//     if (nmiResponse.response_code === "100") {
+//       // Payment was successful
+//       console.log("Plan purchased successfully!");
+//       res.status(200).send("Plan purchased successfully!");
+//       await nmiPayment.save();
 //     } else {
-//       console.log("Payment failed:", response.data.message);
-//       // Your additional logic for a failed payment
+//       // Payment failed
+//       console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+//       res
+//         .status(400)
+//         .send(`Failed to process payment: ${nmiResponse.responsetext}`);
 //     }
-//   })
-//   .catch((error) => {
-//     console.error("Error making HMS API request:", error.message);
+//   } catch (error) {
 //     // Handle errors
-//   });
-//#endregion
+//     console.error("Error:", error);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
 
 
 
-const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-const NMI_API_ENDPOINT = 'https://propertymanager.cloudpress.host/api/webhook/nmi';
-
-// Route for processing a payment
-router.post('/process-payment', async (req, res) => {
+router.post("/purchase", async (req, res) => {
   try {
-    // Extract required data from the request body
-    const { amount, cardNumber, expiration, cvv } = req.body;
+    // Extract necessary data from the request body
+    const { paymentDetails, planId } = req.body;
 
-    // Create a payload for the NMI request
-    const payload = {
-      apikey: 'b6F87GPCBSYujtQFW26583EM8H34vM5r', // Replace with your actual API key
-      amount,
-      ccnumber: cardNumber,
-      ccexp: expiration,
-      cvv,
-      type: 'sale',
+    // Save the payment details to MongoDB
+    const nmiPayment = await NmiPayment.create({
+      first_name: paymentDetails.first_name,
+      last_name: paymentDetails.last_name,
+      email_name: paymentDetails.email_name,
+      card_number: paymentDetails.card_number,
+      amount: paymentDetails.amount,
+      expiration_date: paymentDetails.expiration_date,
+      cvv: paymentDetails.cvv,
+      tenantId: paymentDetails.tenantId,
+      propertyId: paymentDetails.propertyId,
+    });
+
+    // Save the payment details to the database
+
+    // Integrate with NMI transaction API to process the payment
+    const nmiConfig = {
+      recurring: "process_sale",
+      amount: paymentDetails.amount,
+      plan_id: planId,
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
     };
 
-    // Make a POST request to the NMI API endpoint
-    const response = await axios.post(NMI_API_ENDPOINT, payload);
+    const nmiResponse = await sendNmiRequest(nmiConfig, paymentDetails);
+    
+    // Check the response from NMI
+    // if (nmiResponse.response_code === "100") {
+    //   // Payment was successful
+    //   const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
+    //   console.log(successMessage);
+    //   res.status(200).send(successMessage);
+    //   await nmiPayment.save();
+    // } else {
+    //   // Payment failed
+    //   console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+    //   res
+    //     .status(400)
+    //     .send(`Failed to process payment: ${nmiResponse.responsetext}`);
+    // }
+    // Check the response from NMI
+    // Check the response from NMI
+    // Check the response from NMI
+    // Check the response from NMI
 
-    // Handle the response from NMI API
-    // Process the response data accordingly
+if (nmiResponse.response_code === "100") {
+  // Payment was successful
+  const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
+  console.log(successMessage);
+  await nmiPayment.save();
+  return res.status(200).json({
+    statusCode: 100,
+    message: successMessage,
+  });
+} else if (nmiResponse.response_code === "300") {
+  // Duplicate transaction
+  console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+  return res.status(200).json({
+    statusCode: 300,
+    message: `Failed to process payment: ${nmiResponse.responsetext}`,
+  });
+} else {
+  // Payment failed
+  console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+  return res.status(400).send(`Failed to process payment: ${nmiResponse.responsetext}`);
+}
 
-    res.status(200).json({ message: 'Payment processed successfully', responseData: response.data });
+
+
   } catch (error) {
-    // Handle any errors that occur during payment processing
-    res.status(500).json({ error: error.message });
+    // Handle errors
+    console.error("Error:", error);
+    res.status(500).send("Internal Server Error");
   }
 });
 
+
+// Helper function to send a request to the NMI API
+const sendNmiRequest = async (config, paymentDetails) => {
+  // Include the card number and expiration date in the request
+  config.ccnumber = paymentDetails.card_number;
+  config.ccexp = paymentDetails.expiration_date; // Assuming expiration_date is in the format MMYY
+
+  const postData = querystring.stringify(config);
+
+  const nmiConfig = {
+    method: "post",
+    url: "https://secure.nmi.com/api/transact.php",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: postData,
+  };
+
+  try {
+    const response = await axios(nmiConfig);
+    const parsedResponse = querystring.parse(response.data);
+
+    console.log("NMI API Response:", parsedResponse);
+
+    return parsedResponse;
+  } catch (error) {
+    console.error("NMI API Error:", error);
+    throw error;
+  }
+};
 
 module.exports = router;
