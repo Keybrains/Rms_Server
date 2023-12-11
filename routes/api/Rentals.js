@@ -194,9 +194,9 @@ router.post("/rentals", async (req, res) => {
               rental_bed: unitData.rental_bed,
               rental_bath: unitData.rental_bath,
               propertyres_image: unitData.propertyres_image,
-              rental_sqft: unitData.rental_sqft || entry.rentalcom_sqft,
-              rental_units: unitData.rental_units || entry.rentalcom_units,
-              rental_unitsAdress: unitData.rental_unitsAdress || entry.rentalcom_unitsAdress,
+              rental_sqft: unitData.rental_sqft || unitData.rentalcom_sqft,
+              rental_units: unitData.rental_units || unitData.rentalcom_units,
+              rental_unitsAdress: unitData.rental_unitsAdress || unitData.rentalcom_unitsAdress,
               property_image: unitData.property_image,
               propertyId: newEntryId, // Assigning the _id of the new entry to propertyId
             };
