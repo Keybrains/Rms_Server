@@ -18,10 +18,10 @@ const entrySchema = new Schema({
   staffMember: { type: String },
   //rooms
   //RESIDENTIAL
+  
   rental_bed: { type: String },
   rental_bath: { type: String },
   propertyres_image: { type: Array },
-
   rental_soft: { type: String },
   rental_units: { type: String },
   rental_unitsAdress: { type: String },

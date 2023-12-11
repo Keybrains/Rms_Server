@@ -239,6 +239,39 @@ router.get("/rentals", async (req, res) => {
   }
 });
 
+router.get("/existing/rentals", async (req, res) => {
+  try {
+    const uniqueRecords = await Rentals.aggregate([
+      {
+        $group: {
+          _id: {
+            firstName: "$rentalOwner_firstName",
+            lastName: "$rentalOwner_lastName",
+            phoneNumber: "$rentalOwner_phoneNumber"
+          },
+          record: { $first: "$$ROOT" },
+        },
+      },
+      {
+        $replaceRoot: { newRoot: "$record" },
+      },
+    ]);
+
+    res.json({
+      data: uniqueRecords,
+      statusCode: 200,
+      message: "Read All Rentals",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
+
 router.get("/rental", async (req, res) => {
   try {
     var rentalsWithData = await Rentals.find({
