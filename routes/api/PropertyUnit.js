@@ -226,17 +226,27 @@ router.get("/propertyunit/:rentalId", async (req, res) => {
         "entries.rental_adress": propertyUnit.rental_adress,
         "entries.rental_units": propertyUnit.rental_units,
       });
-
+      console.log(tenantData, "tenantData");
       // Extract relevant information from Tenant data
       const tenantInfo =
         tenantData && tenantData.tenant_firstName && tenantData.tenant_lastName
           ? {
               tenant_firstName: tenantData.tenant_firstName,
               tenant_lastName: tenantData.tenant_lastName,
+              start_date: tenantData.entries[0].start_date,
+              end_date: tenantData.entries[0].end_date,
+              lease_type: tenantData.entries[0].lease_type,
+              amount: tenantData.entries[0].amount,
+              unitCreatedAt: tenantData.entries[0].createdAt,
             }
           : {
               tenant_firstName: null,
               tenant_lastName: null,
+              start_date: null,
+              end_date: null,
+              lease_type: null,
+              amount: null,
+              unitCreatedAt: null,
             };
 
       // Add tenant information to PropertyUnit response only for the matched unit
