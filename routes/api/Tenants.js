@@ -554,7 +554,7 @@ router.post("/tenant", async (req, res) => {
       tenant_email,
       tenant_password,
       alternate_email,
-      // tenant_residentStatus,
+      tenant_residentStatus,
       birth_date,
       textpayer_id,
       comments,
