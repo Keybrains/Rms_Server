@@ -244,16 +244,15 @@ router.get("/existing/rentals", async (req, res) => {
     const uniqueRecords = await Rentals.aggregate([
       {
         $group: {
-          _id: {
-            firstName: "$rentalOwner_firstName",
-            lastName: "$rentalOwner_lastName",
-            phoneNumber: "$rentalOwner_phoneNumber"
-          },
-          record: { $first: "$$ROOT" },
+          _id: "$rentalOwner_phoneNumber",
+          records: { $addToSet: "$$ROOT" },
         },
       },
       {
-        $replaceRoot: { newRoot: "$record" },
+        $unwind: "$records" // If you want to destructure the records array
+      },
+      {
+        $replaceRoot: { newRoot: "$records" },
       },
     ]);
 
