@@ -157,6 +157,52 @@ router.put("/updateworkorder/:id", async (req, res) => {
 });
 
 
+router.put('/workorder_enteries/:mainDocId/:entryId', async (req, res) => {
+  try {
+    const { mainDocId, entryId } = req.params;
+    const {  _id: entryDocId, ...updateData } = req.body;
+    // Find the Workorder document by its mainDocId
+    let workorder = await Workorder.findById(mainDocId);
+    if (!workorder) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: 'Workorder not found',
+      });
+    }
+    // Find the entry in the entries array based on its _id
+    const entryIndex = workorder.entries.findIndex(entry => entry._id.toString() === entryId);
+    if (entryIndex === -1) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: 'Entry not found in the Workorder',
+      });
+    }
+    // Check if the provided _id matches the entry _id
+    if (workorder.entries[entryIndex]._id.toString() !== entryDocId) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'Provided _id does not match the entry _id',
+      });
+    }
+    // Update the entry with the new data
+    Object.assign(workorder.entries[entryIndex], updateData);
+    // Save the updated Workorder document
+    let result = await workorder.save();
+    res.json({
+      statusCode: 200,
+      data: {  },
+      message: 'Entry Updated Successfully',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+
 
 // delete workorder
 router.delete("/delete_workorder", async (req, res) => {
