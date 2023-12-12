@@ -602,8 +602,8 @@ router.post("/tenant", async (req, res) => {
     console.log(entries[0].tenant_residentStatus, "entries");
     if (entries[0].tenant_residentStatus) {
       const info = await transporter.sendMail({
-        from: '"donotreply" <mailto:info@cloudpress.host>',
-        to: `${tenant.tenant_email}`,
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: tenant_email,
         subject: "Welcome to your new resident center with 302 Properties",
         text: `
     Hello ${tenant_firstName},
