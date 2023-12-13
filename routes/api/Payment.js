@@ -650,7 +650,7 @@ router.get("/merge_payment_charge/:tenant_id", async (req, res) => {
 
     // Fetch data from the Payment collection based on tenantId and sort by date
     const paymentData = await Payment.find({ tenant_id: tenantId });
-    console.log("Payment Data:", paymentData);
+    // console.log("Payment Data:", paymentData);
 
     // Fetch data from the Charges collection based on tenantId and sort by date
     const chargesData = await Charges.find({ tenant_id: tenantId });

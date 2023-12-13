@@ -20,7 +20,7 @@ cron.schedule("* 12 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
-    console.log("isCronjobRunning", isCronjobRunning);
+    // console.log("isCronjobRunning", isCronjobRunning);
 
     if (isCronjobRunning === false) {
       await Cronjobs.updateOne(
@@ -36,10 +36,10 @@ cron.schedule("* 12 * * *", async () => {
         tenant.entries.forEach(async (entry) => {
          
           const rentCycle = tenant.tenant_firstName;
-          console.log("rentCycle", rentCycle);
+          // console.log("rentCycle", rentCycle);
 
           const paymentMethods = entry.paymentMethod;
-          console.log("payment method", paymentMethods);
+          // console.log("payment method", paymentMethods);
           
         });
       });
@@ -90,9 +90,9 @@ cron.schedule("0 17 * * *", async () => {
             "start-end-due",
             startDate + " " + endDate + " " + nextDueDate + " " + paymentMethod
           );
-          console.log("currentDate", currentDate);
-          console.log("rentCycle", rentCycle);
-          console.log(" Cron middle hitt ...!!!");
+          // console.log("currentDate", currentDate);
+          // console.log("rentCycle", rentCycle);
+          // console.log(" Cron middle hitt ...!!!");
 
           // Monthly cronjob condition
           if (

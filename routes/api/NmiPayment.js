@@ -1,11 +1,10 @@
 var express = require("express");
 var router = express.Router();
 var NmiPayment = require("../../modals/NmiPayment");
+var PaymentPlans = require("../../modals/PaymentPlans");
 var axios = require("axios");
 var crypto = require("crypto");
 var querystring = require("querystring");
-
-
 
 // ===========================================================================================================================
 
@@ -38,7 +37,6 @@ router.post("/purchase", async (req, res) => {
     };
 
     const nmiResponse = await sendNmiRequest(nmiConfig, paymentDetails);
-
 
     // Check the response from NMI
     if (nmiResponse.response_code === "100") {
@@ -325,5 +323,212 @@ const sendNmiRequest = async (config, paymentDetails) => {
   }
 };
 
+router.post("/add-plan", async (req, res) => {
+  try {
+    console.log("API hitt start");
+    const {
+      security_key,
+      recurring,
+      planPayments,
+      planAmount,
+      planName,
+      planId,
+      dayFrequency,
+      billingCycle,
+      // termsConditions,
+      // earlyCancellationFee,
+      // dueChargeMethod,
+      chargeAmount,
+      // allowMemberChangePlan,
+      // allowMemberCancelBilling,
+      // allowMemberPauseBilling,
+    } = req.body;
+
+    let postData = {
+      recurring: "add_plan",
+      plan_payments: planPayments,
+      plan_amount: planAmount,
+      plan_name: planName,
+      plan_id: planId,
+      day_frequency: dayFrequency ? dayFrequency : 30,
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+    };
+
+    postData = querystring.stringify(postData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: postData,
+    };
+    console.log("API hitt middle", config);
+
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+        console.log("parsedResponse", parsedResponse);
+
+        if (parsedResponse.response_code == 100) {
+          const newPaymentPlan = await PaymentPlans.create({
+            planId,
+            planName,
+            planAmount,
+            planPayments,
+            chargeDayFrequency: dayFrequency,
+            billingCycle,
+            // planTermsAndConditions: termsConditions,
+            // earlyCancellationFee,
+            // dueChargeMethod,
+            chargeAmount,
+            // allowMemberChangePlan,
+            // allowMemberCancelBilling,
+            // allowMemberPauseBilling,
+          });
+
+          const paymentPlanSaved = await newPaymentPlan.save();
+          console.log("API hitt End");
+
+          if (paymentPlanSaved)
+            sendResponse(res, "Payment plan added successfully.");
+          else sendResponse(res, "Failed to add payment plan!", 400);
+        } else sendResponse(res, parsedResponse.responsetext, 403);
+        console.log("parsedResponse.responsetext", parsedResponse.responsetext);
+      })
+      .catch(function (error) {
+        //console.log("for 500", res);
+
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+router.post("/custom-add-subscription", async (req, res) => {
+  try {
+    const {
+      planId,
+      start_date,
+      ccnumber,
+      ccexp,
+      cvv,
+      firstName,
+      lastName,
+      address,
+      city,
+      state,
+      zip,
+      paymentToken,
+    } = req.body;
+
+    const currentDate = moment();
+    // Add 1 day to the current date
+    const nextDay = currentDate.add(1, "days");
+    // Format the date as YYYYMMDD
+    const futureDate = nextDay.format("YYYYMMDD");
+
+    //if (!planId) errorMsg = "Plan id required!";
+    // else if(!ccnumber) errorMsg = "Card required!";
+    // else if(!ccexp) errorMsg = "Card expiry required!";
+    // else if(!cvv) errorMsg = "Card CVV number required!";
+    //else if (!paymentToken) errorMsg = "Payment token required!";
+
+    let postData = {
+      recurring: "add_subscription",
+      plan_id: planId,
+      start_date: futureDate,
+      payment_token: paymentToken,
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+    };
+
+    // Set billing information
+    let billingInfo = {
+      first_name: firstName,
+      last_name: lastName,
+      address1: address,
+      city: city,
+      state: state,
+      zip: zip,
+    };
+
+    let customerData = {
+      ccnumber: ccnumber,
+      ccexp: ccexp,
+      cvv: cvv,
+      first_name: firstName,
+      last_name: lastName,
+      address1: address,
+      city: city,
+      state: state,
+      zip: zip,
+      //security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r"
+    };
+
+    // customerData = querystring.stringify(customerData)
+
+    // const customerResult = await createCustomerInVault(customerData);
+
+    // if(customerResult.response_code == 100) {
+    // Merge together all request options into one object
+    Object.assign(postData, billingInfo);
+
+    postData = querystring.stringify(postData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: postData,
+    };
+
+    // axios(config)
+    //   .then(async (response) => {
+    //     const parsedResponse = querystring.parse(response.data);
+    //     if (parsedResponse.response_code == 100) {
+    //       const paymentPlanId = await paymentPlans.findOne({
+    //         gymId: gymId.parentId,
+    //         planId,
+    //       });
+    //       await User.findByIdAndUpdate(
+    //         {
+    //           _id: user.userId,
+    //         },
+    //         {
+    //           nmiplanId: paymentPlanId._id,
+    //           nmiSubscriptionId: parsedResponse.subscription_id,
+    //           paymentStatus: false,
+    //           // nmiCustomerId: customerResult.customer_vault_id
+    //         }
+    //       );
+
+    //       sendResponse(res, "Subscription added successfully.");
+    //     } else
+    //       sendResponse(res, parsedResponse.responsetext, HTTP_CODE_403);
+    //   })
+    //   .catch(function (error) {
+    //     sendResponse(res, error, HTTP_CODE_500);
+    //   });
+    // } else return sendResponse(res, "Error creating member subscription", HTTP_CODE_403)
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", HTTP_CODE_500);
+  }
+});
+
+const sendResponse = (res, data, status = 200) => {
+  if (status !== 200) {
+    data = {
+      error: data,
+    };
+  }
+  res.status(status).json({
+    status,
+    data,
+  });
+};
 
 module.exports = router;
