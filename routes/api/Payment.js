@@ -1,8 +1,12 @@
 var express = require("express");
+
+
 var router = express.Router();
 var Payment = require("../../modals/Payment");
 var Tenants = require("../../modals/Tenants");
 var Charges = require("../../modals/Charges");
+var AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
+
 //   Add  Payment
 // router.post("/add_payment", async (req, res) => {
 //   try {
@@ -527,6 +531,10 @@ router.delete("/delete_charge/:mainId/:chargeIndex", async (req, res) => {
     });
   }
 });
+
+
+
+
 
 // GET data by mainId and chargeIndex
 router.get("/charge_summary/:mainId/charge/:chargeIndex", async (req, res) => {
