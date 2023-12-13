@@ -58,7 +58,7 @@ cron.schedule("* 12 * * *", async () => {
   }
 });
 
-cron.schedule("18 17 * * *", async () => {
+cron.schedule("0 17 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
