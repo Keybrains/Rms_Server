@@ -166,45 +166,6 @@ router.delete("/delete_entry/:entryId", async (req, res) => {
   }
 });
 
-// const { ObjectId } = require('mongodb'); // Import ObjectId from the mongodb library
-
-router.get("/get_entry/:entryId", async (req, res) => {
-  try {
-    const { entryId } = req.params;
-    console.log(entryId, "entryId --------------------------------------------------------------");
-
-    // Find the entry based on the unit paymentAndCharges _id
-    const entry = await AddPaymentAndCharge.findOne({
-      "unit.paymentAndCharges._id": new ObjectId(entryId),
-    });
-
-    console.log(entry, "entry --------------------------------------------------------------");
-
-    if (!entry) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "Entry not found",
-      });
-    }
-
-    // Find the unit that contains the matching paymentAndCharges _id
-    const matchingUnit = entry.unit.find(unit => unit.paymentAndCharges.some(payment => payment._id.equals(new ObjectId(entryId))));
-
-    // Retrieve only the matching paymentAndCharges array
-    const matchingPaymentAndCharges = matchingUnit ? matchingUnit.paymentAndCharges.find(payment => payment._id.equals(new ObjectId(entryId))) : [];
-
-    res.json({
-      statusCode: 200,
-      data: matchingPaymentAndCharges,
-      message: "Payment and charges fetched successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
 
 
 // const { ObjectId } = require('mongodb'); // Import ObjectId from the mongodb library
