@@ -35,6 +35,7 @@ const paymentAndChargeSchema = new mongoose.Schema({
     type: String,
   },
   memo: String,
+  charges_attachment :[{ type: Array }],
   date: {
     type: String,
   },
@@ -42,6 +43,7 @@ const paymentAndChargeSchema = new mongoose.Schema({
   rent_cycle: {
     type: String,
   },
+  isPaid:{ type:Boolean,default: false },
 });
 
 // Define the 'Unit' schema
