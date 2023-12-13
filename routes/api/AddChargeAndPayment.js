@@ -3,6 +3,7 @@ var router = express.Router();
 var ObjectId = require("mongodb").ObjectId;
 var AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
 
+
 // router.post("/payment_charge", async (req, res) => {
 //   try {
 //     const { properties, unit } = req.body;
@@ -164,6 +165,8 @@ router.delete("/delete_entry/:entryId", async (req, res) => {
     });
   }
 });
+
+
 
 // const { ObjectId } = require('mongodb'); // Import ObjectId from the mongodb library
 
@@ -740,10 +743,44 @@ router.get("/financial_unit", async (req, res) => {
   }
 });
 
+//delete charge api
+router.delete("/delete_entry/:entryId", async (req, res) => {
+  try {
+    const { entryId } = req.params;
+
+    const updatedEntry = await AddPaymentAndCharge.findOneAndUpdate(
+      { "unit.paymentAndCharges._id": new ObjectId(entryId) },
+      {
+        $pull: {
+          "unit.$.paymentAndCharges": { _id: new ObjectId(entryId) }
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedEntry) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Entry not found",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedEntry,
+      message: "Entry deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.put("/edit_entry/:entryId", async (req, res) => {
   try {
     const { entryId } = req.params;
-    console.log(entryId, "entryId --------------------------------------------------------------");
     const {
       type,
       charge_type,
@@ -754,20 +791,7 @@ router.put("/edit_entry/:entryId", async (req, res) => {
       date,
       month_year,
       rental_adress,
-      charges_attachment
     } = req.body;
-    console.log(
-      type,
-      charge_type,
-      account,
-      amount,
-      tenant_firstName,
-      memo,
-      date,
-      month_year,
-      rental_adress,
-      charges_attachment,"-------------------------------------------------------------------------"
-    );
 
     // Build an update object with the fields that need to be modified
     const updateFields = {
@@ -780,7 +804,6 @@ router.put("/edit_entry/:entryId", async (req, res) => {
       "unit.$[unitElem].paymentAndCharges.$[elem].date": date,
       "unit.$[unitElem].paymentAndCharges.$[elem].month_year": month_year,
       "unit.$[unitElem].paymentAndCharges.$[elem].rental_adress": rental_adress,
-      "unit.$[unitElem].paymentAndCharges.$[elem].charges_attachment":charges_attachment
     };
 
     const options = {
@@ -817,6 +840,98 @@ router.put("/edit_entry/:entryId", async (req, res) => {
     });
   }
 });
+
+router.put("/charge_paid1", async (req, res) => {
+  try {
+    const { entryIds } = req.body; 
+
+    const updateFields = {
+      "unit.paymentAndCharges.isPaid": true,
+    };
+
+    const options = {
+      arrayFilters: entryIds.map((entryId) => ({
+        "unitElem": { $elemMatch: { "paymentAndCharges._id": new ObjectId(entryId) } },
+        "elem": { $elemMatch: { "_id": new ObjectId(entryId) } },
+      })),
+      new: true,
+    };
+    
+    const updatedEntries = await AddPaymentAndCharge.updateMany(
+      { "unit.paymentAndCharges._id": { $in: entryIds.map((entryId) => new ObjectId(entryId)) } },
+      { $set: updateFields },
+      options
+    );
+
+    if (!updatedEntries || updatedEntries.nModified === 0) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "No entries found",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedEntries,
+      message: "Entries updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/charge_paid", async (req, res) => {
+  try {
+    const { entryIds } = req.body;
+    //const { isPaid } = req.body;
+
+    // Build an update object with the fields that need to be modified
+    const updateFields = {
+      "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": true,
+    };
+
+    const options = {
+      arrayFilters: [
+        { "unitElem.paymentAndCharges._id": { $in: entryIds.map(id => new ObjectId(id)) } },
+        { "elem._id": { $in: entryIds.map(id => new ObjectId(id)) } },
+      ],
+      new: true,
+    };
+
+    // Find and update the entries
+    const updatedEntries = await AddPaymentAndCharge.updateMany(
+      { "unit.paymentAndCharges._id": { $in: entryIds.map(id => new ObjectId(id)) } },
+      { $set: updateFields },
+      options
+    );
+
+    if (updatedEntries.nModified === 0) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "No entries found for the provided entryIds",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedEntries,
+      message: "Entries updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
+
+
+
 
 
 

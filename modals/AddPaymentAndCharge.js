@@ -43,6 +43,7 @@ const paymentAndChargeSchema = new mongoose.Schema({
   rent_cycle: {
     type: String,
   },
+  isPaid:{ type:Boolean,default: false },
 });
 
 // Define the 'Unit' schema

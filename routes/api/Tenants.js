@@ -602,7 +602,7 @@ router.post("/tenant", async (req, res) => {
     console.log(entries[0].tenant_residentStatus, "entries");
     if (entries[0].tenant_residentStatus) {
       const info = await transporter.sendMail({
-        from: '"302 Prperties" <info@cloudpress.host>',
+        from: '"302 Properties" <info@cloudpress.host>',
         to: tenant_email,
         subject: "Welcome to your new resident center with 302 Properties",
         text: `
