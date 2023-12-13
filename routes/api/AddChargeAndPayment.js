@@ -1,5 +1,6 @@
 var express = require("express");
 var router = express.Router();
+var ObjectId = require("mongodb").ObjectId;
 var AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
 const { ObjectId } = require('mongodb');
 
@@ -125,6 +126,40 @@ router.post("/payment_charge", async (req, res) => {
     }
   } catch (error) {
     res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.delete("/delete_entry/:entryId", async (req, res) => {
+  try {
+    const { entryId } = req.params;
+
+    const updatedEntry = await AddPaymentAndCharge.findOneAndUpdate(
+      { "unit.paymentAndCharges._id": new ObjectId(entryId) },
+      {
+        $pull: {
+          "unit.$.paymentAndCharges": { _id: new ObjectId(entryId) }
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedEntry) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Entry not found",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedEntry,
+      message: "Entry deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
       statusCode: 500,
       message: error.message,
     });

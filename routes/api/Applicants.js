@@ -129,7 +129,6 @@ router.put("/applicant/:id/status", async (req, res) => {
       },
       { new: true }
     );
-
     if (!updatedApplicant) {
       return res.status(404).json({
         statusCode: 404,
