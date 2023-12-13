@@ -35,6 +35,7 @@ const paymentAndChargeSchema = new mongoose.Schema({
     type: String,
   },
   memo: String,
+  charges_attachment :[{ type: Array }],
   date: {
     type: String,
   },
