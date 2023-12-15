@@ -13,6 +13,7 @@ const propertiesSchema = new mongoose.Schema({
 
 // Define the 'Payment and Charge' schema
 const paymentAndChargeSchema = new mongoose.Schema({
+  
   type: {
     type: String,
   },
@@ -60,7 +61,7 @@ const unitSchema = new mongoose.Schema({
 // Define the 'Payment' schema that embeds 'Unit' and 'Properties' schemas
 const paymentAndChargeCombinedSchema = new mongoose.Schema({
   properties: propertiesSchema,
-  unit: [unitSchema],
+  unit: [unitSchema]
 });
 
 module.exports = mongoose.model(
