@@ -27,8 +27,13 @@ const applicantSchema = new Schema({
   rentalOwner_homeNumber:{ type: String } ,
   rentalOwner_companyName:{ type: String },
   property_id: { type: String },
-  unit_id: { type: String },    
-
+  unit_id: { type: String },   
+  applicant_NotesAndFile: [
+    {
+      applicant_notes: String,
+      applicant_file: String,
+    },
+  ],
   applicant_status: [
     {
       status: String,
