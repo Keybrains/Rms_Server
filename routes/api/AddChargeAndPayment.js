@@ -173,14 +173,12 @@ router.delete("/delete_entry/:entryId", async (req, res) => {
 router.get("/get_entry/:entryId", async (req, res) => {
   try {
     const { entryId } = req.params;
-    console.log(entryId, "entryId --------------------------------------------------------------");
 
     // Find the entry based on the unit paymentAndCharges _id
     const entry = await AddPaymentAndCharge.findOne({
       "unit.paymentAndCharges._id": new ObjectId(entryId),
     });
 
-    console.log(entry, "entry --------------------------------------------------------------");
 
     if (!entry) {
       return res.status(404).json({
@@ -885,39 +883,39 @@ router.put("/charge_paid1", async (req, res) => {
 
 router.put("/charge_paid", async (req, res) => {
   try {
-    const { entryIds } = req.body;
-    //const { isPaid } = req.body;
+    const { entry } = req.body;
 
-    // Build an update object with the fields that need to be modified
-    const updateFields = {
-      "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": true,
-    };
+    const updateOperations = entry.map(({ id, amount }) => ({
+      updateOne: {
+        filter: {
+          "unit.paymentAndCharges._id": new ObjectId(id),
+        },
+        update: {
+          $set: {
+            "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": amount == 0? true:false,
+            "unit.$[unitElem].paymentAndCharges.$[elem].amount": amount,
+          },
+        },
+        arrayFilters: [
+          { "unitElem.paymentAndCharges._id":  new ObjectId(id) },
+          { "elem._id": new ObjectId(id) },
+        ],
+      },
+    }));
 
-    const options = {
-      arrayFilters: [
-        { "unitElem.paymentAndCharges._id": { $in: entryIds.map(id => new ObjectId(id)) } },
-        { "elem._id": { $in: entryIds.map(id => new ObjectId(id)) } },
-      ],
-      new: true,
-    };
+    // Update all entries in a single operation
+    const updateResult = await AddPaymentAndCharge.bulkWrite(updateOperations);
 
-    // Find and update the entries
-    const updatedEntries = await AddPaymentAndCharge.updateMany(
-      { "unit.paymentAndCharges._id": { $in: entryIds.map(id => new ObjectId(id)) } },
-      { $set: updateFields },
-      options
-    );
-
-    if (updatedEntries.nModified === 0) {
+    if (updateResult.modifiedCount === 0) {
       return res.status(404).json({
         statusCode: 404,
-        message: "No entries found for the provided entryIds",
+        message: "No entries found for the provided entry IDs",
       });
     }
 
     res.json({
       statusCode: 200,
-      data: updatedEntries,
+      data: updateResult,
       message: "Entries updated successfully",
     });
   } catch (error) {
@@ -995,6 +993,69 @@ router.get("/unit_charge", async (req, res) => {
   }
 });
 
+
+router.get("/unit_charge", async (req, res) => {
+  try {
+    const { rental_adress, property_id, unit, tenant_id } = req.query;
+
+    const data = await AddPaymentAndCharge.aggregate([
+      {
+        $match: {
+          "properties.rental_adress": rental_adress,
+          "properties.property_id": property_id,
+        },
+      },
+      {
+        $unwind: "$unit",
+      },
+      {
+        $match: {
+          "unit.paymentAndCharges": {
+            $elemMatch: {
+              "type": "Charge",
+              "isPaid": false,
+              "tenant_id": tenant_id,
+            },
+          }
+        }
+      },
+      {
+        $unwind: "$unit.paymentAndCharges",
+      },
+      {
+        $match: {
+          "unit.paymentAndCharges.type": "Charge",
+          "unit.paymentAndCharges.isPaid": false,
+          "unit.unit": unit,
+          "unit.paymentAndCharges.tenant_id": tenant_id,
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          paymentAndCharges: { $push: "$unit.paymentAndCharges" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          paymentAndCharges: 1,
+        },
+      },
+    ]);
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read Filtered PaymentAndCharge",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 
 
