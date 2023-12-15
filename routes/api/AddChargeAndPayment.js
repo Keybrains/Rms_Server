@@ -926,6 +926,73 @@ router.put("/charge_paid", async (req, res) => {
   }
 });
 
+router.get("/unit_charge", async (req, res) => {
+  try {
+    const { rental_adress, property_id, unit, tenant_id } = req.query;
+
+    const data = await AddPaymentAndCharge.aggregate([
+      {
+        $match: {
+          "properties.rental_adress": rental_adress,
+          "properties.property_id": property_id,
+        },
+      },
+      {
+        $unwind: "$unit",
+      },
+      {
+        $match: {
+          "unit.paymentAndCharges": {
+            $elemMatch: {
+              "type": "Charge",
+              "isPaid": false,
+              "tenant_id": tenant_id,
+            },
+          }
+        }
+      },
+      {
+        $unwind: "$unit.paymentAndCharges",
+      },
+      {
+        $match: {
+          "unit.paymentAndCharges.type": "Charge",
+          "unit.paymentAndCharges.isPaid": false,
+          "unit.unit": unit,
+          "unit.paymentAndCharges.tenant_id": tenant_id,
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          properties: { $first: "$properties" },
+          unit: { $push: "$unit" },
+        },
+      },
+      {
+        $project: {
+          "_id": 1,
+          "unit.paymentAndCharges.type": 1,
+          "unit.paymentAndCharges.account": 1,
+          "unit.paymentAndCharges.amount": 1,
+          "unit.paymentAndCharges._id":1,
+        },
+      },
+    ]);
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read Filtered PaymentAndCharge",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 
 router.get("/unit_charge", async (req, res) => {
   try {
