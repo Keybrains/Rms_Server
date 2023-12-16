@@ -498,23 +498,23 @@ router.get("/financial_unit", async (req, res) => {
         ),
       })),
     }));
-    
+
     // Iterate through the sortedData and set the last RunningTotal to 0
     sortedData.forEach((item) => {
       item.unit.forEach((unitItem) => {
         let runningTotal = 0;
-    
+
         unitItem.paymentAndCharges.reverse().forEach((charge) => {
           charge.RunningTotal = runningTotal;
           charge.Total = runningTotal + charge.Balance;
           runningTotal = charge.Total;
         });
-    
+
         // Reverse the paymentAndCharges array back to its original order
         unitItem.paymentAndCharges.reverse();
       });
     });
-    
+
 
 
 
