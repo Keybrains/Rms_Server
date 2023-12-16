@@ -710,23 +710,23 @@ router.get("/financial_unit", async (req, res) => {
         ),
       })),
     }));
-    
+
     // Iterate through the sortedData and set the last RunningTotal to 0
     sortedData.forEach((item) => {
       item.unit.forEach((unitItem) => {
         let runningTotal = 0;
-    
+
         unitItem.paymentAndCharges.reverse().forEach((charge) => {
           charge.RunningTotal = runningTotal;
           charge.Total = runningTotal + charge.Balance;
           runningTotal = charge.Total;
         });
-    
+
         // Reverse the paymentAndCharges array back to its original order
         unitItem.paymentAndCharges.reverse();
       });
     });
-    
+
 
 
 
@@ -841,93 +841,6 @@ router.put("/edit_entry/:entryId", async (req, res) => {
   }
 });
 
-router.put("/charge_paid1", async (req, res) => {
-  try {
-    const { entryIds } = req.body; 
-
-    const updateFields = {
-      "unit.paymentAndCharges.isPaid": true,
-    };
-
-    const options = {
-      arrayFilters: entryIds.map((entryId) => ({
-        "unitElem": { $elemMatch: { "paymentAndCharges._id": new ObjectId(entryId) } },
-        "elem": { $elemMatch: { "_id": new ObjectId(entryId) } },
-      })),
-      new: true,
-    };
-    
-    const updatedEntries = await AddPaymentAndCharge.updateMany(
-      { "unit.paymentAndCharges._id": { $in: entryIds.map((entryId) => new ObjectId(entryId)) } },
-      { $set: updateFields },
-      options
-    );
-
-    if (!updatedEntries || updatedEntries.nModified === 0) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "No entries found",
-      });
-    }
-
-    res.json({
-      statusCode: 200,
-      data: updatedEntries,
-      message: "Entries updated successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
-
-router.put("/charge_paid", async (req, res) => {
-  try {
-    const { entryIds } = req.body;
-    //const { isPaid } = req.body;
-
-    // Build an update object with the fields that need to be modified
-    const updateFields = {
-      "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": true,
-    };
-
-    const options = {
-      arrayFilters: [
-        { "unitElem.paymentAndCharges._id": { $in: entryIds.map(id => new ObjectId(id)) } },
-        { "elem._id": { $in: entryIds.map(id => new ObjectId(id)) } },
-      ],
-      new: true,
-    };
-
-    // Find and update the entries
-    const updatedEntries = await AddPaymentAndCharge.updateMany(
-      { "unit.paymentAndCharges._id": { $in: entryIds.map(id => new ObjectId(id)) } },
-      { $set: updateFields },
-      options
-    );
-
-    if (updatedEntries.nModified === 0) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "No entries found for the provided entryIds",
-      });
-    }
-
-    res.json({
-      statusCode: 200,
-      data: updatedEntries,
-      message: "Entries updated successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
-
 router.get("/unit_charge", async (req, res) => {
   try {
     const { rental_adress, property_id, unit, tenant_id } = req.query;
@@ -977,7 +890,7 @@ router.get("/unit_charge", async (req, res) => {
           "unit.paymentAndCharges.type": 1,
           "unit.paymentAndCharges.account": 1,
           "unit.paymentAndCharges.amount": 1,
-          "unit.paymentAndCharges._id":1,
+          "unit.paymentAndCharges._id": 1,
         },
       },
     ]);
@@ -995,7 +908,50 @@ router.get("/unit_charge", async (req, res) => {
   }
 });
 
+router.put("/charge_paid", async (req, res) => {
+  try {
+    const { entry } = req.body;
 
+    const updateOperations = entry.map(({ id, amount }) => ({
+      updateOne: {
+        filter: {
+          "unit.paymentAndCharges._id": new ObjectId(id),
+        },
+        update: {
+          $set: {
+            "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": amount == 0 ? true : false,
+            "unit.$[unitElem].paymentAndCharges.$[elem].amount": amount,
+          },
+        },
+        arrayFilters: [
+          { "unitElem.paymentAndCharges._id": new ObjectId(id) },
+          { "elem._id": new ObjectId(id) },
+        ],
+      },
+    }));
+
+    // Update all entries in a single operation
+    const updateResult = await AddPaymentAndCharge.bulkWrite(updateOperations);
+
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "No entries found for the provided entry IDs",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updateResult,
+      message: "Entries updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 
 
