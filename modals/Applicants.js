@@ -13,7 +13,6 @@ const applicantSchema = new Schema({
   tenant_homeNumber: { type: Number },
   tenant_faxPhoneNumber: { type: Number },
   rental_adress: { type: String },
-  status: { type: String, default: "" },
   rental_units: { type: String },
   applicant_checklist: { type: Array },
   applicant_checkedChecklist: { type: Array },
