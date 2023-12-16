@@ -36,7 +36,7 @@ router.get("/rentals_property/:rental_adress", async (req, res) => {
       var data = await PropertyUnit.find({ rental_adress: adress }).select(
         "rental_units"
       );
-      console.log(data, "data")
+      // console.log(data, "data")
       if (data) {
         res.json({
           data: data,
@@ -85,10 +85,9 @@ router.get("/rentals_property/:rental_adress", async (req, res) => {
   
 router.put("/propertyunit/:id", async (req, res) => {
     try {
-      // Update the PropertyUnit
+    
       let updatedPropertyUnit = await PropertyUnit.findByIdAndUpdate(req.params.id, req.body);
   
-      // Update all PropertyUnits with the same rentalId
       await PropertyUnit.updateMany(
         { rentalId: updatedPropertyUnit.rentalId },
         {
@@ -102,7 +101,7 @@ router.put("/propertyunit/:id", async (req, res) => {
         }
       );
   
-      // Update the corresponding entry in Rentals
+  
       await Rentals.updateOne(
         {
           _id: updatedPropertyUnit.rentalId,

@@ -7,7 +7,7 @@ const propertyUnitSchema = new Schema({
 
   rental_city: { type: String },
   rental_country: { type: String },
-  rental_postcode: { type: Number },
+  rental_postcode: { type: String },
   rental_state: { type: String },
 
 

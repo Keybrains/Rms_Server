@@ -792,7 +792,7 @@ router.get("/allproperty", async (req, res) => {
       {},
       "entries.rental_adress rentalOwner_firstName rentalOwner_lastName rentalOwner_companyName rentalOwner_primaryEmail rentalOwner_phoneNumber rentalOwner_homeNumber rentalOwner_businessNumber"
     );
-    console.log(data, "data");
+    // console.log(data, "data");
 
     const rentalAddresses = data.reduce((addresses, rental) => {
       if (rental.entries && rental.entries.length > 0) {
