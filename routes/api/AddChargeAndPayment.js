@@ -166,10 +166,6 @@ router.delete("/delete_entry/:entryId", async (req, res) => {
   }
 });
 
-
-
-// const { ObjectId } = require('mongodb'); // Import ObjectId from the mongodb library
-
 router.get("/get_entry/:entryId", async (req, res) => {
   try {
     const { entryId } = req.params;
@@ -205,10 +201,6 @@ router.get("/get_entry/:entryId", async (req, res) => {
     });
   }
 });
-
-
-
-
 
 // // Unit pass and get Data - Sorting and Calculating (All Working ok)
 
@@ -359,208 +351,6 @@ router.get("/financial", async (req, res) => {
   }
 });
 
-// Working Proper
-// router.get("/xyz", async (req, res) => {
-//   try {
-//     const { rental_adress, property_id, unit, tenant_id } = req.query;
-
-//     const data = await AddPaymentAndCharge.aggregate([
-//       {
-//         $match: {
-//           "properties.rental_adress": rental_adress,
-//           "properties.property_id": property_id,
-//         },
-//       },
-//       {
-//         $unwind: "$unit",
-//       },
-//       {
-//         $match: {
-//           "unit.unit": unit,
-//         },
-//       },
-//       {
-//         $addFields: {
-//           "unit.paymentAndCharges": {
-//             $filter: {
-//               input: "$unit.paymentAndCharges",
-//               as: "charge",
-//               cond: {
-//                 $eq: ["$$charge.tenant_id", tenant_id],
-//               },
-//             },
-//           },
-//         },
-//       },
-//       {
-//         $match: {
-//           "unit.paymentAndCharges": { $ne: [] },
-//         },
-//       },
-//       {
-//         $addFields: {
-//           "unit.paymentAndCharges": {
-//             $map: {
-//               input: "$unit.paymentAndCharges",
-//               as: "charge",
-//               in: {
-//                 $mergeObjects: [
-//                   "$$charge",
-//                   {
-//                     // Index: { $add: ["$$charge.Index", 1] }, // Index starts from 1
-//                     Total: 0, // Initialize Total to 0
-//                   },
-//                 ],
-//               },
-//             },
-//           },
-//         },
-//       },
-//       {
-//         $addFields: {
-//           "unit.paymentAndCharges": {
-//             $map: {
-//               input: "$unit.paymentAndCharges",
-//               as: "charge",
-//               in: {
-//                 $mergeObjects: [
-//                   "$$charge",
-//                   {
-//                     Balance: {
-//                       $cond: {
-//                         if: { $eq: ["$$charge.type", "Charge"] },
-//                         then: "$$charge.amount",
-//                         else: { $subtract: [0, "$$charge.amount"] }, // for Payment type
-//                       },
-//                     },
-//                   },
-//                 ],
-//               },
-//             },
-//           },
-//         },
-//       },
-//       {
-//         $addFields: {
-//           "unit.paymentAndCharges": {
-//             $map: {
-//               input: "$unit.paymentAndCharges",
-//               as: "charge",
-//               in: {
-//                 $mergeObjects: [
-//                   "$$charge",
-//                   {
-//                     Total: {
-//                       $add: ["$$charge.Total", "$$charge.Balance"], // Update Total with Balance
-//                   },
-//                 }
-//                 ],
-//               },
-//             },
-//           },
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: "$_id",
-//           properties: { $first: "$properties" },
-//           unit: { $push: "$unit" },
-//         },
-//       },
-//     ]);
-
-//     // Iterate through the result and calculate "Total" and "RunningTotal" for each element
-//     data.forEach((item) => {
-//       item.unit.forEach((unit) => {
-//         let runningTotal = 0;
-
-//         unit.paymentAndCharges.forEach((charge) => {
-//           charge.RunningTotal = runningTotal;
-//           charge.Total = runningTotal + charge.Balance;
-//           runningTotal = charge.Total;
-//         });
-//       });
-//     });
-
-//     res.json({
-//       statusCode: 200,
-//       data: data,
-//       message: "Read Filtered PaymentAndCharge",
-//     });
-//   } catch (error) {
-//     res.json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
-
-//  Sort
-// router.get("/xyz", async (req, res) => {
-//     try {
-//         const { rental_adress, property_id, unit, tenant_id } = req.query;
-
-//         const data = await AddPaymentAndCharge.aggregate([
-//             {
-//                 $match: {
-//                     "properties.rental_adress": rental_adress,
-//                     "properties.property_id": property_id,
-//                 },
-//             },
-//             {
-//                 $unwind: "$unit",
-//             },
-//             {
-//                 $match: {
-//                     "unit.unit": unit,
-//                 },
-//             },
-//             {
-//                 $addFields: {
-//                     "unit.paymentAndCharges": {
-//                         $filter: {
-//                             input: "$unit.paymentAndCharges",
-//                             as: "charge",
-//                             cond: {
-//                                 $eq: ["$$charge.tenant_id", tenant_id],
-//                             },
-//                         },
-//                     },
-//                 },
-//             },
-//             {
-//                 $group: {
-//                     _id: "$_id",
-//                     properties: { $first: "$properties" },
-//                     unit: { $push: "$unit" },
-//                 },
-//             },
-//         ]);
-
-//         // Client-side sorting of paymentAndCharges array based on date (new to old)
-//         const sortedData = data.map((item) => ({
-//             ...item,
-//             unit: item.unit.map((unitItem) => ({
-//                 ...unitItem,
-//                 paymentAndCharges: unitItem.paymentAndCharges.sort((a, b) =>
-//                     new Date(b.date) - new Date(a.date)
-//                 ),
-//             })),
-//         }));
-
-//         res.json({
-//             statusCode: 200,
-//             data: sortedData,
-//             message: "Read Filtered PaymentAndCharge",
-//         });
-//     } catch (error) {
-//         res.json({
-//             statusCode: 500,
-//             message: error.message,
-//         });
-//     }
-// });
-
 router.get("/financial_unit", async (req, res) => {
   try {
     const { rental_adress, property_id, unit, tenant_id } = req.query;
@@ -708,23 +498,23 @@ router.get("/financial_unit", async (req, res) => {
         ),
       })),
     }));
-    
+
     // Iterate through the sortedData and set the last RunningTotal to 0
     sortedData.forEach((item) => {
       item.unit.forEach((unitItem) => {
         let runningTotal = 0;
-    
+
         unitItem.paymentAndCharges.reverse().forEach((charge) => {
           charge.RunningTotal = runningTotal;
           charge.Total = runningTotal + charge.Balance;
           runningTotal = charge.Total;
         });
-    
+
         // Reverse the paymentAndCharges array back to its original order
         unitItem.paymentAndCharges.reverse();
       });
     });
-    
+
 
 
 
@@ -839,223 +629,179 @@ router.put("/edit_entry/:entryId", async (req, res) => {
   }
 });
 
-router.put("/charge_paid1", async (req, res) => {
-  try {
-    const { entryIds } = req.body; 
+// router.put("/charge_paid", async (req, res) => {
+//   try {
+//     const { entry } = req.body;
 
-    const updateFields = {
-      "unit.paymentAndCharges.isPaid": true,
-    };
+//     const updateOperations = entry.map(({ id, amount }) => ({
+//       updateOne: {
+//         filter: {
+//           "unit.paymentAndCharges._id": new ObjectId(id),
+//         },
+//         update: {
+//           $set: {
+//             "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": amount == 0? true:false,
+//             "unit.$[unitElem].paymentAndCharges.$[elem].amount": amount,
+//           },
+//         },
+//         arrayFilters: [
+//           { "unitElem.paymentAndCharges._id":  new ObjectId(id) },
+//           { "elem._id": new ObjectId(id) },
+//         ],
+//       },
+//     }));
 
-    const options = {
-      arrayFilters: entryIds.map((entryId) => ({
-        "unitElem": { $elemMatch: { "paymentAndCharges._id": new ObjectId(entryId) } },
-        "elem": { $elemMatch: { "_id": new ObjectId(entryId) } },
-      })),
-      new: true,
-    };
-    
-    const updatedEntries = await AddPaymentAndCharge.updateMany(
-      { "unit.paymentAndCharges._id": { $in: entryIds.map((entryId) => new ObjectId(entryId)) } },
-      { $set: updateFields },
-      options
-    );
+//     const updateResult = await AddPaymentAndCharge.bulkWrite(updateOperations);
 
-    if (!updatedEntries || updatedEntries.nModified === 0) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "No entries found",
-      });
-    }
+//     if (updateResult.modifiedCount === 0) {
+//       return res.status(404).json({
+//         statusCode: 404,
+//         message: "No entries found for the provided entry IDs",
+//       });
+//     }
 
-    res.json({
-      statusCode: 200,
-      data: updatedEntries,
-      message: "Entries updated successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
+//     res.json({
+//       statusCode: 200,
+//       data: updateResult,
+//       message: "Entries updated successfully",
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 
-router.put("/charge_paid", async (req, res) => {
-  try {
-    const { entry } = req.body;
+// router.get("/unit_charge", async (req, res) => {
+//   try {
+//     const { rental_adress, property_id, unit, tenant_id } = req.query;
 
-    const updateOperations = entry.map(({ id, amount }) => ({
-      updateOne: {
-        filter: {
-          "unit.paymentAndCharges._id": new ObjectId(id),
-        },
-        update: {
-          $set: {
-            "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": amount == 0? true:false,
-            "unit.$[unitElem].paymentAndCharges.$[elem].amount": amount,
-          },
-        },
-        arrayFilters: [
-          { "unitElem.paymentAndCharges._id":  new ObjectId(id) },
-          { "elem._id": new ObjectId(id) },
-        ],
-      },
-    }));
+//     const data = await AddPaymentAndCharge.aggregate([
+//       {
+//         $match: {
+//           "properties.rental_adress": rental_adress,
+//           "properties.property_id": property_id,
+//         },
+//       },
+//       {
+//         $unwind: "$unit",
+//       },
+//       {
+//         $match: {
+//           "unit.paymentAndCharges": {
+//             $elemMatch: {
+              
+//               "isPaid": false,
+//               "tenant_id": tenant_id,
+//             },
+//           }
+//         }
+//       },
+//       {
+//         $unwind: "$unit.paymentAndCharges",
+//       },
+//       {
+//         $match: {
+//           "unit.paymentAndCharges.type": "Charge",
+//           "unit.paymentAndCharges.isPaid": false,
+//           "unit.unit": unit,
+//           "unit.paymentAndCharges.tenant_id": tenant_id,
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$_id",
+//           properties: { $first: "$properties" },
+//           unit: { $push: "$unit" },
+//         },
+//       },
+//       {
+//         $project: {
+//           "_id": 1,
+//           "unit.paymentAndCharges.type": 1,
+//           "unit.paymentAndCharges.account": 1,
+//           "unit.paymentAndCharges.amount": 1,
+//           "unit.paymentAndCharges._id":1,
+//         },
+//       },
+//     ]);
 
-    // Update all entries in a single operation
-    const updateResult = await AddPaymentAndCharge.bulkWrite(updateOperations);
+//     res.json({
+//       statusCode: 200,
+//       data: data,
+//       message: "Read Filtered PaymentAndCharge",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 
-    if (updateResult.modifiedCount === 0) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "No entries found for the provided entry IDs",
-      });
-    }
+// router.get("/unit_charge", async (req, res) => {
+//   try {
+//     const { rental_adress, property_id, unit, tenant_id } = req.query;
 
-    res.json({
-      statusCode: 200,
-      data: updateResult,
-      message: "Entries updated successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
+//     const data = await AddPaymentAndCharge.aggregate([
+//       {
+//         $match: {
+//           "properties.rental_adress": rental_adress,
+//           "properties.property_id": property_id,
+//         },
+//       },
+//       {
+//         $unwind: "$unit",
+//       },
+//       {
+//         $match: {
+//           "unit.paymentAndCharges": {
+//             $elemMatch: {
+//               "type": "Charge",
+//               "isPaid": false,
+//               "tenant_id": tenant_id,
+//             },
+//           }
+//         }
+//       },
+//       {
+//         $unwind: "$unit.paymentAndCharges",
+//       },
+//       {
+//         $match: {
+//           "unit.paymentAndCharges.type": "Charge",
+//           "unit.paymentAndCharges.isPaid": false,
+//           "unit.unit": unit,
+//           "unit.paymentAndCharges.tenant_id": tenant_id,
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$_id",
+//           paymentAndCharges: { $push: "$unit.paymentAndCharges" },
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           paymentAndCharges: 1,
+//         },
+//       },
+//     ]);
 
-router.get("/unit_charge", async (req, res) => {
-  try {
-    const { rental_adress, property_id, unit, tenant_id } = req.query;
-
-    const data = await AddPaymentAndCharge.aggregate([
-      {
-        $match: {
-          "properties.rental_adress": rental_adress,
-          "properties.property_id": property_id,
-        },
-      },
-      {
-        $unwind: "$unit",
-      },
-      {
-        $match: {
-          "unit.paymentAndCharges": {
-            $elemMatch: {
-              "type": "Charge",
-              "isPaid": false,
-              "tenant_id": tenant_id,
-            },
-          }
-        }
-      },
-      {
-        $unwind: "$unit.paymentAndCharges",
-      },
-      {
-        $match: {
-          "unit.paymentAndCharges.type": "Charge",
-          "unit.paymentAndCharges.isPaid": false,
-          "unit.unit": unit,
-          "unit.paymentAndCharges.tenant_id": tenant_id,
-        },
-      },
-      {
-        $group: {
-          _id: "$_id",
-          properties: { $first: "$properties" },
-          unit: { $push: "$unit" },
-        },
-      },
-      {
-        $project: {
-          "_id": 1,
-          "unit.paymentAndCharges.type": 1,
-          "unit.paymentAndCharges.account": 1,
-          "unit.paymentAndCharges.amount": 1,
-          "unit.paymentAndCharges._id":1,
-        },
-      },
-    ]);
-
-    res.json({
-      statusCode: 200,
-      data: data,
-      message: "Read Filtered PaymentAndCharge",
-    });
-  } catch (error) {
-    res.json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
-
-
-router.get("/unit_charge", async (req, res) => {
-  try {
-    const { rental_adress, property_id, unit, tenant_id } = req.query;
-
-    const data = await AddPaymentAndCharge.aggregate([
-      {
-        $match: {
-          "properties.rental_adress": rental_adress,
-          "properties.property_id": property_id,
-        },
-      },
-      {
-        $unwind: "$unit",
-      },
-      {
-        $match: {
-          "unit.paymentAndCharges": {
-            $elemMatch: {
-              "type": "Charge",
-              "isPaid": false,
-              "tenant_id": tenant_id,
-            },
-          }
-        }
-      },
-      {
-        $unwind: "$unit.paymentAndCharges",
-      },
-      {
-        $match: {
-          "unit.paymentAndCharges.type": "Charge",
-          "unit.paymentAndCharges.isPaid": false,
-          "unit.unit": unit,
-          "unit.paymentAndCharges.tenant_id": tenant_id,
-        },
-      },
-      {
-        $group: {
-          _id: "$_id",
-          paymentAndCharges: { $push: "$unit.paymentAndCharges" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          paymentAndCharges: 1,
-        },
-      },
-    ]);
-
-    res.json({
-      statusCode: 200,
-      data: data,
-      message: "Read Filtered PaymentAndCharge",
-    });
-  } catch (error) {
-    res.json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
+//     res.json({
+//       statusCode: 200,
+//       data: data,
+//       message: "Read Filtered PaymentAndCharge",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 
 
 

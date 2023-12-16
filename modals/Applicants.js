@@ -13,7 +13,6 @@ const applicantSchema = new Schema({
   tenant_homeNumber: { type: Number },
   tenant_faxPhoneNumber: { type: Number },
   rental_adress: { type: String },
-  status: { type: String, default: "" },
   rental_units: { type: String },
   applicant_checklist: { type: Array },
   applicant_checkedChecklist: { type: Array },
@@ -27,7 +26,8 @@ const applicantSchema = new Schema({
   rentalOwner_homeNumber:{ type: String } ,
   rentalOwner_companyName:{ type: String },
   property_id: { type: String },
-  unit_id: { type: String },   
+  unit_id: { type: String }, 
+  isMovedin:{type:Boolean,default:false},
   applicant_NotesAndFile: [
     {
       applicant_notes: String,
