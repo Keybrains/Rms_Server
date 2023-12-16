@@ -51,7 +51,7 @@ cron.schedule("* 12 * * *", async () => {
         { _id: cronjobs[0]._id },
         { isCronjobRunning: false }
       );
-      console.log("updated to false");
+      //console.log("updated to false");
     }
   } catch (error) {
     console.error("Error:", error);
@@ -782,7 +782,7 @@ cron.schedule("0 17 * * *", async () => {
         { _id: cronjobs[0]._id },
         { isCronjobRunning: false }
       );
-      console.log("cron updated to false");
+      //console.log("cron updated to false");
     }
   } catch (error) {
     console.error("Error:", error);
@@ -1539,8 +1539,8 @@ router.put("/tenant/:id", async (req, res) => {
     const tenantId = req.params.id;
     const updateData = req.body;
     const tenant = await Tenants.findById(tenantId);
-    console.log(updateData, "updateData");
-    console.log(tenant, "tenant=======================");
+    // console.log(updateData, "updateData");
+    // console.log(tenant, "tenant=======================");
     if (!tenant) {
       return res
         .status(404)

@@ -36,7 +36,7 @@ router.get("/rentals_property/:rental_adress", async (req, res) => {
       var data = await PropertyUnit.find({ rental_adress: adress }).select(
         "rental_units"
       );
-      console.log(data, "data")
+      // console.log(data, "data")
       if (data) {
         res.json({
           data: data,
