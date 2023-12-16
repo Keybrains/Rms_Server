@@ -69,6 +69,39 @@ router.get("/applicant", async (req, res) => {
 
 //appicants data get mobile number wise and stutus wise  like  approved
 
+// router.get("/applicant_get", async (req, res) => {
+//   try {
+//     // Extract tenant_mobileNumber and status from query parameters
+//     const { tenant_mobileNumber, status } = req.query;
+
+//     // Build a filter object based on provided parameters
+//     const filter = {};
+//     if (tenant_mobileNumber) {
+//       filter.tenant_mobileNumber = tenant_mobileNumber;
+//     }
+
+//     // If status is provided, search inside the applicant_status array
+//     if (status) {
+//       filter['applicant_status.status'] = status;
+//     }
+
+//     // Use the filter object in the MongoDB query
+//     var data = await Applicant.find(filter);
+//     console.log(data[0].applicant_status, "data")
+
+//     res.json({
+//       data: data,
+//       statusCode: 200,
+//       message: "Read All applicants",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+
 router.get("/applicant_get", async (req, res) => {
   try {
     // Extract tenant_mobileNumber and status from query parameters
@@ -79,15 +112,40 @@ router.get("/applicant_get", async (req, res) => {
     if (tenant_mobileNumber) {
       filter.tenant_mobileNumber = tenant_mobileNumber;
     }
+
+    // If status is provided, use aggregation to filter array elements
     if (status) {
-      filter.status = status;
+      filter.applicant_status = {
+        $elemMatch: {
+          status: status,
+        },
+      };
     }
 
     // Use the filter object in the MongoDB query
     var data = await Applicant.find(filter);
 
+    // Process the data to include only matching elements in the response
+    const filteredData = data.map((document) => {
+      // Reverse the order of the applicant_status array for each document
+      document.applicant_status.reverse();
+
+      // Check if the status of the first object matches the provided status
+      if (document.applicant_status.length > 0 && document.applicant_status[0].status === status) {
+        return {
+          ...document.toObject(), // Convert Mongoose document to plain object
+          applicant_status: document.applicant_status,
+        };
+      } else {
+        return null; // Exclude documents without matching status
+      }
+    });
+
+    // Remove null entries from the filteredData array
+    const finalData = filteredData.filter((entry) => entry !== null);
+
     res.json({
-      data: data,
+      data: finalData,
       statusCode: 200,
       message: "Read All applicants",
     });
@@ -98,7 +156,6 @@ router.get("/applicant_get", async (req, res) => {
     });
   }
 });
-
 
 //put api by mansi
 router.put("/applicant/:id/status", async (req, res) => {
@@ -116,6 +173,7 @@ router.put("/applicant/:id/status", async (req, res) => {
 
     const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
+    // Update the status of the specified applicant
     const updatedApplicant = await Applicant.findByIdAndUpdate(
       applicantId,
       {
@@ -129,11 +187,31 @@ router.put("/applicant/:id/status", async (req, res) => {
       },
       { new: true }
     );
+
     if (!updatedApplicant) {
       return res.status(404).json({
         statusCode: 404,
         message: "Applicant not found.",
       });
+    }
+
+    // If the status is 'approved', automatically reject other applicants for the same property
+    if (newStatus === 'approved') {
+      await Applicant.updateMany(
+        {
+          propertyId: updatedApplicant.propertyId, // Assuming you have a propertyId field in your Applicant schema
+          _id: { $ne: applicantId }, // Exclude the current applicant
+        },
+        {
+          $push: {
+            applicant_status: {
+              statusUpdatedBy: 'automatic', // You can customize the user/system that updates the status
+              status: 'rejected',
+              updateAt: updatedAt,
+            },
+          },
+        }
+      );
     }
 
     res.json({
@@ -148,6 +226,7 @@ router.put("/applicant/:id/status", async (req, res) => {
     });
   }
 });
+
 
 // delete Applicant
 router.delete("/applicant", async (req, res) => {
@@ -184,6 +263,36 @@ router.put("/applicant/:id", async (req, res) => {
     });
   }
 });
+
+//movein api
+router.put("/applicant/:id/movein", async (req, res) => {
+  try {
+    let result = await Applicant.findByIdAndUpdate(
+      req.params.id,
+      { isMovedin: true },
+      { new: true } 
+    );
+
+    if (!result) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "isMovedin field updated successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 
 //get applicant summary
 router.get("/applicant_summary/:id", async (req, res) => {
@@ -386,8 +495,6 @@ router.put("/applicant/:id/status", async (req, res) => {
     });
   }
 });
-
-
 
 router.put("/applicant/:id/checked-checklist", async (req, res) => {
   try {
