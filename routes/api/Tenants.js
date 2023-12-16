@@ -15,6 +15,7 @@ const cron = require("node-cron");
 const PaymentCharges = require("../../modals/AddPaymentAndCharge");
 var NmiPayment = require("../../modals/NmiPayment");
 var Cronjobs = require("../../modals/cronjobs");
+const axios = require('axios');
 
 cron.schedule("* 12 * * *", async () => {
   try {
@@ -57,6 +58,25 @@ cron.schedule("* 12 * * *", async () => {
     console.error("Error:", error);
   }
 });
+
+// cron.schedule("39 15 * * *", async () => {
+
+//   try {
+//     // Your payload for the webhook API
+//     const payload = {
+//       event: 'custom_subscription',
+//       // Add other necessary data...
+//     };
+
+//     // Make a POST request to your webhook API
+//     const response = await axios.post(`${baseurl}/webhook/nmis`, payload);
+
+//     console.log('Webhook called successfully:', response.data);
+//   } catch (error) {
+//     console.error('Error calling webhook:', error.message);
+//   }
+ 
+// });
 
 cron.schedule("0 17 * * *", async () => {
   try {
