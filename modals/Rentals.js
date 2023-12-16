@@ -9,7 +9,7 @@ const entrySchema = new Schema({
   isrenton: { type: Boolean, default: false },
   rental_city: { type: String },
   rental_country: { type: String },
-  rental_postcode: { type: Number },
+  rental_postcode: { type: String },
   prop_image:{ type: String, default: "" },
   rental_state: { type: String },
 

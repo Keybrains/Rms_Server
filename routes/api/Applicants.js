@@ -114,12 +114,14 @@ router.get("/applicant_get", async (req, res) => {
     }
 
     // If status is provided, use aggregation to filter array elements
+
     if (status) {
       filter.applicant_status = {
         $elemMatch: {
           status: status,
         },
       };
+      
     }
 
     // Use the filter object in the MongoDB query
@@ -143,6 +145,8 @@ router.get("/applicant_get", async (req, res) => {
 
     // Remove null entries from the filteredData array
     const finalData = filteredData.filter((entry) => entry !== null);
+
+   
 
     res.json({
       data: finalData,
