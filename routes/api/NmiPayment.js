@@ -447,7 +447,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       // zip: zip,
       /* Include other necessary parameters for subscription */
     };
-    console.log(" middled");
+    console.log(postData," middled");
 
     postData = querystring.stringify(postData);
 
