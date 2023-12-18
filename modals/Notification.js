@@ -14,6 +14,7 @@ const notificationSchema = new Schema({
   vendor_name: { type: String },
   staffmember_name: { type: String },
   rental_adress: { type: String },
+  rental_units: { type: String },
   notification_time: { type: String },
 });
 

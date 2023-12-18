@@ -9,7 +9,7 @@ var workorder = require("../../modals/Workorder");
  router.post("/notification", async (req, res) => {
     try {
   
-      const { workorder_id, vendor_name, staffmember_name, rental_adress } = req.body.workorder;
+      const { workorder_id, vendor_name, staffmember_name, rental_adress, rental_units } = req.body.workorder;
       
       // const VendorName = req.body.vendor_name;
       // const matchingTenant = await workorder.findOne({
@@ -27,7 +27,7 @@ var workorder = require("../../modals/Workorder");
       const vendorNotification = {
         workorder_id: `${workorder_id}`,
         notification_title: 'Workorder Added',
-        notification_details: `Admin created Work Order for ${req.body.workorder.rental_adress} to handle ${req.body.workorder.work_subject}`,
+        notification_details: `Admin created Work Order for ${req.body.workorder.rental_adress} ${req.body.workorder.rental_units} to handle ${req.body.workorder.work_subject}`,
         isTenantread: false,
         isVendorread: false,
         isStaffread: false,
@@ -36,6 +36,7 @@ var workorder = require("../../modals/Workorder");
         vendor_name: `${vendor_name}`,
         staffmember_name:`${staffmember_name}`,
         rental_adress: `${rental_adress}`,
+        rental_units: `${rental_units}`,
         notification_time: new Date().toISOString(),
       };
   
@@ -61,12 +62,12 @@ var workorder = require("../../modals/Workorder");
   router.post("/notification/tenant", async (req, res) => {
     try {
   
-      const { workorder_id, vendor_name, staffmember_name, rental_adress } = req.body.workorder;
+      const { workorder_id, vendor_name, staffmember_name, rental_adress,rental_units } = req.body.workorder;
 
       const adminNotification = {
         workorder_id: `${workorder_id}`,
         notification_title: 'Tenant Added Workorder',
-        notification_details: `Tenant created Work Order for ${req.body.workorder.rental_adress} to handle ${req.body.workorder.work_subject}`,
+        notification_details: `Tenant created Work Order for ${req.body.workorder.rental_adress} ${req.body.workorder.rental_adress} to handle ${req.body.workorder.work_subject}`,
         isTenantread: false,
         isVendorread: false,
         isStaffread: false,
@@ -75,6 +76,7 @@ var workorder = require("../../modals/Workorder");
         // vendor_name: `${vendor_name}`,
         // staffmember_name:`${staffmember_name}`,
         rental_adress: `${rental_adress}`,
+        rental_units:`${rental_units}`,
         notification_time: new Date().toISOString(),
       };
 
@@ -99,12 +101,12 @@ var workorder = require("../../modals/Workorder");
   router.post("/notification/vendor", async (req, res) => {
     try {
   
-      const { workorder_id, vendor_name, staffmember_name, rental_adress } = req.body.workorder;
+      const { workorder_id, vendor_name, staffmember_name, rental_adress, rental_units } = req.body.workorder;
 
       const vendorNotification = {
         workorder_id: `${workorder_id}`,
         notification_title: 'Vendor Update Workorder',
-        notification_details: `Vendor added parts and labour to the Work Order for ${req.body.workorder.rental_adress} to handle ${req.body.workorder.work_subject}`,
+        notification_details: `Vendor added parts and labour to the Work Order for ${req.body.workorder.rental_adress} ${req.body.workorder.rental_units} to handle ${req.body.workorder.work_subject}`,
         isTenantread: false,
         isVendorread: false,
         isStaffread: false,
@@ -113,6 +115,7 @@ var workorder = require("../../modals/Workorder");
         // vendor_name: `${vendor_name}`,
         // staffmember_name:`${staffmember_name}`,
         rental_adress: `${rental_adress}`,
+        rental_units: `${rental_units}`,
         notification_time: new Date().toISOString(),
       };
 
@@ -204,14 +207,17 @@ router.get("/staffnotification/:staffmember_name", async (req, res) => {
   }
 });
 
-//get vendor
-router.get("/tenantnotification/tenant/:rental_addresses", async (req, res) => {
+// Get tenant notifications by rental addresses and rental units
+router.get("/tenantnotification/:rental_addresses/:rental_units", async (req, res) => {
   try {
-    const rentalAddresses = req.params.rental_addresses.split('-');
-    
-    if (rentalAddresses.length === 1) {      
+    const rentalAddresses = req.params.rental_addresses.split("^");
+    const rentalUnits = req.params.rental_units.split('^');
+
+    if (rentalAddresses.length === 1 && rentalUnits.length === 1) {      
       const singleAddress = rentalAddresses[0];
-      const data = await Notification.find({ istenant: false, rental_adress : singleAddress });
+      const singleUnit = rentalUnits[0];
+
+      const data = await Notification.find({ istenant: false, rental_adress: singleAddress, rental_units: singleUnit });
 
       if (data) {
         res.json({
@@ -222,25 +228,29 @@ router.get("/tenantnotification/tenant/:rental_addresses", async (req, res) => {
       } else {
         res.status(404).json({
           statusCode: 404,
-          message: "Notification details not found for the single rental address",
+          message: "Notification details not found for the given rental address and unit",
         });
       }
     } else {
-       // Handle multiple rental addresses
-       const data = await Notification.find({ rental_adress: { $in: rentalAddresses } });
-       if (data && data.length > 0) {
-         res.json({
-           data: data,
-           statusCode: 200,
-           message: "Notification details retrieved successfully for multiple rental addresses",
-         });
-       } else {
-         res.status(404).json({
-           statusCode: 404,
-           message: "Notification details not found for the multiple rental addresses",
-         });
-       }
-     }
+      // Handle multiple rental addresses and units
+      const data = await Notification.find({ 
+        rental_adress: { $in: rentalAddresses },
+        rental_units: { $in: rentalUnits }
+      });
+
+      if (data && data.length > 0) {
+        res.json({
+          data: data,
+          statusCode: 200,
+          message: "Notification details retrieved successfully for multiple rental addresses and units",
+        });
+      } else {
+        res.status(404).json({
+          statusCode: 404,
+          message: "Notification details not found for the given rental addresses and units",
+        });
+      }
+    }
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
@@ -248,6 +258,7 @@ router.get("/tenantnotification/tenant/:rental_addresses", async (req, res) => {
     });
   }
 });
+
 
 
 // Add a new route for deleting a notification by workorder_id
