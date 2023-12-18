@@ -813,35 +813,18 @@ router.post("/add-customer-and-subscription", async (req, res) => {
 // });
 
 
-router.post("/nmiss", async (req, res) => {
-  console.log('hii' );
-});
 
-router.post("/nmis", (req, res) => {
-  console.log("Webhook received:", req.body);
-  const signingKey = "CC8775A4CFD933614985209F6F68768B"; // Your signing key
-  const receivedSignature = req.headers["x-nmi-signature"];
-  console.log("chal gaya webhook................");
-  // Validate the signature to ensure the request is from NMI
-  if (receivedSignature === signingKey) {
-    // Process the webhook data
-    const event = req.body.event;
-    console.log("Received NMI webhook:", event);
-
-    // Handle different events accordingly
-    if (event === "recurring_payment") {
-      console.log("Recurring payment added!");
-      // Add your logic for recurring payment event here
-    } else if (event === "custom_subscription") {
-      console.log("New custom subscription added!");
-      // Add your logic for new custom subscription event here
-    }
-
-    res.sendStatus(200); // Respond with 200 to acknowledge receipt of the webhook
-  } else {
-    res.sendStatus(401); // Invalid signature, reject the request
+router.post("/nmis", async (req, res) => {
+  try {
+    const signingKey = "CC8775A4CFD933614985209F6F68768B";
+    const webhookBody = req.body;
+    const sigHeader = req.get("Webhook-Signature");
+    console.log("event type :", webhookBody.event_type);
+   } catch (error) {
+    console.log("Error:", error);
   }
 });
+
 
 const sendResponse = (res, data, status = 200) => {
   if (status !== 200) {
