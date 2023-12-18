@@ -812,6 +812,14 @@ router.post("/add-customer-and-subscription", async (req, res) => {
 //   }
 // });
 
+
+router.post("/nmiss", async (req, res) => {
+  console.log('hii' );
+});
+
+
+
+
 const sendResponse = (res, data, status = 200) => {
   if (status !== 200) {
     data = {
