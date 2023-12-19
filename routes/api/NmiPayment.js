@@ -866,6 +866,13 @@ router.post("/nmi", async (req, res) => {
   }
 });
 
+const webhookIsVerified = (webhookBody, signingKey, nonce, sig) => {
+  const hashedSignature = crypto
+    .createHmac("sha256", signingKey)
+    .update(nonce + "." + webhookBody)
+    .digest("hex");
+  return sig === hashedSignature;
+};
 
 const sendResponse = (res, data, status = 200) => {
   if (status !== 200) {
