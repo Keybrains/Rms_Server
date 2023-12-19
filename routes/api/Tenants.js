@@ -35,13 +35,13 @@ cron.schedule("* 12 * * *", async () => {
 
       tenants.forEach(async (tenant) => {
         tenant.entries.forEach(async (entry) => {
-         
+
           const rentCycle = tenant.tenant_firstName;
           // console.log("rentCycle", rentCycle);
 
           const paymentMethods = entry.paymentMethod;
           // console.log("payment method", paymentMethods);
-          
+
         });
       });
 
@@ -75,7 +75,7 @@ cron.schedule("* 12 * * *", async () => {
 //   } catch (error) {
 //     console.error('Error calling webhook:', error.message);
 //   }
- 
+
 // });
 
 cron.schedule("0 17 * * *", async () => {
@@ -233,9 +233,8 @@ cron.schedule("0 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "sahil cron",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${
-                  currentDate.split("-")[0]
-                }`,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                  }`,
                 rent_cycle: "Monthly", // Change this accordingly
               });
 
@@ -271,9 +270,8 @@ cron.schedule("0 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${
-                          currentDate.split("-")[0]
-                        }`,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
                         rent_cycle: "Monthly", // Change this accordingly
                       },
                     ],
@@ -294,7 +292,7 @@ cron.schedule("0 17 * * *", async () => {
             }
             //post data static after cron run for the monthly end----------------------------------------
           }
-//**************************************************************************************************************************************************************************************************************** */
+          //**************************************************************************************************************************************************************************************************************** */
           // Weekly cronjob condition
           if (
             startDate &&
@@ -346,9 +344,8 @@ cron.schedule("0 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "test",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${
-                  currentDate.split("-")[0]
-                }`,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                  }`,
                 rent_cycle: "Weekly", // Change this accordingly
               });
 
@@ -384,9 +381,8 @@ cron.schedule("0 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${
-                          currentDate.split("-")[0]
-                        }`,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
                         rent_cycle: "Weekly", // Change this accordingly
                       },
                     ],
@@ -456,9 +452,8 @@ cron.schedule("0 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "test",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${
-                  currentDate.split("-")[0]
-                }`,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                  }`,
                 rent_cycle: "Daily", // Change this accordingly
               });
 
@@ -494,9 +489,8 @@ cron.schedule("0 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${
-                          currentDate.split("-")[0]
-                        }`,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
                         rent_cycle: "Daily", // Change this accordingly
                       },
                     ],
@@ -567,9 +561,8 @@ cron.schedule("0 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "test",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${
-                  currentDate.split("-")[0]
-                }`,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                  }`,
                 rent_cycle: "Every two months", // Change this accordingly
               });
 
@@ -605,9 +598,8 @@ cron.schedule("0 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${
-                          currentDate.split("-")[0]
-                        }`,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
                         rent_cycle: "Every two months", // Change this accordingly
                       },
                     ],
@@ -678,9 +670,8 @@ cron.schedule("0 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "test",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${
-                  currentDate.split("-")[0]
-                }`,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                  }`,
                 rent_cycle: "Every two weeks", // Change this accordingly
               });
 
@@ -716,9 +707,8 @@ cron.schedule("0 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${
-                          currentDate.split("-")[0]
-                        }`,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
                         rent_cycle: "Every two weeks", // Change this accordingly
                       },
                     ],
@@ -794,7 +784,7 @@ cron.schedule("0 17 * * *", async () => {
             await tenant.save();
           }
 
-//**************************************************************************************************************************************************************************************************************** */
+          //**************************************************************************************************************************************************************************************************************** */
 
         });
       });
@@ -2510,5 +2500,28 @@ router.put("/moveout/:id/:entryIndex", async (req, res) => {
     });
   }
 });
+
+
+router.get('/findData', async (req, res) => {
+  try {
+    const currentDate = new Date().toISOString().split('T')[0]; // Get current date in 'YYYY-MM-DD' format
+
+    // Query to find data
+    const result = await Tenants.find({
+      'entries.start_date': { $lte: currentDate },
+      'entries.end_date': { $gt: currentDate },
+      $or: [
+        { 'entries.rental_adress': req.query.rental_adress },
+        { 'entries.rental_units': req.query.rental_units }
+      ]
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 module.exports = router;
