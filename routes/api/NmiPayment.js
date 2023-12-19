@@ -844,27 +844,27 @@ router.post("/nmi", async (req, res) => {
     // const signature = match[2];
     // console.log('SIG->',signingKey, nonce, signature);
     //  console.log("yay3...!!!");
-//     if (
-//       !webhookIsVerified(
-//         JSON.stringify(webhookBody),
-//         signingKey,
-//         nonce,
-//         signature
-//       )
-//     ) {
-//       console.log("invalid webhook - invalid signature, cannot verify sender");
-//       res
-//         .status(400)
-//         .send("invalid webhook - invalid signature, cannot verify sender");
-//       return;
-//     }
-//    console.log("yay4...!!!");
+    //     if (
+    //       !webhookIsVerified(
+    //         JSON.stringify(webhookBody),
+    //         signingKey,
+    //         nonce,
+    //         signature
+    //       )
+    //     ) {
+    //       console.log("invalid webhook - invalid signature, cannot verify sender");
+    //       res
+    //         .status(400)
+    //         .send("invalid webhook - invalid signature, cannot verify sender");
+    //       return;
+    //     }
+    //    console.log("yay4...!!!");
     
-//     res.status(200).send("Webhook processed successfully");
-//   } catch (error) {
-//     console.log("Error:", error);
-//   }
-// });
+    res.status(200).send("Webhook processed successfully");
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
 
 // const webhookIsVerified = (webhookBody, signingKey, nonce, sig) => {
 //   const hashedSignature = crypto
