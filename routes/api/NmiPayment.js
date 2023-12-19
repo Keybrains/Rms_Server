@@ -829,50 +829,50 @@ router.post("/nmi", async (req, res) => {
     console.log("yay2...!!!");
     //console.log('yay here is response : ', webhookBody);
 
-    if (!sigHeader || sigHeader.length < 1) {
-      res.status(400).send("invalid webhook - signature header missing");
-      return;
-    }
+    // if (!sigHeader || sigHeader.length < 1) {
+    //   res.status(400).send("invalid webhook - signature header missing");
+    //   return;
+    // }
 
-    const match = sigHeader.match(/t=(.*),s=(.*)/);
-    if (!match) {
-      res.status(400).send("unrecognized webhook signature format");
-      return;
-    }
+    // const match = sigHeader.match(/t=(.*),s=(.*)/);
+    // if (!match) {
+    //   res.status(400).send("unrecognized webhook signature format");
+    //   return;
+    // }
 
-    const nonce = match[1];
-    const signature = match[2];
-    console.log('SIG->',signingKey, nonce, signature);
-     console.log("yay3...!!!");
-    if (
-      !webhookIsVerified(
-        JSON.stringify(webhookBody),
-        signingKey,
-        nonce,
-        signature
-      )
-    ) {
-      console.log("invalid webhook - invalid signature, cannot verify sender");
-      res
-        .status(400)
-        .send("invalid webhook - invalid signature, cannot verify sender");
-      return;
-    }
-   console.log("yay4...!!!");
+    // const nonce = match[1];
+    // const signature = match[2];
+    // console.log('SIG->',signingKey, nonce, signature);
+    //  console.log("yay3...!!!");
+//     if (
+//       !webhookIsVerified(
+//         JSON.stringify(webhookBody),
+//         signingKey,
+//         nonce,
+//         signature
+//       )
+//     ) {
+//       console.log("invalid webhook - invalid signature, cannot verify sender");
+//       res
+//         .status(400)
+//         .send("invalid webhook - invalid signature, cannot verify sender");
+//       return;
+//     }
+//    console.log("yay4...!!!");
     
-    res.status(200).send("Webhook processed successfully");
-  } catch (error) {
-    console.log("Error:", error);
-  }
-});
+//     res.status(200).send("Webhook processed successfully");
+//   } catch (error) {
+//     console.log("Error:", error);
+//   }
+// });
 
-const webhookIsVerified = (webhookBody, signingKey, nonce, sig) => {
-  const hashedSignature = crypto
-    .createHmac("sha256", signingKey)
-    .update(nonce + "." + webhookBody)
-    .digest("hex");
-  return sig === hashedSignature;
-};
+// const webhookIsVerified = (webhookBody, signingKey, nonce, sig) => {
+//   const hashedSignature = crypto
+//     .createHmac("sha256", signingKey)
+//     .update(nonce + "." + webhookBody)
+//     .digest("hex");
+//   return sig === hashedSignature;
+// };
 
 const sendResponse = (res, data, status = 200) => {
   if (status !== 200) {
