@@ -827,7 +827,7 @@ router.post("/nmi", async (req, res) => {
       console.log("webhookBody data:", webhookBody.event_type);
     }
     console.log("yay2...!!!");
-    //console.log('yay here is response : ', webhookBody);
+    console.log('yay... here is response : ', webhookBody);
 
     // if (!sigHeader || sigHeader.length < 1) {
     //   res.status(400).send("invalid webhook - signature header missing");
