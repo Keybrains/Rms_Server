@@ -827,6 +827,8 @@ router.post("/nmi", async (req, res) => {
       console.log("webhookBody data:", webhookBody.event_type);
     }
     console.log("yay2...!!!");
+    console.log('yay here is response : ', res)
+    
     res.status(200).send("Webhook processed successfully");
   } catch (error) {
     console.log("Error:", error);
