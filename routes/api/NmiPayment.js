@@ -700,6 +700,77 @@ router.post("/add-customer-and-subscription", async (req, res) => {
   }
 });
 
+router.post("/nmi", async (req, res) => {
+  try {
+    const signingKey = "CC8775A4CFD933614985209F6F68768B";
+    const webhookBody = req.body;
+    const sigHeader = req.get("Webhook-Signature");
+    console.log("event type :", webhookBody.event_type);
+    console.log('req body', sigHeader)
+      if(webhookBody.event_type === 'recurring.subscription.add') {
+        console.log('sigHeader', sigHeader)
+        console.log('webhookBody data:', webhookBody.event_type)
+      }
+
+      if (!sigHeader || sigHeader.length < 1) {
+          res.status(400).send('invalid webhook - signature header missing');
+          return;
+      }
+
+      const match = sigHeader.match(/t=(.*),s=(.*)/);
+      if (!match) {
+          res.status(400).send('unrecognized webhook signature format');
+          return;
+      }
+
+      const nonce = match[1];
+      const signature = match[2];
+    // console.log('SIG->',signingKey, nonce, signature);
+
+      if (!webhookIsVerified(JSON.stringify(webhookBody), signingKey, nonce, signature)) {
+          console.log('invalid webhook - invalid signature, cannot verify sender')
+          res.status(400).send('invalid webhook - invalid signature, cannot verify sender');
+          return;
+      }
+
+      // Webhook is now verified to have been sent by us, continue processing
+      const parsedWebhook = webhookBody;
+      if(parsedWebhook.event_type === 'recurring.subscription.update') {
+          console.log("successfully update recurring subscription")
+          const gymOwner = await User.findOne({nmiSubscriptionId: parsedWebhook.event_body.subscription_id});
+
+          if(gymOwner) {
+          const payment = await Payment.create({
+              gymId: gymOwner.parentId,
+              paymentplanId: gymOwner.nmiplanId,
+              memberId: gymOwner._id,
+              email: parsedWebhook.event_body.email,
+              description: "Recurring charging",
+              amount: parsedWebhook.event_body.plan.amount
+          });
+
+          //Save payment details of the user in payment collection
+          await payment.save();
+
+          //update user payment status to true
+          await User.findOneAndUpdate(
+              {
+                  nmiSubscriptionId: parsedWebhook.event_body.subscription_id,
+                  userRole: ROLE_MEMBER
+              },
+              {
+                  paymentStatus: true
+              }
+            );
+          }
+      }
+
+      res.status(200).send('Webhook processed successfully');
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
 // router.post("/custom-add-subscription", async (req, res) => {
 //   try {
 //     const {
