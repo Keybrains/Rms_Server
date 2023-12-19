@@ -531,7 +531,6 @@ router.get("/listings", async (req, res) => {
 });
 
 //get rentalproperty and rental owners
-
 router.get("/rentalproperty", async (req, res) => {
   try {
     // Use the .find() method to retrieve data and select specific fields
@@ -557,8 +556,7 @@ router.get("/rentalproperty", async (req, res) => {
   }
 });
 
-//get rentals table  summary data id wise
-
+//get rentals table  summary data id wis
 router.get("/rentals_summary/:id", async (req, res) => {
   try {
     const userId = req.params.id; // Get the user ID from the URL parameter
@@ -621,7 +619,6 @@ router.post("/filterproperty_type", async (req, res) => {
 });
 
 //fillter api  rentalproperty and rental owners
-
 router.post("/filterproperty/owners", async (req, res) => {
   try {
     let pipeline = [];
@@ -866,7 +863,6 @@ router.post("/filter_lease", async (req, res) => {
 });
 
 //search properties table data like rental_address etc
-
 router.post("/search_Properties", async (req, res) => {
   try {
     let newArray = [];
@@ -1052,6 +1048,7 @@ router.get("/Rentals_summary/tenant/:rental_address", async (req, res) => {
     });
   }
 });
+
 router.put("/proparty_image/:id/:entryId", async (req, res) => {
   try {
     const { id: mainId, entryId } = req.params;
