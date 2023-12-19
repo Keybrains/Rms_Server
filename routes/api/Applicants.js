@@ -101,6 +101,110 @@ router.get("/applicant", async (req, res) => {
 //   }
 // });
 
+router.delete("/applicant/note_attachment/:applicantId/:noteAndFileId", async (req, res) => {
+  try {
+    const { applicantId, noteAndFileId } = req.params;
+
+    const updatedApplicant = await Applicant.findByIdAndUpdate(
+      applicantId,
+      { $pull: { applicant_NotesAndFile: { _id: noteAndFileId } } },
+      { new: true }
+    );
+
+    if (!updatedApplicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedApplicant,
+      message: "Note and File Deleted Successfully",
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+router.put("/applicant/:id/status", async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const newStatus = req.body.status;
+    const statusUpdatedBy = req.body.statusUpdatedBy;
+
+    if (!applicantId || !newStatus) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Invalid request. Please provide 'status'.",
+      });
+    }
+
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    // Update the status of the specified applicant
+    const updatedApplicant = await Applicant.findByIdAndUpdate(
+      applicantId,
+      {
+        $push: {
+          applicant_status: {
+            statusUpdatedBy: statusUpdatedBy,
+            status: newStatus,
+            updateAt: updatedAt,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedApplicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    if (newStatus === 'Approved') {
+      const { rental_adress, rental_units } = updatedApplicant;
+    
+      await Applicant.updateMany(
+        {
+          rental_adress,
+          rental_units,
+          _id: { $ne: applicantId }, 
+          'applicant_status.status': { $ne: 'Approved' }, 
+        },
+        {
+          $push: {
+            applicant_status: {
+              statusUpdatedBy: 'Admin',
+              status: 'Rejected',
+              updateAt: updatedAt,
+            },
+          },
+        }
+      );
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedApplicant,
+      message: "Applicant Status Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+
 router.get("/applicant_get", async (req, res) => {
   try {
     // Extract tenant_mobileNumber and status from query parameters
@@ -159,78 +263,7 @@ router.get("/applicant_get", async (req, res) => {
 });
 
 //put api by mansi
-router.put("/applicant/:id/status", async (req, res) => {
-  try {
-    const applicantId = req.params.id;
-    const newStatus = req.body.status;
-    const statusUpdatedBy = req.body.statusUpdatedBy;
 
-    if (!applicantId || !newStatus) {
-      return res.status(400).json({
-        statusCode: 400,
-        message: "Invalid request. Please provide 'status'.",
-      });
-    }
-
-    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-    // Update the status of the specified applicant
-    const updatedApplicant = await Applicant.findByIdAndUpdate(
-      applicantId,
-      {
-        $push: {
-          applicant_status: {
-            statusUpdatedBy: statusUpdatedBy,
-            status: newStatus,
-            updateAt: updatedAt,
-          },
-        },
-      },
-      { new: true }
-    );
-
-    if (!updatedApplicant) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "Applicant not found.",
-      });
-    }
-
-    // If the status is 'approved', automatically reject other applicants with the same rental_adress and unit
-    if (newStatus === 'Approved') {
-      const { rental_adress, rental_units } = updatedApplicant;
-    
-      await Applicant.updateMany(
-        {
-          rental_adress,
-          rental_units,
-          _id: { $ne: applicantId }, 
-          'applicant_status.status': { $ne: 'Approved' }, 
-        },
-        {
-          $push: {
-            applicant_status: {
-              statusUpdatedBy: 'Admin',
-              status: 'Rejected',
-              updateAt: updatedAt,
-            },
-          },
-        }
-      );
-    }
-
-    res.json({
-      statusCode: 200,
-      data: updatedApplicant,
-      message: "Applicant Status Updated Successfully",
-    });
-  } catch (err) {
-    res.status(500).json({
-      statusCode: 500,
-      message: err.message,
-    });
-  }
-});
 
 // delete Applicant
 router.delete("/applicant", async (req, res) => {
