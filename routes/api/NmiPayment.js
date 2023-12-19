@@ -814,13 +814,21 @@ router.post("/add-customer-and-subscription", async (req, res) => {
 
 
 
-router.post("/nmis", async (req, res) => {
+router.post("/nmi", async (req, res) => {
   try {
+    console.log("yay...!!!");
     const signingKey = "CC8775A4CFD933614985209F6F68768B";
     const webhookBody = req.body;
     const sigHeader = req.get("Webhook-Signature");
     console.log("event type :", webhookBody.event_type);
-   } catch (error) {
+    console.log("req body", sigHeader);
+    if (webhookBody.event_type === "recurring.subscription.add") {
+      console.log("sigHeader", sigHeader);
+      console.log("webhookBody data:", webhookBody.event_type);
+    }
+    console.log("yay2...!!!");
+    res.status(200).send("Webhook processed successfully");
+  } catch (error) {
     console.log("Error:", error);
   }
 });
