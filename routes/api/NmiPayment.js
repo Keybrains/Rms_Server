@@ -827,7 +827,38 @@ router.post("/nmi", async (req, res) => {
       console.log("webhookBody data:", webhookBody.event_type);
     }
     console.log("yay2...!!!");
-    console.log('yay here is response : ', webhookBody);
+    //console.log('yay here is response : ', webhookBody);
+
+    if (!sigHeader || sigHeader.length < 1) {
+      res.status(400).send("invalid webhook - signature header missing");
+      return;
+    }
+
+    const match = sigHeader.match(/t=(.*),s=(.*)/);
+    if (!match) {
+      res.status(400).send("unrecognized webhook signature format");
+      return;
+    }
+
+    const nonce = match[1];
+    const signature = match[2];
+    console.log('SIG->',signingKey, nonce, signature);
+     console.log("yay3...!!!");
+    if (
+      !webhookIsVerified(
+        JSON.stringify(webhookBody),
+        signingKey,
+        nonce,
+        signature
+      )
+    ) {
+      console.log("invalid webhook - invalid signature, cannot verify sender");
+      res
+        .status(400)
+        .send("invalid webhook - invalid signature, cannot verify sender");
+      return;
+    }
+   console.log("yay4...!!!");
     
     res.status(200).send("Webhook processed successfully");
   } catch (error) {
