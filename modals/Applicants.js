@@ -17,6 +17,7 @@ const applicantSchema = new Schema({
   applicant_checklist: { type: Array },
   applicant_checkedChecklist: { type: Array },
   applicant_emailsend_date: { type: String },
+  updateAt: { type: String },
   createAt: { type: String },
   rentalOwner_firstName: { type: String },
   rentalOwner_lastName: { type: String },

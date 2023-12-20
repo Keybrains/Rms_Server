@@ -196,7 +196,7 @@ router.post("/login", async (req, res) => {
 
     if (isMatch) {
       res.json({
-        statusCode: 200,
+        statusCode: 202,
         message: "User Authenticated",
         token: tokens,
         data: user,
