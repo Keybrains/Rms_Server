@@ -813,66 +813,49 @@ router.post("/add-customer-and-subscription", async (req, res) => {
 // });
 
 
+function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
+  const calculatedSig = crypto.createHmac('sha256', signingKey)
+    .update(`${nonce}.${webhookBody}`)
+    .digest('hex');
+  return sig === calculatedSig;
+}
 
-router.post("/nmi", async (req, res) => {
+
+router.post("/nmi", (req, res) => {
   try {
-    console.log("yay...!!!");
-    const signingKey = "CC8775A4CFD933614985209F6F68768B";
-    const webhookBody = req.body;
-    const sigHeader = req.get("Webhook-Signature");
-    console.log("event type :", webhookBody.event_type);
-    console.log("req body", sigHeader);
-    if (webhookBody.event_type === "recurring.subscription.add") {
-      console.log("sigHeader", sigHeader);
-      console.log("webhookBody data:", webhookBody.event_type);
+    const signingKey = 'CC8775A4CFD933614985209F6F68768B';
+    const webhookBody = JSON.stringify(req.body); // Assuming body is JSON
+    const sigHeader = req.headers['webhook-signature'];
+
+    if (!sigHeader || sigHeader.length < 1) {
+      throw new Error('Invalid webhook - signature header missing');
     }
-    console.log("yay2...!!!");
-    console.log('yay... here is response : ', webhookBody);
 
-    // if (!sigHeader || sigHeader.length < 1) {
-    //   res.status(400).send("invalid webhook - signature header missing");
-    //   return;
-    // }
+    const sigMatches = sigHeader.match(/t=(.*),s=(.*)/);
+    if (!sigMatches || sigMatches.length !== 3) {
+      throw new Error('Unrecognized webhook signature format');
+    }
 
-    // const match = sigHeader.match(/t=(.*),s=(.*)/);
-    // if (!match) {
-    //   res.status(400).send("unrecognized webhook signature format");
-    //   return;
-    // }
+    const nonce = sigMatches[1];
+    const signature = sigMatches[2];
 
-    // const nonce = match[1];
-    // const signature = match[2];
-    // console.log('SIG->',signingKey, nonce, signature);
-    //  console.log("yay3...!!!");
-    //     if (
-    //       !webhookIsVerified(
-    //         JSON.stringify(webhookBody),
-    //         signingKey,
-    //         nonce,
-    //         signature
-    //       )
-    //     ) {
-    //       console.log("invalid webhook - invalid signature, cannot verify sender");
-    //       res
-    //         .status(400)
-    //         .send("invalid webhook - invalid signature, cannot verify sender");
-    //       return;
-    //     }
-    //    console.log("yay4...!!!");
-    
-    res.status(200).send("Webhook processed successfully");
+    if (!webhookIsVerified(webhookBody, signingKey, nonce, signature)) {
+      throw new Error('Invalid webhook - invalid signature, cannot verify sender');
+    }
+
+    // Webhook is now verified to have been sent by you, continue processing
+    console.log('Webhook is verified');
+    const webhook = req.body; // Assuming JSON payload
+    console.log(webhook);
+
+    res.status(200).send('Webhook processed successfully');
   } catch (error) {
-    console.log("Error:", error);
+    console.error('Error handling webhook:', error);
+    res.status(500).send('Error processing webhook');
   }
+
 });
 
-// const webhookIsVerified = (webhookBody, signingKey, nonce, sig) => {
-//   const hashedSignature = crypto
-//     .createHmac("sha256", signingKey)
-//     .update(nonce + "." + webhookBody)
-//     .digest("hex");
-//   return sig === hashedSignature;
-// };
 
 const sendResponse = (res, data, status = 200) => {
   if (status !== 200) {
