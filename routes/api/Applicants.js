@@ -204,7 +204,6 @@ router.put("/applicant/:id/status", async (req, res) => {
   }
 });
 
-
 router.get("/applicant_get", async (req, res) => {
   try {
     // Extract tenant_mobileNumber and status from query parameters
@@ -261,9 +260,6 @@ router.get("/applicant_get", async (req, res) => {
     });
   }
 });
-
-//put api by mansi
-
 
 // delete Applicant
 router.delete("/applicant", async (req, res) => {

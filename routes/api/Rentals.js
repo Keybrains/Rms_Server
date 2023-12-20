@@ -85,8 +85,7 @@ var moment = require("moment")
 //   }
 // });
 
-//updated by shivam
-//updated by shivam (With entryIndex)
+//updated by mansi with unique rental_adress condition
 router.post("/rentals", async (req, res) => {
   try {
     const {
@@ -125,7 +124,7 @@ router.post("/rentals", async (req, res) => {
       });
     }
 
-    // Process entries and add to the existing or newly created rental
+    // Process entries and check for unique rental_adress within the same rental
     for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
       const entry = entries[entryIndex];
       const {
@@ -141,73 +140,84 @@ router.post("/rentals", async (req, res) => {
         residential,
       } = entry;
 
-      // Check if the entry already exists in the rental
-      const existingEntry = existingRental.entries.find(
-        e => e.property_type === property_type &&
-          e.rental_adress === rental_adress &&
-          e.isrenton === isrenton &&
-          e.rental_city === rental_city &&
-          e.rental_country === rental_country &&
-          e.rental_state === rental_state &&
-          e.rental_postcode === rental_postcode &&
-          e.staffMember === staffMember
-      );
+      // Check if the rental_adress already exists within the same rental
+      // const existingAddressInRental = existingRental.entries.find(
+      //   e => e.rental_adress === rental_adress 
+      // );
 
-      if (!existingEntry) {
-        // If the entry does not exist, push the new entry
-        const newEntry = {
-          property_type,
-          rental_adress,
-          isrenton,
-          rental_city,
-          rental_country,
-          rental_state,
-          rental_postcode,
-          staffMember,
-          // entryIndex: (entryIndex + 1).toString().padStart(2, '0'), // Add entryIndex
-          entryIndex: (existingRental.entries.length + 1).toString().padStart(2, '0'), 
-          createdAt: moment().format("YYYY-MM-DD HH:mm:ss"), 
-        };
+      // console.log(existingAddressInRental, "----------");
 
-        existingRental.entries.push(newEntry);
+      // if (existingAddressInRental) {
+      //   return res.status(400).json({
+      //     statusCode: 400,
+      //     message: `Entry with rental_adress '${rental_adress}' already exists within the same rental.`
+      //   });
+      // }
 
-        // Save the updated or newly created rental to get the _id of the new entry
-        await existingRental.save();
+      let existingRentals = await Rentals.findOne({
+        "entries.rental_adress": rental_adress,
+      });
+      
+      // Check if the rental_adress already exists in any rental
+      if (existingRentals) {
+        return res.status(201).json({
+          statusCode: 201,
+          message: `Entry with rental_adress '${rental_adress}' already exists in the system.`,
+        });
+      }
 
-        // Get the _id of the new entry
-        const newEntryId = existingRental.entries[existingRental.entries.length - 1]._id;
+      // If the address does not exist, push the new entry
+      const newEntry = {
+        property_type,
+        rental_adress,
+        isrenton,
+        rental_city,
+        rental_country,
+        rental_state,
+        rental_postcode,
+        staffMember,
+        entryIndex: (existingRental.entries.length + 1).toString().padStart(2, '0'), 
+        createdAt: moment().format("YYYY-MM-DD HH:mm:ss"), 
+      };
 
-        // Process commercial or residential entries and create PropertyUnits
-        const unitDataArray = commercial || residential || [];
+      existingRental.entries.push(newEntry);
 
-        if (Array.isArray(unitDataArray)) {
-          for (const unitData of unitDataArray) {
-            const propertyUnitData = {
-              rental_adress,
-              rental_city,
-              rental_country,
-              rental_state,
-              rental_postcode,
-              rentalId: existingRental._id,
-              description: "",
-              market_rent: isrenton ? unitData.rental_soft : entry.rentalcom_soft,
-              rental_bed: unitData.rental_bed,
-              rental_bath: unitData.rental_bath,
-              propertyres_image: unitData.propertyres_image,
-              rental_sqft: unitData.rental_sqft || unitData.rentalcom_sqft,
-              rental_units: unitData.rental_units || unitData.rentalcom_units,
-              rental_unitsAdress: unitData.rental_unitsAdress || unitData.rentalcom_unitsAdress,
-              property_image: unitData.property_image,
-              propertyId: newEntryId, // Assigning the _id of the new entry to propertyId
-            };
+      // Save the updated or newly created rental to get the _id of the new entry
+      await existingRental.save();
 
-            const propertyUnit = await PropertyUnit.create(propertyUnitData);
-          }
+      // Get the _id of the new entry
+      const newEntryId = existingRental.entries[existingRental.entries.length - 1]._id;
+
+      // Process commercial or residential entries and create PropertyUnits
+      const unitDataArray = commercial || residential || [];
+
+      if (Array.isArray(unitDataArray)) {
+        for (const unitData of unitDataArray) {
+          const propertyUnitData = {
+            rental_adress,
+            rental_city,
+            rental_country,
+            rental_state,
+            rental_postcode,
+            rentalId: existingRental._id,
+            description: "",
+            market_rent: isrenton ? unitData.rental_soft : entry.rentalcom_soft,
+            rental_bed: unitData.rental_bed,
+            rental_bath: unitData.rental_bath,
+            propertyres_image: unitData.propertyres_image,
+            rental_sqft: unitData.rental_sqft || unitData.rentalcom_sqft,
+            rental_units: unitData.rental_units || unitData.rentalcom_units,
+            rental_unitsAdress: unitData.rental_unitsAdress || unitData.rentalcom_unitsAdress,
+            property_image: unitData.property_image,
+            propertyId: newEntryId, // Assigning the _id of the new entry to propertyId
+          };
+
+          const propertyUnit = await PropertyUnit.create(propertyUnitData);
         }
       }
     }
 
-    res.json({
+    res.status(200).json({
       statusCode: 200,
       data: {
         rental_id: existingRental._id.toString(),
@@ -215,12 +225,16 @@ router.post("/rentals", async (req, res) => {
       message: "Add Rentals Successfully",
     });
   } catch (error) {
-    res.json({
+    res.status(500).json({
       statusCode: 500,
       message: error.message,
     });
   }
 });
+
+
+
+
 
 router.get("/rentals", async (req, res) => {
   try {
