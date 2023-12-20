@@ -101,6 +101,8 @@ router.get("/findworkorderbyId/:workorder_id", async (req, res) => {
   try {
     const workorder_id = req.params.workorder_id;
     var data = await Workorder.find({ workorder_id });
+
+    console.log(data, "workorder_id_________________________  ");
     data.reverse();
     res.json({
       data: data,
@@ -249,7 +251,10 @@ router.put("/workorder/:workorder_id", async (req, res) => {
 router.get("/workorder_summary/:workorder_id", async (req, res) => {
   try {
     const userId = req.params.workorder_id;
+
+    console.log(Workorder, "-------------------------YYYYYYYYYYYYYYYYYYYYYYYYY");
     var data = await Workorder.findOne({ workorder_id: userId });
+    console.log(data,'-------------------------------------------')
     if (data) {
       res.json({
         data: data,
