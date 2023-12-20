@@ -4,12 +4,12 @@ var Workorder = require("../../modals/Workorder");
 var moment = require("moment");
 // var {verifyToken} = require("../authentication");
 
-// Add workorder api
 // Add workorder API
 router.post("/workorder", async (req, res) => {
   try {
+    const createdAt = moment().add(1, "seconds").format("YYYY-MM-DD HH:mm:ss");
     const {
-      // createdAt = moment().format("YYYY-MM-DD HH:mm:ss"),
+      
       workorder_id,
       work_subject,
       rental_adress,
@@ -34,6 +34,7 @@ router.post("/workorder", async (req, res) => {
     } = req.body;
 
     const data = await Workorder.create({
+      createdAt:createdAt,
       workorder_id,
       work_subject,
       rental_adress,
@@ -142,6 +143,7 @@ router.delete("/deleteworkorderbyId/:workorder_id", async (req, res) => {
 
 router.put("/updateworkorder/:id", async (req, res) => {
   try {
+    req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     let result = await Workorder.findByIdAndUpdate(req.params.id, req.body);
     res.json({
       statusCode: 200,
@@ -271,7 +273,6 @@ router.get("/workorder_summary/:workorder_id", async (req, res) => {
 });
 
 // get workorder data as per rental address
-// get workorder data as per rental address
 router.get("/workorder/:rental_adress", async (req, res) => {
   try {
     const address = req.params.rental_adress;
@@ -323,14 +324,16 @@ router.get("/workorder/by-staff-member/:staffmember_name", async (req, res) => {
 });
 
 // get workorder data as per rental address
-router.get("/workorder/tenant/:rental_addresses", async (req, res) => {
+router.get("/workorder/tenant/:rental_addresses/:rental_units", async (req, res) => {
   try {
-    const rentalAddresses = req.params.rental_addresses.split("-");
+    const rentalAddresses = req.params.rental_addresses.split("^");
+    const rentalUnits = req.params.rental_units.split('^');
 
-    if (rentalAddresses.length === 1) {
-      // Handle a single rental address
+    if (rentalAddresses.length === 1 && rentalUnits.length === 1) {
       const singleAddress = rentalAddresses[0];
-      const data = await Workorder.find({ rental_adress: singleAddress });
+      const singleUnit = rentalUnits[0];
+
+      const data = await Workorder.find({ rental_adress: singleAddress, rental_units: singleUnit });
       if (data) {
         res.json({
           data: data,
@@ -347,6 +350,7 @@ router.get("/workorder/tenant/:rental_addresses", async (req, res) => {
       // Handle multiple rental addresses
       const data = await Workorder.find({
         rental_adress: { $in: rentalAddresses },
+        rental_units: { $in: rentalUnits }
       });
       if (data && data.length > 0) {
         res.json({

@@ -34,8 +34,8 @@ priority: { type: String },
 upload_file:{ type: String },
 final_total_amount: { type: Number },
 updateAt: { type: String },
-  createdAt: { type: String },
- // Parts and Labor Entries
+createdAt: { type: String },
+
  entries: [entrySchema],
 });
 

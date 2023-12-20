@@ -165,38 +165,38 @@ router.get("/find_agentname", async (req, res) => {
 
 
 // Login agent
-// router.post("/login", async (req, res) => {
-//   try {
-//     const user = await Addagent.findOne({ agent_email: req.body.agent_email });
-//     if (!user) {
-//       return res.json({ statusCode: 403, message: "User doesn't exist" });
-//     }
-//     const isMatch = await Addagent.findOne({ agent_password: req.body.agent_password });
-//     if (!isMatch) {
-//       return res.json({ statusCode: 402, message: "Enter Valid Password" });
-//     }
+router.post("/login", async (req, res) => {
+  try {
+    const user = await Addagent.findOne({ agent_email: req.body.agent_email });
+    if (!user) {
+      return res.json({ statusCode: 403, message: "User doesn't exist" });
+    }
+    const isMatch = await Addagent.findOne({ agent_password: req.body.agent_password });
+    if (!isMatch) {
+      return res.json({ statusCode: 402, message: "Enter Valid Password" });
+    }
 
-//     // console.log("User found:", user);
-//     // console.log("Password match:", isMatch);
+    // console.log("User found:", user);
+    // console.log("Password match:", isMatch);
 
-//     const tokens = await createToken({
-//       _id: user._id,
-//       agent_email: user.agent_email,
-//     });
+    const tokens = await createToken({
+      _id: user._id,
+      agent_email: user.agent_email,
+    });
 
-//     if (isMatch) {
-//       res.json({
-//         statusCode: 200,
-//         message: "User Authenticated",
-//         token: tokens,
-//         data: user,
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error:", error);
-//     res.status(500).json({ statusCode: 500, message: error.message });
-//   }
-// });
+    if (isMatch) {
+      res.json({
+        statusCode: 200,
+        message: "User Authenticated",
+        token: tokens,
+        data: user,
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ statusCode: 500, message: error.message });
+  }
+});
 
 
 
