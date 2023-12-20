@@ -11,6 +11,17 @@ router.post("/applicant", async (req, res) => {
     const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
     const createdAt = moment().add(1, "seconds").format("YYYY-MM-DD HH:mm:ss");
 
+    const existingTenant = await Applicant.findOne({
+      tenant_mobileNumber: req.body.tenant_mobileNumber,
+    });
+
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: "Applicant with the same mobile number already exists",
+      });
+    }
+
     const { statusUpdatedBy, ...restOfReqBody } = req.body;
 
     const applicantData = {
