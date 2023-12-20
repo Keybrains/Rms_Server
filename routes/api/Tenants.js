@@ -29,8 +29,6 @@ cron.schedule("49 5 * * *", async () => {
         { isCronjobRunning: true }
       );
 
-
-
       const tenants = await Tenants.find();
 
       tenants.forEach(async (tenant) => {
@@ -45,9 +43,7 @@ cron.schedule("49 5 * * *", async () => {
         });
       });
 
-
       //here set interveral of 20 sec
-
       await Cronjobs.updateOne(
         { _id: cronjobs[0]._id },
         { isCronjobRunning: false }
@@ -1107,6 +1103,18 @@ const transporter = nodemailer.createTransport({
 
 router.post("/tenant", async (req, res) => {
   try {
+    // Check if tenant with the same mobile number already exists
+    const existingTenant = await Tenants.findOne({
+      tenant_mobileNumber: req.body.tenant_mobileNumber,
+    });
+
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: "Tenant with the same mobile number already exists",
+      });
+    }
+
     var count = await Tenants.count();
     function pad(num) {
       num = num.toString();
