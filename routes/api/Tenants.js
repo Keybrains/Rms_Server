@@ -17,7 +17,7 @@ var NmiPayment = require("../../modals/NmiPayment");
 var Cronjobs = require("../../modals/cronjobs");
 const axios = require('axios');
 
-cron.schedule("* 12 * * *", async () => {
+cron.schedule("49 5 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
@@ -1176,7 +1176,7 @@ router.post("/tenant", async (req, res) => {
     });
 
     data.entries = entries;
-
+ 
     const tenantRentalAddress = entries[0].rental_adress;
 
     console.log(
