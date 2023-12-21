@@ -749,6 +749,7 @@ router.post("/nmi", async (req, res) => {
         description: "Recurring charging added",
         amount: webhook.event_body.plan.amount,
       });
+      console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
       //update user payment status to true
@@ -1045,40 +1046,40 @@ function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
 }
 
 
-router.post("/nmi", (req, res) => {
-  try {
-    const signingKey = 'CC8775A4CFD933614985209F6F68768B';
-    const webhookBody = JSON.stringify(req.body); // Assuming body is JSON
-    const sigHeader = req.headers['webhook-signature'];
+// router.post("/nmi", (req, res) => {
+//   try {
+//     const signingKey = 'CC8775A4CFD933614985209F6F68768B';
+//     const webhookBody = JSON.stringify(req.body); // Assuming body is JSON
+//     const sigHeader = req.headers['webhook-signature'];
 
-    if (!sigHeader || sigHeader.length < 1) {
-      throw new Error('Invalid webhook - signature header missing');
-    }
+//     if (!sigHeader || sigHeader.length < 1) {
+//       throw new Error('Invalid webhook - signature header missing');
+//     }
 
-    const sigMatches = sigHeader.match(/t=(.*),s=(.*)/);
-    if (!sigMatches || sigMatches.length !== 3) {
-      throw new Error('Unrecognized webhook signature format');
-    }
+//     const sigMatches = sigHeader.match(/t=(.*),s=(.*)/);
+//     if (!sigMatches || sigMatches.length !== 3) {
+//       throw new Error('Unrecognized webhook signature format');
+//     }
 
-    const nonce = sigMatches[1];
-    const signature = sigMatches[2];
+//     const nonce = sigMatches[1];
+//     const signature = sigMatches[2];
 
-    if (!webhookIsVerified(webhookBody, signingKey, nonce, signature)) {
-      throw new Error('Invalid webhook - invalid signature, cannot verify sender');
-    }
+//     if (!webhookIsVerified(webhookBody, signingKey, nonce, signature)) {
+//       throw new Error('Invalid webhook - invalid signature, cannot verify sender');
+//     }
 
-    // Webhook is now verified to have been sent by you, continue processing
-    console.log('Webhook is verified');
-    const webhook = req.body; // Assuming JSON payload
-    console.log(webhook);
+//     // Webhook is now verified to have been sent by you, continue processing
+//     console.log('Webhook is verified');
+//     const webhook = req.body; // Assuming JSON payload
+//     console.log(webhook);
 
-    res.status(200).send('Webhook processed successfully');
-  } catch (error) {
-    console.error('Error handling webhook:', error);
-    res.status(500).send('Error processing webhook');
-  }
+//     res.status(200).send('Webhook processed successfully');
+//   } catch (error) {
+//     console.error('Error handling webhook:', error);
+//     res.status(500).send('Error processing webhook');
+//   }
 
-});
+// });
 
 
 const sendResponse = (res, data, status = 200) => {
