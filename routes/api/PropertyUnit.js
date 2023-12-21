@@ -7,6 +7,7 @@ router.post("/propertyunit", async (req, res) => {
   try {
     let findPropertyUnit = await PropertyUnit.findOne({
       rental_units: req.body.rental_units,
+      rental_adress: req.body.rental_adress,
     });
     if (!findPropertyUnit) {
       var data = await PropertyUnit.create(req.body);
@@ -17,7 +18,7 @@ router.post("/propertyunit", async (req, res) => {
       });
     } else {
       res.json({
-        statusCode: 500,
+        statusCode: 201,
         message: `${req.body.rental_units} Name Already Added`,
       });
     }
