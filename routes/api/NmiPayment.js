@@ -424,6 +424,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       first_name,
       last_name,
       address,
+      email,
       // city,
       // state,
       // zip,
@@ -443,6 +444,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       first_name: first_name,
       last_name: last_name,
       address1: address,
+      email,
       // city: city,
       // state: state,
       // zip: zip,
@@ -821,6 +823,15 @@ router.post("/nmi", async (req, res) => {
       const payment = await AutoRecPayments.create({
         email: webhook.event_body.email,
         description: "Recurring charging transaction capture failure",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    }
+    else if (webhook.event_type === "transaction.credit.failure") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.email,
+        description: "Recurring charging transaction credit failure",
         amount: webhook.event_body.plan.amount,
       });
       //Save payment details of the user in payment collection
