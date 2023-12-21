@@ -468,7 +468,7 @@ router.post("/custom-add-subscription", async (req, res) => {
           sendResponse(res, "Custom subscription added successfully.");
         } else {
           // Handle subscription creation failure
-          sendResponse(res, parsedRseponse.responsetext, 403);
+          sendResponse(res, parsedResponse.responsetext, 403);
         }
       })
       .catch(function (error) {
