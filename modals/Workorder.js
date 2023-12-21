@@ -35,6 +35,7 @@ upload_file:{ type: String },
 final_total_amount: { type: Number },
 updateAt: { type: String },
 createdAt: { type: String },
+workOrderImage:{type: Array },
 
  entries: [entrySchema],
 });
