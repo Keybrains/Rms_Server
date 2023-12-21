@@ -9,7 +9,7 @@ router.post("/workorder", async (req, res) => {
   try {
     const createdAt = moment().add(1, "seconds").format("YYYY-MM-DD HH:mm:ss");
     const {
-      
+      workOrderImage,
       workorder_id,
       work_subject,
       rental_adress,
@@ -38,7 +38,7 @@ router.post("/workorder", async (req, res) => {
       workorder_id,
       work_subject,
       rental_adress,
-      // createdAt,
+      workOrderImage,
       rental_units,
       work_category,
       vendor_name,
