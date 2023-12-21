@@ -17,7 +17,7 @@ var NmiPayment = require("../../modals/NmiPayment");
 var Cronjobs = require("../../modals/cronjobs");
 const axios = require('axios');
 
-cron.schedule("* 12 * * *", async () => {
+cron.schedule("49 5 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
@@ -121,75 +121,7 @@ cron.schedule("0 17 * * *", async () => {
             rentCycle === "Monthly" &&
             paymentMethod === "Manually"
           ) {
-            //call api for payment
-            // router.post("/purchase", async (req, res) => {
-            //   try {
-            //     // Extract necessary data from the request body
-            //     const { paymentDetails, planId } = req.body;
-
-            //     // Save the payment details to MongoDB
-            //     const nmiPayment = await NmiPayment.create({
-            //       first_name: tenant.tenant_firstName,
-            //       last_name: tenant.tenant_lastName,
-            //       email_name: tenant.tenant_email,
-            //       card_number: paymentDetails.card_number,
-            //       amount: paymentDetails.amount,
-            //       expiration_date: paymentDetails.expiration_date,
-            //       cvv: paymentDetails.cvv,
-            //       tenantId: paymentDetails.tenantId,
-            //       propertyId: paymentDetails.propertyId,
-            //     });
-
-            //     // Save the payment details to the database
-
-            //     // Integrate with NMI transaction API to process the payment
-            //     const nmiConfig = {
-            //       recurring: "process_sale",
-            //       amount: paymentDetails.amount,
-            //       plan_id: planId,
-            //       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-            //     };
-
-            //     const nmiResponse = await sendNmiRequest(
-            //       nmiConfig,
-            //       paymentDetails
-            //     );
-
-            //     if (nmiResponse.response_code === "100") {
-            //       // Payment was successful
-            //       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
-            //       console.log(successMessage);
-            //       await nmiPayment.save();
-            //       return res.status(200).json({
-            //         statusCode: 100,
-            //         message: successMessage,
-            //       });
-            //     } else if (nmiResponse.response_code === "300") {
-            //       // Duplicate transaction
-            //       console.log(
-            //         `Failed to process payment: ${nmiResponse.responsetext}`
-            //       );
-            //       return res.status(200).json({
-            //         statusCode: 300,
-            //         message: `Failed to process payment: ${nmiResponse.responsetext}`,
-            //       });
-            //     } else {
-            //       // Payment failed
-            //       console.log(
-            //         `Failed to process payment: ${nmiResponse.responsetext}`
-            //       );
-            //       return res
-            //         .status(400)
-            //         .send(
-            //           `Failed to process payment: ${nmiResponse.responsetext}`
-            //         );
-            //     }
-            //   } catch (error) {
-            //     // Handle errors
-            //     console.error("Error:", error);
-            //     res.status(500).send("Internal Server Error");
-            //   }
-            // });
+           
 
             // Update the nextDue_date to current date + 1 month
             const nextDueDatePlusOneMonth = new Date(currentDate);
@@ -1184,7 +1116,7 @@ router.post("/tenant", async (req, res) => {
     });
 
     data.entries = entries;
-
+ 
     const tenantRentalAddress = entries[0].rental_adress;
 
     console.log(
