@@ -4,12 +4,12 @@ var Workorder = require("../../modals/Workorder");
 var moment = require("moment");
 // var {verifyToken} = require("../authentication");
 
-// Add workorder api
 // Add workorder API
 router.post("/workorder", async (req, res) => {
   try {
+    const createdAt = moment().add(1, "seconds").format("YYYY-MM-DD HH:mm:ss");
     const {
-      // createdAt = moment().format("YYYY-MM-DD HH:mm:ss"),
+      
       workorder_id,
       work_subject,
       rental_adress,
@@ -34,6 +34,7 @@ router.post("/workorder", async (req, res) => {
     } = req.body;
 
     const data = await Workorder.create({
+      createdAt:createdAt,
       workorder_id,
       work_subject,
       rental_adress,
@@ -144,6 +145,7 @@ router.delete("/deleteworkorderbyId/:workorder_id", async (req, res) => {
 
 router.put("/updateworkorder/:id", async (req, res) => {
   try {
+    req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     let result = await Workorder.findByIdAndUpdate(req.params.id, req.body);
     res.json({
       statusCode: 200,
