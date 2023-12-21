@@ -11,6 +11,17 @@ router.post("/applicant", async (req, res) => {
     const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
     const createdAt = moment().add(1, "seconds").format("YYYY-MM-DD HH:mm:ss");
 
+    const existingTenant = await Applicant.findOne({
+      tenant_mobileNumber: req.body.tenant_mobileNumber,
+    });
+
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: "Applicant with the same mobile number already exists",
+      });
+    }
+
     const { statusUpdatedBy, ...restOfReqBody } = req.body;
 
     const applicantData = {
@@ -283,7 +294,9 @@ router.delete("/applicant", async (req, res) => {
 //edit rentals
 router.put("/applicant/:id", async (req, res) => {
   try {
+    req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     let result = await Applicant.findByIdAndUpdate(req.params.id, req.body);
+  
     res.json({
       statusCode: 200,
       data: result,
