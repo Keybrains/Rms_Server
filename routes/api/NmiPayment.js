@@ -752,7 +752,7 @@ router.post("/nmi", async (req, res) => {
         description: "Recurring charging added",
         amount: webhook.event_body.plan.amount,
       });
-      console.log("req.body is here : ",req.body);
+      console.log("req.body is here : ", req.body);
       console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
@@ -769,33 +769,55 @@ router.post("/nmi", async (req, res) => {
       // }
     } else if (webhook.event_type === "recurring.subscription.update") {
       const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging subscription update",
         amount: webhook.event_body.plan.amount,
       });
-
       //Save payment details of the user in payment collection
       await payment.save();
     } else if (webhook.event_type === "recurring.subscription.delete") {
       const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging subscription delete",
         amount: webhook.event_body.plan.amount,
       });
       //Save payment details of the user in payment collection
       await payment.save();
-    }else if (webhook.event_type === "transaction.auth.failure") {
+    } else if (webhook.event_type === "recurring.plan.add") {
       const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging plan add",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "recurring.plan.update") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging plan update",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "recurring.plan.delete") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging plan delete",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.auth.failure") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging transaction auth failure",
         amount: webhook.event_body.plan.amount,
       });
-
       //Save payment details of the user in payment collection
       await payment.save();
     } else if (webhook.event_type === "transaction.auth.success") {
       const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging transaction auth success",
         amount: webhook.event_body.plan.amount,
       });
@@ -804,7 +826,7 @@ router.post("/nmi", async (req, res) => {
       await payment.save();
     } else if (webhook.event_type === "transaction.auth.unknown") {
       const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging transaction auth unknown",
         amount: webhook.event_body.plan.amount,
       });
@@ -813,33 +835,168 @@ router.post("/nmi", async (req, res) => {
       await payment.save();
     } else if (webhook.event_type === "transaction.capture.success") {
       const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging transaction capture success",
-        amount: webhook.event_body.plan.amount,
-      });
-      //Save payment details of the user in payment collection
-      await payment.save();
-    } else if (webhook.event_type === "transaction.credit.success") {
-      const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
-        description: "Recurring charging transaction credit success",
         amount: webhook.event_body.plan.amount,
       });
       //Save payment details of the user in payment collection
       await payment.save();
     } else if (webhook.event_type === "transaction.capture.failure") {
       const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging transaction capture failure",
         amount: webhook.event_body.plan.amount,
       });
       //Save payment details of the user in payment collection
       await payment.save();
-    }
-    else if (webhook.event_type === "transaction.credit.failure") {
+    } else if (webhook.event_type === "transaction.capture.unknown") {
       const payment = await AutoRecPayments.create({
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction capture unknown",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.credit.success") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction credit success",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.credit.failure") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging transaction credit failure",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.credit.unknown") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction credit unknown",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "settlement.batch.complete") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging settlement batch complete",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "settlement.batch.failure") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging settlement batch failure",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.sale.failure") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction sale failure",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.sale.success") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction sale success",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.sale.unknown") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction sale unknown",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.void.success") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction void success",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.void.failure") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction void failure",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.void.unknown") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction void unknown",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.refund.success") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction refund success",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.refund.failure") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction refund failure",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.refund.unknown") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction refund unknown",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.validate.success") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction validate success",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.validate.failure") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction validate failure",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "transaction.validate.unknown") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging transaction validate unknown",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    } else if (webhook.event_type === "chargeback.batch.complete") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.billing_address.email,
+        description: "Recurring charging chargeback batch complete",
         amount: webhook.event_body.plan.amount,
       });
       //Save payment details of the user in payment collection
@@ -852,6 +1009,7 @@ router.post("/nmi", async (req, res) => {
     res.status(500).send("Error processing webhook");
   }
 });
+
 
 router.post("/nmis", async (req, res) => {
   try {
