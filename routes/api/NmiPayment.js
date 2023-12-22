@@ -776,7 +776,15 @@ router.post("/nmi", async (req, res) => {
 
       //Save payment details of the user in payment collection
       await payment.save();
-    } else if (webhook.event_type === "transaction.auth.failure") {
+    } else if (webhook.event_type === "recurring.subscription.delete") {
+      const payment = await AutoRecPayments.create({
+        email: webhook.event_body.email,
+        description: "Recurring charging subscription delete",
+        amount: webhook.event_body.plan.amount,
+      });
+      //Save payment details of the user in payment collection
+      await payment.save();
+    }else if (webhook.event_type === "transaction.auth.failure") {
       const payment = await AutoRecPayments.create({
         email: webhook.event_body.email,
         description: "Recurring charging transaction auth failure",
