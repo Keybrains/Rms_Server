@@ -748,7 +748,7 @@ router.post("/nmi", async (req, res) => {
         // paymentplanId: gymOwner.nmiplanId,
         // memberId: gymOwner._id,
         nmisubscriptionId: webhook.event_body.subscription_id,
-        email: webhook.event_body.email,
+        email: webhook.event_body.billing_address.email,
         description: "Recurring charging added",
         amount: webhook.event_body.plan.amount,
       });
@@ -1051,12 +1051,12 @@ router.post("/nmis", async (req, res) => {
 // });
 
 
-function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
-  const calculatedSig = crypto.createHmac('sha256', signingKey)
-    .update(`${nonce}.${webhookBody}`)
-    .digest('hex');
-  return sig === calculatedSig;
-}
+// function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
+//   const calculatedSig = crypto.createHmac('sha256', signingKey)
+//     .update(`${nonce}.${webhookBody}`)
+//     .digest('hex');
+//   return sig === calculatedSig;
+// }
 
 
 // router.post("/nmi", (req, res) => {
