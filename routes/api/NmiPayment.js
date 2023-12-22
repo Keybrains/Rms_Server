@@ -419,6 +419,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       plan_amount,
       dayFrequency,
       ccnumber,
+      email,
       ccexp,
       first_name,
       last_name,
@@ -438,6 +439,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       plan_amount,
       day_frequency: dayFrequency ? dayFrequency : 30,
       ccnumber,
+      email,
       ccexp,
       first_name: first_name,
       last_name: last_name,
@@ -447,7 +449,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       // zip: zip,
       /* Include other necessary parameters for subscription */
     };
-    console.log(postData," middled");
+    console.log(postData, " middled");
 
     postData = querystring.stringify(postData);
 
@@ -468,7 +470,7 @@ router.post("/custom-add-subscription", async (req, res) => {
           sendResponse(res, "Custom subscription added successfully.");
         } else {
           // Handle subscription creation failure
-          sendResponse(res, parsedRseponse.responsetext, 403);
+          sendResponse(res, parsedResponse.responsetext, 403);
         }
       })
       .catch(function (error) {
