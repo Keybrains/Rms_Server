@@ -230,7 +230,7 @@ router.delete("/delete_workorder", async (req, res) => {
 //edit workorder
 router.put("/workorder/:workorder_id", async (req, res) => {
   try {
-    // req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     let result = await Workorder.updateOne(
       { workorder_id: req.params.workorder_id },
       req.body
