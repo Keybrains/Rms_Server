@@ -31,6 +31,7 @@ var PropertyUnitRouter = require("./routes/api/PropertyUnit");
 var AddChargeAndPaymentRouter = require("./routes/api/AddChargeAndPayment")
 var NmiPaymentRouter = require("./routes/api/NmiPayment")
 var webhookRoutes = require('./routes/api/webhook')
+var imagesRouter = require('./routes/api/Images')
 
 var app = express();
 
@@ -69,6 +70,7 @@ app.use("/api/propertyunit",PropertyUnitRouter);
 app.use("/api/payment_charge",AddChargeAndPaymentRouter);
 app.use("/api/nmipayment",NmiPaymentRouter);
 app.use('/api/webhook', webhookRoutes)
+app.use('/api/images', imagesRouter)
 app.use(function (req, res, next) {
   next(createError(404));
 });

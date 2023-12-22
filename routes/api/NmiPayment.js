@@ -440,11 +440,11 @@ router.post("/custom-add-subscription", async (req, res) => {
       plan_amount,
       day_frequency: dayFrequency ? dayFrequency : 30,
       ccnumber,
+      email,
       ccexp,
       first_name: first_name,
       last_name: last_name,
       address1: address,
-      email,
       // city: city,
       // state: state,
       // zip: zip,
@@ -1244,13 +1244,14 @@ router.post("/nmis", async (req, res) => {
 //   }
 // });
 
+
 // function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
-//   const calculatedSig = crypto
-//     .createHmac("sha256", signingKey)
+//   const calculatedSig = crypto.createHmac('sha256', signingKey)
 //     .update(`${nonce}.${webhookBody}`)
-//     .digest("hex");
+//     .digest('hex');
 //   return sig === calculatedSig;
 // }
+
 
 // router.post("/nmi", (req, res) => {
 //   try {
