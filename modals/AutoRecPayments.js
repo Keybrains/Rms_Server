@@ -17,6 +17,10 @@ const autoRecpaymentSchema = new Schema({
     //     ref: "users",
     //     required: true
     // },
+    nmiSubscriptionId: {
+        type:String,
+        default:null
+      },
     email: {
         type: String,
         default: ""
