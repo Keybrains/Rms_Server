@@ -55,8 +55,7 @@ router.post("/upload", upload.array("files", 5), async (req, res) => {
                 return {
                     fileType: file.mimetype.split("/")[1],
                     index: index,
-                    filename: file.filename,sky
-                    
+                    filename: file.filename,                    
                     url: url
                 };
             } else if (file.mimetype === "application/pdf") {
