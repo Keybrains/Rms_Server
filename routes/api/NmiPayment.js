@@ -425,6 +425,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       last_name,
       address,
       email,
+      start_date,
       // city,
       // state,
       // zip,
@@ -445,6 +446,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       first_name: first_name,
       last_name: last_name,
       address1: address,
+      start_date: start_date,
       // city: city,
       // state: state,
       // zip: zip,
@@ -465,7 +467,7 @@ router.post("/custom-add-subscription", async (req, res) => {
     axios(config)
       .then(async (response) => {
         const parsedResponse = querystring.parse(response.data);
-        console.log("ek ek krne", parsedResponse);
+        // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
           sendResponse(res, "Custom subscription added successfully.");
