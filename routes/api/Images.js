@@ -14,7 +14,7 @@ const hours = String(currentDate.getHours()).padStart(2, '0');
 const minutes = String(currentDate.getMinutes()).padStart(2, '0');
 const seconds = String(currentDate.getSeconds()).padStart(2, '0');
 const formattedDateTime = `${year}-${month}-${day}-${hours}-${minutes}-${seconds}-`;
-
+console.log("currentdate and time by yash : ", formattedDateTime);
 //defined storage path
 const storage = multer.diskStorage({
 
