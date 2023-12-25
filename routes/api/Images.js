@@ -6,15 +6,17 @@ const path = require('path');
 const baseUrl = process.env.REACT_APP_BASE_URL;
 
 //set currunt time to add before filename to identify
-const currentDate = new Date();
-const year = currentDate.getFullYear();
-const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-const day = String(currentDate.getDate()).padStart(2, '0');
-const hours = String(currentDate.getHours()).padStart(2, '0');
-const minutes = String(currentDate.getMinutes()).padStart(2, '0');
-const seconds = String(currentDate.getSeconds()).padStart(2, '0');
-const formattedDateTime = `${year}-${month}-${day}-${hours}-${minutes}-${seconds}-`;
-console.log("currentdate and time by yash : ", formattedDateTime);
+function getCurrentDateAndTime() {
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const hours = String(currentDate.getHours()).padStart(2, '0');
+    const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+    const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+    return formattedDateTime = `${year}-${month}-${day}-${hours}-${minutes}-${seconds}-`;
+}
+
 //defined storage path
 const storage = multer.diskStorage({
 
@@ -45,7 +47,7 @@ const storage = multer.diskStorage({
         cb(null, destinationFolder);
     },
     filename: function (req, file, cb) {
-        cb(null, formattedDateTime + file.originalname.replace(/\s/g, ''));
+        cb(null, getCurrentDateAndTime() + file.originalname.replace(/\s/g, ''));
     },
 });
 
@@ -53,7 +55,6 @@ const upload = multer({ storage: storage });
 
 //upload sinle and multiple files
 router.post("/upload", upload.array("files", 12), async (req, res) => {
-    console.log(req.files)
     try {
         const uploadedFiles = req.files.map((file, index) => {
             if (file.mimetype === "image/jpeg" ||
@@ -98,7 +99,6 @@ router.post("/upload", upload.array("files", 12), async (req, res) => {
     }
 });
 
-//get files by filetype and filename
 router.get("/upload/:filetype/:filename", async (req, res) => {
     try {
         const filename = req.params.filename;
@@ -110,6 +110,7 @@ router.get("/upload/:filetype/:filename", async (req, res) => {
         // Check if the file exists
         if (filetype === "images") {
             const filePath = path.join("./files/", filetype, filename);
+            console.log(filePath)
             if (fs.existsSync(filePath)) {
                 // Read the file and send it in the response
                 const fileBuffer = fs.readFileSync(filePath);
