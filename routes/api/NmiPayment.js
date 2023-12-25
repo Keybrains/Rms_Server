@@ -425,6 +425,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       last_name,
       address,
       email,
+      start_date,
       // city,
       // state,
       // zip,
@@ -445,6 +446,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       first_name: first_name,
       last_name: last_name,
       address1: address,
+      start_date: start_date,
       // city: city,
       // state: state,
       // zip: zip,
@@ -465,7 +467,7 @@ router.post("/custom-add-subscription", async (req, res) => {
     axios(config)
       .then(async (response) => {
         const parsedResponse = querystring.parse(response.data);
-        console.log("ek ek krne", parsedResponse);
+        // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
           sendResponse(res, "Custom subscription added successfully.");
@@ -753,7 +755,7 @@ router.post("/nmi", async (req, res) => {
         amount: webhook.event_body.plan.amount,
       });
       console.log("req.body is here : ", req.body);
-      console.log("email from NMI resp: ", webhook.event_body.email);
+      // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
       //update user payment status to true
@@ -1287,7 +1289,6 @@ router.post("/nmis", async (req, res) => {
 //   }
 
 // });
-
 
 const sendResponse = (res, data, status = 200) => {
   if (status !== 200) {
