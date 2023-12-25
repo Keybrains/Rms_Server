@@ -3,72 +3,6 @@ var router = express.Router();
 var ObjectId = require("mongodb").ObjectId;
 var AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
 
-
-// router.post("/payment_charge", async (req, res) => {
-//   try {
-//     const { properties, unit } = req.body;
-
-//     // Check if a record with the provided property_id and rental_adress exists
-//     const existingRecord = await AddPaymentAndCharge.findOne({
-//       "properties.property_id": properties.property_id,
-//       "properties.rental_adress": properties.rental_adress,
-//     });
-//     const existingRecord1 = await AddPaymentAndCharge.findById(existingRecordId);
-//     console.log("Existing Record:", existingRecord1);
-
-//     if (!existingRecord) {
-//       // If the record does not exist, create a new one
-//       const newData = await AddPaymentAndCharge.create(req.body);
-//       res.json({
-//         statusCode: 200,
-//         data: newData,
-//         message: "Add payment Successfully",
-//       });
-//     } else {
-//       if (unit && unit.length > 0) {
-//         // Find the existing unit by unit and unit_id
-//         const existingUnit = existingRecord.unit.find(
-//           (u) => u.unit === unit[0].unit && u.unit_id === unit[0].unit_id
-//         );
-
-//         if (existingUnit) {
-//           // If the unit exists, push the new paymentAndCharges data into it
-//           existingUnit.paymentAndCharges.push(...unit[0].paymentAndCharges);
-//         } else {
-//           // If the unit does not exist, create a new unit
-//           existingRecord.unit.push({
-//             unit: unit[0].unit,
-//             unit_id: unit[0].unit_id,
-//             paymentAndCharges: unit[0].paymentAndCharges,
-//           });
-//         }
-//       } else {
-//         // If unit information is not present, create a new record without unit
-//         const newRecord = await AddPaymentAndCharge.create(req.body);
-//         res.json({
-//           statusCode: 200,
-//           data: newRecord,
-//           message: "Add payment Successfully",
-//         });
-//         return; // Return to prevent the code below from executing
-//       }
-
-//       const updatedData = await existingRecord.save();
-
-//       res.json({
-//         statusCode: 200,
-//         data: updatedData,
-//         message: "Update payment Successfully",
-//       });
-//     }
-//   } catch (error) {
-//     res.json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
-
 router.post("/payment_charge", async (req, res) => {
   try {
     const { properties, unit } = req.body;
@@ -132,40 +66,6 @@ router.post("/payment_charge", async (req, res) => {
   }
 });
 
-router.delete("/delete_entry/:entryId", async (req, res) => {
-  try {
-    const { entryId } = req.params;
-
-    const updatedEntry = await AddPaymentAndCharge.findOneAndUpdate(
-      { "unit.paymentAndCharges._id": new ObjectId(entryId) },
-      {
-        $pull: {
-          "unit.$.paymentAndCharges": { _id: new ObjectId(entryId) }
-        }
-      },
-      { new: true }
-    );
-
-    if (!updatedEntry) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "Entry not found",
-      });
-    }
-
-    res.json({
-      statusCode: 200,
-      data: updatedEntry,
-      message: "Entry deleted successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
-
 router.get("/get_entry/:entryId", async (req, res) => {
   try {
     const { entryId } = req.params;
@@ -201,81 +101,6 @@ router.get("/get_entry/:entryId", async (req, res) => {
     });
   }
 });
-
-// // Unit pass and get Data - Sorting and Calculating (All Working ok)
-
-// // without unit pass and get Data - Sorting and Calculating (All Working ok)
-// router.get("/financial", async (req, res) => {
-//   try {
-//     const { rental_adress, property_id, unit, tenant_id } = req.query;
-
-//     // Construct the query object based on the provided parameters
-//     const query = {
-//       "properties.rental_adress": rental_adress,
-//       "properties.property_id": property_id,
-//       $or: [
-//         { "unit.unit": unit },
-//         { unit: { $exists: false } },
-//         { unit: { $elemMatch: { unit: unit } } },
-//         { unit: { $elemMatch: { unit: "" } } },
-//       ],
-//       "unit.paymentAndCharges.tenant_id": tenant_id,
-//     };
-
-//     // Remove undefined parameters from the query object
-//     Object.keys(query).forEach((key) => query[key] === undefined && delete query[key]);
-
-//     // Use the constructed query object to filter the data
-//     const data = await AddPaymentAndCharge.find(query, { "unit.$": 1 });
-
-//     // Iterate through the result and calculate "Total" and "Balance" for each element
-//     const processedData = data.map((item) => ({
-//       ...item.toObject(), // Convert Mongoose document to plain JavaScript object
-//       unit: item.unit.map((unitItem) => ({
-//         ...unitItem.toObject(),
-//         paymentAndCharges: unitItem.paymentAndCharges.map((charge) => ({
-//           ...charge.toObject(),
-//           Balance: charge.type === "Charge" ? charge.amount : -charge.amount,
-//           Total: 0, // Initialize Total to 0
-//         })),
-//       })),
-//     }));
-
-//     const sortedData = processedData.map((item) => ({
-//       ...item,
-//       unit: item.unit.map((unitItem) => ({
-//           ...unitItem,
-//           paymentAndCharges: unitItem.paymentAndCharges.sort((a, b) =>
-//               new Date(b.date) - new Date(a.date)
-//           ),
-//       })),
-//   }));
-
-//     // Iterate through the result and calculate "Total" and "RunningTotal" for each element
-//     sortedData.forEach((item) => {
-//       item.unit.forEach((unit) => {
-//         let runningTotal = 0;
-
-//         unit.paymentAndCharges.forEach((charge) => {
-//           charge.RunningTotal = runningTotal;
-//           charge.Total = runningTotal + charge.Balance;
-//           runningTotal = charge.Total;
-//         });
-//       });
-//     });
-
-//     res.json({
-//       statusCode: 200,
-//       data: sortedData,
-//       message: "Read Filtered PaymentAndCharge",
-//     });
-//   } catch (error) {
-//     res.json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
 
 router.get("/financial", async (req, res) => {
   try {
@@ -628,6 +453,74 @@ router.put("/edit_entry/:entryId", async (req, res) => {
     });
   }
 });
+
+//API for property financial
+router.get("/property_financial", async (req, res) => {
+  try {
+    const { rental_adress, property_id } = req.query;
+
+    // Construct the query object based on the provided parameters
+    const query = {
+      "properties.rental_adress": rental_adress,
+      "properties.property_id": property_id,
+    };
+
+    // Remove undefined parameters from the query object
+    Object.keys(query).forEach(
+      (key) => query[key] === undefined && delete query[key]
+    );
+
+    // Use the constructed query object to filter the data
+    const data = await AddPaymentAndCharge.find(query);
+
+    // Iterate through the result and calculate "Total" and "RunningTotal" for each element
+    const processedData = data.map((item) => ({
+      ...item.toObject(),
+      unit: item.unit.map((unitItem) => ({
+        ...unitItem.toObject(),
+        paymentAndCharges: unitItem.paymentAndCharges.map((charge) => ({
+          ...charge.toObject(),
+          Balance: charge.type === "Charge" ? charge.amount : -charge.amount,
+          Total: 0, // Initialize Total to 0
+        })),
+      })),
+    }));
+
+    processedData.forEach((item) => {
+      item.unit.forEach((unit) => {
+        let runningTotal = 0;
+
+        unit.paymentAndCharges.forEach((charge) => {
+          charge.RunningTotal = runningTotal;
+          charge.Total = runningTotal + charge.Balance;
+          runningTotal = charge.Total;
+        });
+      });
+    });
+
+    const sortedData = processedData.map((item) => ({
+      ...item,
+      unit: item.unit.map((unitItem) => ({
+        ...unitItem,
+        paymentAndCharges: unitItem.paymentAndCharges.sort(
+          (a, b) => new Date(b.date) - new Date(a.date)
+        ),
+      })),
+    }));
+
+    res.json({
+      statusCode: 200,
+      data: sortedData,
+      message: "Read Filtered PaymentAndCharge",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 
 // router.put("/charge_paid", async (req, res) => {
 //   try {
