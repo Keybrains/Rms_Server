@@ -757,6 +757,7 @@ router.post("/nmi", async (req, res) => {
         description: "Recurring charging added",
         amount: webhook.event_body.plan.amount,
       });
+      console.log("payment is here : ", payment);
       console.log("req.body is here : ", req.body);
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
