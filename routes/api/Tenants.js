@@ -1131,7 +1131,7 @@ router.post("/tenant", async (req, res) => {
         (entry) => entry.rental_adress === tenantRentalAddress
       );
 
-      console.log("Matching Entry:", matchingEntry);
+      //console.log("Matching Entry:", matchingEntry);
 
       if (
         matchingEntry &&

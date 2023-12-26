@@ -1,3 +1,4 @@
+//#region var
 var express = require("express");
 var router = express.Router();
 var NmiPayment = require("../../modals/NmiPayment");
@@ -6,7 +7,7 @@ var AutoRecPayments = require("../../modals/AutoRecPayments");
 var axios = require("axios");
 var crypto = require("crypto");
 var querystring = require("querystring");
-
+//#endregion
 // ===========================================================================================================================
 
 router.post("/purchase", async (req, res) => {
@@ -410,7 +411,7 @@ router.post("/add-plan", async (req, res) => {
 
 router.post("/custom-add-subscription", async (req, res) => {
   try {
-    console.log("started");
+    console.log("................started...............");
     const {
       security_key,
       recurring,
@@ -425,6 +426,8 @@ router.post("/custom-add-subscription", async (req, res) => {
       last_name,
       address,
       email,
+      // nextDue_date,
+      // start_date,
       // city,
       // state,
       // zip,
@@ -445,12 +448,14 @@ router.post("/custom-add-subscription", async (req, res) => {
       first_name: first_name,
       last_name: last_name,
       address1: address,
+      // next_charge_date: nextDue_date,
+      // start_date: start_date,
       // city: city,
       // state: state,
       // zip: zip,
       /* Include other necessary parameters for subscription */
     };
-    console.log(postData, " middled");
+    console.log("...........postData..........", postData);
 
     postData = querystring.stringify(postData);
 
@@ -465,7 +470,7 @@ router.post("/custom-add-subscription", async (req, res) => {
     axios(config)
       .then(async (response) => {
         const parsedResponse = querystring.parse(response.data);
-        console.log("ek ek krne", parsedResponse);
+        // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
           sendResponse(res, "Custom subscription added successfully.");
@@ -753,7 +758,7 @@ router.post("/nmi", async (req, res) => {
         amount: webhook.event_body.plan.amount,
       });
       console.log("req.body is here : ", req.body);
-      console.log("email from NMI resp: ", webhook.event_body.email);
+      // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
       //update user payment status to true
@@ -1287,7 +1292,6 @@ router.post("/nmis", async (req, res) => {
 //   }
 
 // });
-
 
 const sendResponse = (res, data, status = 200) => {
   if (status !== 200) {

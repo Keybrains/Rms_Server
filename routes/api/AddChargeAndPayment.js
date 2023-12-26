@@ -519,7 +519,7 @@ router.put("/edit_entry/:entryId", async (req, res) => {
 //         $match: {
 //           "unit.paymentAndCharges": {
 //             $elemMatch: {
-              
+
 //               "isPaid": false,
 //               "tenant_id": tenant_id,
 //             },
