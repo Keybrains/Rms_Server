@@ -138,6 +138,7 @@ router.post("/rentals", async (req, res) => {
         staffMember,
         commercial,
         residential,
+        type,
       } = entry;
 
       // Check if the rental_adress already exists within the same rental
@@ -176,6 +177,7 @@ router.post("/rentals", async (req, res) => {
         rental_state,
         rental_postcode,
         staffMember,
+        type,
         entryIndex: (existingRental.entries.length + 1).toString().padStart(2, '0'), 
         createdAt: moment().format("YYYY-MM-DD HH:mm:ss"), 
       };
@@ -201,6 +203,7 @@ router.post("/rentals", async (req, res) => {
             rental_postcode,
             rentalId: existingRental._id,
             description: "",
+            type,
             market_rent: isrenton ? unitData.rental_soft : entry.rentalcom_soft,
             rental_bed: unitData.rental_bed,
             rental_bath: unitData.rental_bath,
@@ -231,10 +234,6 @@ router.post("/rentals", async (req, res) => {
     });
   }
 });
-
-
-
-
 
 router.get("/rentals", async (req, res) => {
   try {
@@ -477,7 +476,6 @@ router.put("/rentals/:id", async (req, res) => {
 });
 
 //put api add new entry in existing rentalowner
-
 router.put("/rental/:id", async (req, res) => {
   try {
     const rentalId = req.params.id;
@@ -669,25 +667,6 @@ router.post("/filterproperty/owners", async (req, res) => {
   }
 });
 
-// find rental_address(proparty in lease form)
-// router.get("/property", async (req, res) => {
-//   try {
-//     var data = await Rentals.find({isrenton:false}).select("rental_adress")
-//     console.log("Retrieved data:", data);
-//     data.reverse();
-//     res.json({
-//       statusCode: 200,
-//       data: data,
-//       message: "read all property",
-//     });
-//   } catch (error) {
-//     res.json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
-
 router.get("/property", async (req, res) => {
   try {
     const data = await Rentals.find(
@@ -767,36 +746,6 @@ router.get("/rental_allproperty", async (req, res) => {
   }
 });
 
-// router.get("/allproperty", async (req, res) => {
-//   try {
-//     const data = await Rentals.find({}, "entries.rental_adress");
-
-//     const rentalAddresses = data.reduce((addresses, rental) => {
-//       if (rental.entries && rental.entries.length > 0) {
-//         rental.entries.forEach((entry) => {
-//           if (entry.rental_adress) {
-//             addresses.push({
-//               _id: rental._id,
-//               rental_adress: entry.rental_adress,
-//             });
-//           }
-//         });
-//       }
-//       return addresses;
-//     }, []);
-
-//     res.json({
-//       statusCode: 200,
-//       data: rentalAddresses,
-//       message: "Read all rental addresses",
-//     });
-//   } catch (error) {
-//     res.json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
 router.get("/allproperty", async (req, res) => {
   try {
     const data = await Rentals.find(
@@ -927,64 +876,6 @@ router.post("/search_Properties", async (req, res) => {
     });
   }
 });
-
-// router.get("/rentals_property/:rental_adress", async (req, res) => {
-//   try {
-//     const adress = req.params.rental_adress;
-//     var data = await Rentals.findOne({ rental_adress: adress });
-//     if (data) {
-//       res.json({
-//         data: data,
-//         statusCode: 200,
-//         message: "Rental property details retrieved successfully",
-//       });
-//     } else {
-//       res.status(404).json({
-//         statusCode: 404,
-//         message: "Rental property details not found",
-//       });
-//     }
-//   } catch (error) {
-//     res.status(500).json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
-
-///working this code
-
-// router.put("/rental/:id/entry/:entryId", async (req, res) => {
-//   try {
-//     const id = req.params.id;
-//     const entryId = req.params.entryId;
-//     const updatedRentalData = req.body; // The entire updated tenant object
-
-//     // Find the tenant by ID
-//     const rentals = await Rentals.findById(id);
-
-//     if (!rentals) {
-//       return res.status(404).json({ statusCode: 404, message: "Tenant not found" });
-//     }
-
-//     // Update the entire tenant object with the updated data
-//     rentals.set(updatedRentalData);
-
-//     // Save the updated tenant document
-//     const result = await rentals.save();
-
-//     res.json({
-//       statusCode: 200,
-//       data: result,
-//       message: "Tenant Updated Successfully",
-//     });
-//   } catch (err) {
-//     res.status(500).json({
-//       statusCode: 500,
-//       message: err.message,
-//     });
-//   }
-// });
 
 router.put("/rental/:id/entry/:entryIndex", async (req, res) => {
   try {

@@ -30,7 +30,7 @@ const entrySchema = new Schema({
   account: { type: String },
   nextDue_date: { type: String },
   memo: { type: String },
-  upload_file: [{ type: Array }],
+  upload_file: { type: Array },
   isrenton: { type: Boolean, default: false },
   rent_paid: { type: Boolean, default: false },
   propertyOnRent: { type: Boolean, default: false },
@@ -98,7 +98,7 @@ const entrySchema = new Schema({
 
   moveout_date: { type: String },
   moveout_notice_given_date: { type: String },
-  paymentMethod:{type: String}
+  paymentMethod: { type: String }
 });
 
 const tenantsSchema = new Schema({

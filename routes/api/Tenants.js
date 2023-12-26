@@ -1090,6 +1090,7 @@ router.post("/tenant", async (req, res) => {
 
     entries.forEach((entry, index) => {
       entry.entryIndex = (index + 1).toString().padStart(2, "0");
+      //entry.createdAt= moment().format("YYYY-MM-DD HH:mm:ss"), 
     });
 
     const data = await Tenants.create({
@@ -1118,11 +1119,6 @@ router.post("/tenant", async (req, res) => {
     data.entries = entries;
  
     const tenantRentalAddress = entries[0].rental_adress;
-
-    console.log(
-      "Attempting to find matching rental for address:",
-      tenantRentalAddress
-    );
 
     const matchingRental = await Rentals.findOne({
       "entries.rental_adress": tenantRentalAddress,
@@ -1572,6 +1568,7 @@ router.put("/tenant/:id", async (req, res) => {
     });
   }
 });
+
 //get  rentroll table data
 router.get("/rentroll", async (req, res) => {
   try {
@@ -1590,7 +1587,6 @@ router.get("/rentroll", async (req, res) => {
 });
 
 //get tenant table  summary data id wise
-
 router.get("/tenant_summary/:id", async (req, res) => {
   try {
     const userId = req.params.id; // Get the user ID from the URL parameter
@@ -1711,7 +1707,6 @@ router.post("/filterlease_type", async (req, res) => {
 });
 
 //search tenant table data like firstname , lastname
-
 router.post("/search_tenant", async (req, res) => {
   try {
     let newArray = [];
@@ -1819,7 +1814,6 @@ router.post("/login", async (req, res) => {
 });
 
 //get tenant table in  rental_adress $ id   wise  data
-
 router.get("/tenant_summary/:rental_adress/:id", async (req, res) => {
   try {
     const rentalAdress = req.params.rental_adress;
@@ -1912,7 +1906,6 @@ router.get("/renton_property/:rental_adress", async (req, res) => {
 });
 
 //entry wise delete
-
 router.delete("/tenant/:tenantId/entry/:entryIndex", async (req, res) => {
   try {
     const tenantId = req.params.tenantId;
@@ -2408,6 +2401,7 @@ router.get("/rental-address/:id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 router.put("/moveout/:id/:entryIndex", async (req, res) => {
   try {
     const { id, entryIndex } = req.params;
@@ -2441,7 +2435,6 @@ router.put("/moveout/:id/:entryIndex", async (req, res) => {
   }
 });
 
-
 router.get('/findData', async (req, res) => {
   try {
     const currentDate = new Date().toISOString().split('T')[0]; // Get current date in 'YYYY-MM-DD' format
@@ -2462,6 +2455,5 @@ router.get('/findData', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 module.exports = router;
