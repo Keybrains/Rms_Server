@@ -426,7 +426,6 @@ router.post("/custom-add-subscription", async (req, res) => {
       last_name,
       address,
       email,
-      // nextDue_date,
       // start_date,
       // city,
       // state,
@@ -716,6 +715,7 @@ function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
   return sig === calculatedSig;
 }
 
+
 router.post("/nmi", async (req, res) => {
   try {
     const signingKey = "CC8775A4CFD933614985209F6F68768B";
@@ -757,6 +757,7 @@ router.post("/nmi", async (req, res) => {
         description: "Recurring charging added",
         amount: webhook.event_body.plan.amount,
       });
+      
       console.log("req.body is here : ", req.body);
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
