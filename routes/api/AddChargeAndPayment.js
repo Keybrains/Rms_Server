@@ -579,6 +579,7 @@ router.put("/edit_entry/:entryId", async (req, res) => {
       date,
       month_year,
       rental_adress,
+      charges_attachment
     } = req.body;
 
     // Build an update object with the fields that need to be modified
@@ -592,6 +593,7 @@ router.put("/edit_entry/:entryId", async (req, res) => {
       "unit.$[unitElem].paymentAndCharges.$[elem].date": date,
       "unit.$[unitElem].paymentAndCharges.$[elem].month_year": month_year,
       "unit.$[unitElem].paymentAndCharges.$[elem].rental_adress": rental_adress,
+      "unit.$[unitElem].paymentAndCharges.$[elem].charges_attachment": charges_attachment,
     };
 
     const options = {
@@ -691,7 +693,7 @@ router.put("/edit_entry/:entryId", async (req, res) => {
 //         $match: {
 //           "unit.paymentAndCharges": {
 //             $elemMatch: {
-              
+
 //               "isPaid": false,
 //               "tenant_id": tenant_id,
 //             },
