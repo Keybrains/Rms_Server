@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const entrySchema = new Schema({
+  type: { type: String },
   rental_id: { type: String },
   entryIndex: { type: String },
   property_type: { type: String },

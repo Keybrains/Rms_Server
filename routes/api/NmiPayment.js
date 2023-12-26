@@ -426,7 +426,6 @@ router.post("/custom-add-subscription", async (req, res) => {
       last_name,
       address,
       email,
-      // nextDue_date,
       // start_date,
       // city,
       // state,
@@ -715,6 +714,7 @@ function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
     .digest("hex");
   return sig === calculatedSig;
 }
+
 
 router.post("/nmi", async (req, res) => {
   try {
