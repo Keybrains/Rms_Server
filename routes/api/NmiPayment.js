@@ -1,3 +1,4 @@
+//#region var
 var express = require("express");
 var router = express.Router();
 var NmiPayment = require("../../modals/NmiPayment");
@@ -6,7 +7,7 @@ var AutoRecPayments = require("../../modals/AutoRecPayments");
 var axios = require("axios");
 var crypto = require("crypto");
 var querystring = require("querystring");
-
+//#endregion
 // ===========================================================================================================================
 
 router.post("/purchase", async (req, res) => {
@@ -425,7 +426,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       last_name,
       address,
       email,
-      nextDue_date,
+      // nextDue_date,
       // start_date,
       // city,
       // state,
@@ -447,7 +448,7 @@ router.post("/custom-add-subscription", async (req, res) => {
       first_name: first_name,
       last_name: last_name,
       address1: address,
-      next_charge_date: nextDue_date,
+      // next_charge_date: nextDue_date,
       // start_date: start_date,
       // city: city,
       // state: state,
