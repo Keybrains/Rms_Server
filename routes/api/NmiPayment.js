@@ -752,12 +752,12 @@ router.post("/nmi", async (req, res) => {
         // gymId: gymOwner.parentId,
         // paymentplanId: gymOwner.nmiplanId,
         // memberId: gymOwner._id,
-        nmisubscriptionId: webhook.event_body.subscription_id,
+        nmiSubscriptionId: req.body.event_body.subscription_id,
         email: webhook.event_body.billing_address.email,
         description: "Recurring charging added",
         amount: webhook.event_body.plan.amount,
       });
-      
+      console.log("payment is here : ", payment);
       console.log("req.body is here : ", req.body);
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
