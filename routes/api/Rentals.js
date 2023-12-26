@@ -138,6 +138,7 @@ router.post("/rentals", async (req, res) => {
         staffMember,
         commercial,
         residential,
+        type,
       } = entry;
 
       // Check if the rental_adress already exists within the same rental
@@ -176,6 +177,7 @@ router.post("/rentals", async (req, res) => {
         rental_state,
         rental_postcode,
         staffMember,
+        type,
         entryIndex: (existingRental.entries.length + 1).toString().padStart(2, '0'), 
         createdAt: moment().format("YYYY-MM-DD HH:mm:ss"), 
       };
@@ -201,6 +203,7 @@ router.post("/rentals", async (req, res) => {
             rental_postcode,
             rentalId: existingRental._id,
             description: "",
+            type,
             market_rent: isrenton ? unitData.rental_soft : entry.rentalcom_soft,
             rental_bed: unitData.rental_bed,
             rental_bath: unitData.rental_bath,
