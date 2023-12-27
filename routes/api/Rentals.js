@@ -308,6 +308,7 @@ router.get("/rental", async (req, res) => {
               entryIndex: entry.entryIndex,
               rental_adress: entry.rental_adress,
               property_type: entry.property_type,
+              type: entry.type,
               isrenton: entry.isrenton,
               rental_city: entry.rental_city,
               rental_country: entry.rental_country,

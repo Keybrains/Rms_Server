@@ -702,6 +702,7 @@ router.get("/property_financial", async (req, res) => {
     const query = {
       "properties.rental_adress": rental_adress,
       "properties.property_id": property_id,
+      "unit.paymentAndCharges.type": { $in: ["Payment"] }, 
     };
 
     Object.keys(query).forEach(
@@ -717,7 +718,7 @@ router.get("/property_financial", async (req, res) => {
         paymentAndCharges: unitItem.paymentAndCharges.map((charge) => ({
           ...charge.toObject(),
           Balance: charge.type === "Charge" ? charge.amount : -charge.amount,
-          Total: 0, 
+          Total: 0,
         })),
       })),
     }));
@@ -727,9 +728,11 @@ router.get("/property_financial", async (req, res) => {
         let runningTotal = 0;
 
         unit.paymentAndCharges.forEach((charge) => {
-          charge.RunningTotal = runningTotal;
-          charge.Total = runningTotal + charge.Balance;
-          runningTotal = charge.Total;
+          if (charge.type === "Payment") {
+            charge.RunningTotal = runningTotal;
+            charge.Total = runningTotal + charge.Balance;
+            runningTotal = charge.Total;
+          }
         });
       });
     });
@@ -738,9 +741,9 @@ router.get("/property_financial", async (req, res) => {
       ...item,
       unit: item.unit.map((unitItem) => ({
         ...unitItem,
-        paymentAndCharges: unitItem.paymentAndCharges.sort(
-          (a, b) => new Date(b.date) - new Date(a.date)
-        ),
+        paymentAndCharges: unitItem.paymentAndCharges
+          .filter((charge) => charge.type === "Payment")
+          .sort((a, b) => new Date(b.date) - new Date(a.date)),
       })),
     }));
 
