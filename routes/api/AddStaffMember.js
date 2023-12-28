@@ -32,7 +32,6 @@ router.post("/addstaffmember", async (req, res) => {
 });
 
 // get staffmember
-
 router.get("/addstaffmember", async (req, res) => {
   try {
     var data = await AddStaffMember.find({});
@@ -106,7 +105,6 @@ router.delete("/delete_staffmember", async (req, res) => {
 });
 
 //edit staffmember
-
 router.put("/staffmember/:id", async (req, res) => {
   try {
     req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
