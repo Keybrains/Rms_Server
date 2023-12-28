@@ -457,49 +457,49 @@ router.put("/edit_entry/:entryId", async (req, res) => {
   }
 });
 
-// router.put("/charge_paid", async (req, res) => {
-//   try {
-//     const { entry } = req.body;
+router.put("/charge_paid", async (req, res) => {
+  try {
+    const { entry } = req.body;
 
-//     const updateOperations = entry.map(({ id, amount }) => ({
-//       updateOne: {
-//         filter: {
-//           "unit.paymentAndCharges._id": new ObjectId(id),
-//         },
-//         update: {
-//           $set: {
-//             "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": amount == 0? true:false,
-//             "unit.$[unitElem].paymentAndCharges.$[elem].amount": amount,
-//           },
-//         },
-//         arrayFilters: [
-//           { "unitElem.paymentAndCharges._id":  new ObjectId(id) },
-//           { "elem._id": new ObjectId(id) },
-//         ],
-//       },
-//     }));
+    const updateOperations = entry.map(({ id, amount }) => ({
+      updateOne: {
+        filter: {
+          "unit.paymentAndCharges._id": new ObjectId(id),
+        },
+        update: {
+          $set: {
+            "unit.$[unitElem].paymentAndCharges.$[elem].isPaid": amount == 0? true:false,
+            "unit.$[unitElem].paymentAndCharges.$[elem].amount": amount,
+          },
+        },
+        arrayFilters: [
+          { "unitElem.paymentAndCharges._id":  new ObjectId(id) },
+          { "elem._id": new ObjectId(id) },
+        ],
+      },
+    }));
 
-//     const updateResult = await AddPaymentAndCharge.bulkWrite(updateOperations);
+    const updateResult = await AddPaymentAndCharge.bulkWrite(updateOperations);
 
-//     if (updateResult.modifiedCount === 0) {
-//       return res.status(404).json({
-//         statusCode: 404,
-//         message: "No entries found for the provided entry IDs",
-//       });
-//     }
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "No entries found for the provided entry IDs",
+      });
+    }
 
-//     res.json({
-//       statusCode: 200,
-//       data: updateResult,
-//       message: "Entries updated successfully",
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
+    res.json({
+      statusCode: 200,
+      data: updateResult,
+      message: "Entries updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 // router.get("/unit_charge", async (req, res) => {
 //   try {

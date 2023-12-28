@@ -1080,7 +1080,7 @@ router.post("/tenant", async (req, res) => {
 
     entries.forEach((entry, index) => {
       entry.entryIndex = (index + 1).toString().padStart(2, "0");
-      //entry.createdAt= moment().format("YYYY-MM-DD HH:mm:ss"), 
+      entry.createdAt= moment().format("YYYY-MM-DD HH:mm:ss");
     });
 
     const data = await Tenants.create({
@@ -1104,6 +1104,7 @@ router.post("/tenant", async (req, res) => {
       email,
       emergency_PhoneNumber,
       entries,
+      createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
     });
 
     data.entries = entries;
@@ -1377,6 +1378,34 @@ router.delete("/tenant", async (req, res) => {
     });
   }
 });
+
+router.put("/reset_password/:mail", async (req, res) => {
+  try {
+    const email = req.params.mail;
+    const updateData = req.body;
+
+    let result = await Tenants.findOneAndUpdate({ tenant_email: email }, updateData, { new: true });
+
+    if (result) {
+      res.json({
+        statusCode: 200,
+        data: result,
+        message: "Password Updated Successfully",
+      });
+    } else {
+      res.json({
+        statusCode: 404,
+        message: "No matching record found for the provided email",
+      });
+    }
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 
 //edit tenant
 // PUT request to update tenant data old
@@ -2392,38 +2421,38 @@ router.get("/rental-address/:id", async (req, res) => {
   }
 });
 
-router.put("/moveout/:id/:entryIndex", async (req, res) => {
-  try {
-    const { id, entryIndex } = req.params;
+// router.put("/moveout/:id/:entryIndex", async (req, res) => {
+//   try {
+//     const { id, entryIndex } = req.params;
 
-    let result = await Tenants.findOneAndUpdate(
-      {
-        _id: id,
-        "entries.entryIndex": entryIndex,
-      },
-      {
-        $set: {
-          "entries.$.moveout_date": req.body.moveout_date,
-          "entries.$.moveout_notice_given_date":
-            req.body.moveout_notice_given_date,
-          // Add other fields you want to update
-        },
-      },
-      { new: true }
-    );
+//     let result = await Tenants.findOneAndUpdate(
+//       {
+//         _id: id,
+//         "entries.entryIndex": entryIndex,
+//       },
+//       {
+//         $set: {
+//           "entries.$.moveout_date": req.body.moveout_date,
+//           "entries.$.moveout_notice_given_date":
+//             req.body.moveout_notice_given_date,
+//           // Add other fields you want to update
+//         },
+//       },
+//       { new: true }
+//     );
 
-    res.json({
-      statusCode: 200,
-      data: result,
-      message: "Entry Updated Successfully",
-    });
-  } catch (err) {
-    res.json({
-      statusCode: 500,
-      message: err.message,
-    });
-  }
-});
+//     res.json({
+//       statusCode: 200,
+//       data: result,
+//       message: "Entry Updated Successfully",
+//     });
+//   } catch (err) {
+//     res.json({
+//       statusCode: 500,
+//       message: err.message,
+//     });
+//   }
+// });
 
 router.get('/findData', async (req, res) => {
   try {
