@@ -29,19 +29,10 @@ cron.schedule("49 5 * * *", async () => {
         { isCronjobRunning: true }
       );
 
-      const tenants = await Tenants.find();
+      
 
-      tenants.forEach(async (tenant) => {
-        tenant.entries.forEach(async (entry) => {
 
-          const rentCycle = tenant.tenant_firstName;
-          // console.log("rentCycle", rentCycle);
-
-          const paymentMethods = entry.paymentMethod;
-          // console.log("payment method", paymentMethods);
-
-        });
-      });
+ 
 
       //here set interveral of 20 sec
       await Cronjobs.updateOne(
@@ -74,7 +65,7 @@ cron.schedule("49 5 * * *", async () => {
 
 // });
 
-cron.schedule("0 17 * * *", async () => {
+cron.schedule("17 17 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
@@ -122,7 +113,6 @@ cron.schedule("0 17 * * *", async () => {
             paymentMethod === "Manually"
           ) {
            
-
             // Update the nextDue_date to current date + 1 month
             const nextDueDatePlusOneMonth = new Date(currentDate);
             nextDueDatePlusOneMonth.setMonth(
