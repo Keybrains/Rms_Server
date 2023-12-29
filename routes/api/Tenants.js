@@ -16,6 +16,7 @@ const PaymentCharges = require("../../modals/AddPaymentAndCharge");
 var NmiPayment = require("../../modals/NmiPayment");
 var Cronjobs = require("../../modals/cronjobs");
 const axios = require('axios');
+const crypto = require('crypto');
 
 cron.schedule("49 5 * * *", async () => {
   try {
@@ -1033,6 +1034,53 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// const generateToken = () => {
+//   return crypto.randomBytes(20).toString('hex');
+// };
+
+const encrypt = (text) => {
+  const cipher = crypto.createCipher('aes-256-cbc', 'your-secret-key');
+  let encrypted = cipher.update(text, 'utf-8', 'hex');
+  encrypted += cipher.final('hex');
+  return encrypted;
+};
+
+router.post("/passwordmail", async (req, res) => {
+  try {
+    const { tenant_email } = req.body;
+
+    const encryptedEmail = encrypt(tenant_email);
+
+    const token = encryptedEmail
+
+    const info = await transporter.sendMail({
+      from: '"302 Properties" <info@cloudpress.host>',
+      to: tenant_email,
+      subject: "Welcome to your new resident center with 302 Properties",
+      text: `
+        Hello Sir/Ma'am,
+        
+        Change your password now:
+        ${"https://propertymanager.cloudpress.host/auth/changepassword?token=" + token}
+        
+        Best regards,
+        The 302 Properties Team
+        `,
+    });
+    
+    res.json({
+      statusCode: 200,
+      data: info,
+      message: "Send Mail Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: false,
+      message: error.message,
+    });
+  }
+});
+
 router.post("/tenant", async (req, res) => {
   try {
     // Check if tenant with the same mobile number already exists
@@ -1145,8 +1193,7 @@ router.post("/tenant", async (req, res) => {
         console.log("Conditions not met for setting isrenton to true.");
       }
     }
-    console.log(tenant_residentStatus);
-    console.log(entries[0].tenant_residentStatus, "entries");
+ 
     if (entries[0].tenant_residentStatus) {
       const info = await transporter.sendMail({
         from: '"302 Properties" <info@cloudpress.host>',
