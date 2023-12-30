@@ -15,9 +15,9 @@ const cron = require("node-cron");
 const PaymentCharges = require("../../modals/AddPaymentAndCharge");
 var NmiPayment = require("../../modals/NmiPayment");
 var Cronjobs = require("../../modals/cronjobs");
-const axios = require('axios');
+const axios = require("axios");
 
-cron.schedule("49 5 * * *", async () => {
+cron.schedule("48 16 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
@@ -28,11 +28,35 @@ cron.schedule("49 5 * * *", async () => {
         { _id: cronjobs[0]._id },
         { isCronjobRunning: true }
       );
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      console.log("Cron hitt...!!!");
+      const currentDate = new Date().toISOString().split("T")[0]; // Get current date in yyyy-mm-dd format
 
-      
-
-
- 
+      const fetchedchargespayaments = await PaymentCharges.find();
+      console.log("oo mahiii...1", fetchedchargespayaments);
+      if (fetchedchargespayaments && fetchedchargespayaments.length > 0) {
+        fetchedchargespayaments.forEach((payment) => {
+          if (payment.unit && payment.unit.length > 0) {
+            console.log("oo mahiii...2", payment.unit);
+            payment.unit.forEach((unit) => {
+              if (unit.paymentAndCharges && unit.paymentAndCharges.length > 0) {
+                console.log(first)
+                unit.paymentAndCharges.forEach((charge) => {
+                  if (
+                    charge.type === "Charge" &&
+                    charge.charge_type === "Last Month's Rent" &&
+                    charge.date === currentDate &&
+                    charge.rent_cycle === "Monthly" &&
+                    charge.isPaid === false
+                  ) {
+                    console.log("Charge object:", charge);
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
 
       //here set interveral of 20 sec
       await Cronjobs.updateOne(
@@ -65,7 +89,7 @@ cron.schedule("49 5 * * *", async () => {
 
 // });
 
-cron.schedule("17 17 * * *", async () => {
+cron.schedule("55 14 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
@@ -112,7 +136,6 @@ cron.schedule("17 17 * * *", async () => {
             rentCycle === "Monthly" &&
             paymentMethod === "Manually"
           ) {
-           
             // Update the nextDue_date to current date + 1 month
             const nextDueDatePlusOneMonth = new Date(currentDate);
             nextDueDatePlusOneMonth.setMonth(
@@ -144,15 +167,17 @@ cron.schedule("17 17 * * *", async () => {
               // Entry exists, add payment information to existing entry
               existingEntry.unit[0].paymentAndCharges.push({
                 type: "Charges",
-                account: "rent",
+                charge_type: "Last Month's Rent",
+                account: "Last Month's Rent",
                 amount: tenant.entries[0].amount,
                 rental_adress: rentalAdress,
                 tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
                 tenant_id: tenant._id,
                 memo: "sahil cron",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                  }`,
+                month_year: `${currentDate.split("-")[1]}-${
+                  currentDate.split("-")[0]
+                }`,
                 rent_cycle: "Monthly", // Change this accordingly
               });
 
@@ -188,8 +213,9 @@ cron.schedule("17 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                          }`,
+                        month_year: `${currentDate.split("-")[1]}-${
+                          currentDate.split("-")[0]
+                        }`,
                         rent_cycle: "Monthly", // Change this accordingly
                       },
                     ],
@@ -262,8 +288,9 @@ cron.schedule("17 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "test",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                  }`,
+                month_year: `${currentDate.split("-")[1]}-${
+                  currentDate.split("-")[0]
+                }`,
                 rent_cycle: "Weekly", // Change this accordingly
               });
 
@@ -299,8 +326,9 @@ cron.schedule("17 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                          }`,
+                        month_year: `${currentDate.split("-")[1]}-${
+                          currentDate.split("-")[0]
+                        }`,
                         rent_cycle: "Weekly", // Change this accordingly
                       },
                     ],
@@ -370,8 +398,9 @@ cron.schedule("17 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "test",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                  }`,
+                month_year: `${currentDate.split("-")[1]}-${
+                  currentDate.split("-")[0]
+                }`,
                 rent_cycle: "Daily", // Change this accordingly
               });
 
@@ -407,8 +436,9 @@ cron.schedule("17 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                          }`,
+                        month_year: `${currentDate.split("-")[1]}-${
+                          currentDate.split("-")[0]
+                        }`,
                         rent_cycle: "Daily", // Change this accordingly
                       },
                     ],
@@ -479,8 +509,9 @@ cron.schedule("17 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "test",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                  }`,
+                month_year: `${currentDate.split("-")[1]}-${
+                  currentDate.split("-")[0]
+                }`,
                 rent_cycle: "Every two months", // Change this accordingly
               });
 
@@ -516,8 +547,9 @@ cron.schedule("17 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                          }`,
+                        month_year: `${currentDate.split("-")[1]}-${
+                          currentDate.split("-")[0]
+                        }`,
                         rent_cycle: "Every two months", // Change this accordingly
                       },
                     ],
@@ -588,8 +620,9 @@ cron.schedule("17 17 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "test",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                  }`,
+                month_year: `${currentDate.split("-")[1]}-${
+                  currentDate.split("-")[0]
+                }`,
                 rent_cycle: "Every two weeks", // Change this accordingly
               });
 
@@ -625,8 +658,9 @@ cron.schedule("17 17 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                          }`,
+                        month_year: `${currentDate.split("-")[1]}-${
+                          currentDate.split("-")[0]
+                        }`,
                         rent_cycle: "Every two weeks", // Change this accordingly
                       },
                     ],
@@ -703,7 +737,6 @@ cron.schedule("17 17 * * *", async () => {
           }
 
           //**************************************************************************************************************************************************************************************************************** */
-
         });
       });
       await Cronjobs.updateOne(
@@ -1080,7 +1113,7 @@ router.post("/tenant", async (req, res) => {
 
     entries.forEach((entry, index) => {
       entry.entryIndex = (index + 1).toString().padStart(2, "0");
-      entry.createdAt= moment().format("YYYY-MM-DD HH:mm:ss");
+      entry.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
     });
 
     const data = await Tenants.create({
@@ -1108,7 +1141,7 @@ router.post("/tenant", async (req, res) => {
     });
 
     data.entries = entries;
- 
+
     const tenantRentalAddress = entries[0].rental_adress;
 
     const matchingRental = await Rentals.findOne({
@@ -1384,7 +1417,11 @@ router.put("/reset_password/:mail", async (req, res) => {
     const email = req.params.mail;
     const updateData = req.body;
 
-    let result = await Tenants.findOneAndUpdate({ tenant_email: email }, updateData, { new: true });
+    let result = await Tenants.findOneAndUpdate(
+      { tenant_email: email },
+      updateData,
+      { new: true }
+    );
 
     if (result) {
       res.json({
@@ -1405,7 +1442,6 @@ router.put("/reset_password/:mail", async (req, res) => {
     });
   }
 });
-
 
 //edit tenant
 // PUT request to update tenant data old
@@ -2454,24 +2490,24 @@ router.get("/rental-address/:id", async (req, res) => {
 //   }
 // });
 
-router.get('/findData', async (req, res) => {
+router.get("/findData", async (req, res) => {
   try {
-    const currentDate = new Date().toISOString().split('T')[0]; // Get current date in 'YYYY-MM-DD' format
+    const currentDate = new Date().toISOString().split("T")[0]; // Get current date in 'YYYY-MM-DD' format
 
     // Query to find data
     const result = await Tenants.find({
-      'entries.start_date': { $lte: currentDate },
-      'entries.end_date': { $gt: currentDate },
+      "entries.start_date": { $lte: currentDate },
+      "entries.end_date": { $gt: currentDate },
       $or: [
-        { 'entries.rental_adress': req.query.rental_adress },
-        { 'entries.rental_units': req.query.rental_units }
-      ]
+        { "entries.rental_adress": req.query.rental_adress },
+        { "entries.rental_units": req.query.rental_units },
+      ],
     });
 
     res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send("Internal Server Error");
   }
 });
 
