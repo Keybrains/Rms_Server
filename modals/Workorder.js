@@ -36,7 +36,14 @@ final_total_amount: { type: Number },
 updateAt: { type: String },
 createdAt: { type: String },
 workOrderImage:{type: Array },
-
+workorder_status: [
+  {
+    createdAt: String,
+    status: String,
+    updateAt: String,
+    statusUpdatedBy: String,
+  },
+],
  entries: [entrySchema],
 });
 
