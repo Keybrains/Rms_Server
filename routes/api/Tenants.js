@@ -1216,7 +1216,7 @@ router.post("/passwordmail", async (req, res) => {
         Hello Sir/Ma'am,
         
         Change your password now:
-        ${"http://localhost:3000/auth/changepassword?token=" + token}
+        ${"https://propertymanager.cloudpress.host/auth/changepassword?token=" + token}
         
         Best regards,
         The 302 Properties Team
