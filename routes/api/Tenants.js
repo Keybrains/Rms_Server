@@ -56,36 +56,37 @@ cron.schedule("02 11 * * *", async () => {
                       console.log("The late fee will be charged.");
 
                       // Find and update the existing object
-                      const foundPayment = await PaymentCharges.updateOne(
-                        {
-                          'unit.paymentAndCharges': {
-                            $elemMatch: {
-                              type: "Charge",
-                              charge_type: "Last Month's Rent",
-                              rent_cycle: "Monthly",
-                              isPaid: false,
-                              islatefee: false,
-                              // Add other matching criteria like rental_adress and unit details here
-                            },
-                          },
-                        },
-                        {
-                          $push: {
-                            'unit.paymentAndCharges': {
-                              type: "Charge",
-                              charge_type: "Rent Late Fee",
-                              account: "Rent Late Fee",
-                              amount: charge.amount * (10 / 100),
-                              rental_adress: charge.rental_adress,
-                              tenant_firstName: `${charge.tenant_firstName}`,
-                              tenant_id: charge.tenant_id,
-                              memo: "Late fee for Rent",
-                              date: currentDate,
-                              rent_cycle: "Monthly", // Change this accordingly
-                            },
-                          },
-                        }
-                      );
+                      // const foundPayment = await PaymentCharges.updateOne(
+                      //   {
+                      //     'unit.paymentAndCharges': {
+                      //       $elemMatch: {
+                      //         type: "Charge",
+                      //         charge_type: "Last Month's Rent",
+                      //         rent_cycle: "Monthly",
+                      //         isPaid: false,
+                      //         islatefee: false,
+                      //         // Add other matching criteria like rental_adress and unit details here
+                      //       },
+                      //     },
+                      //   },
+                      //   {
+                      //     $push: {
+                      //       'unit.paymentAndCharges': {
+                      //         type: "Charge",
+                      //         charge_type: "Rent Late Fee",
+                      //         account: "Rent Late Fee",
+                      //         amount: charge.amount * (10 / 100),
+                      //         rental_adress: charge.rental_adress,
+                      //         tenant_firstName: `${charge.tenant_firstName}`,
+                      //         tenant_id: charge.tenant_id,
+                      //         memo: "Late fee for Rent",
+                      //         date: currentDate,
+                      //         rent_cycle: "Monthly", // Change this accordingly
+                      //       },
+                      //     },
+                      //   }
+                      // );
+                      
                       console.log("Late fee added to the payment details.", foundPayment);
                     } else {
                       console.log("Charge object:", charge);
