@@ -30,10 +30,10 @@ cron.schedule("49 5 * * *", async () => {
         { isCronjobRunning: true }
       );
 
-      
 
 
- 
+
+
 
       //here set interveral of 20 sec
       await Cronjobs.updateOne(
@@ -113,7 +113,7 @@ cron.schedule("17 17 * * *", async () => {
             rentCycle === "Monthly" &&
             paymentMethod === "Manually"
           ) {
-           
+
             // Update the nextDue_date to current date + 1 month
             const nextDueDatePlusOneMonth = new Date(currentDate);
             nextDueDatePlusOneMonth.setMonth(
@@ -1057,7 +1057,7 @@ router.post("/passwordmail", async (req, res) => {
         The 302 Properties Team
         `,
     });
-    
+
     res.json({
       statusCode: 200,
       data: info,
@@ -1128,7 +1128,7 @@ router.post("/tenant", async (req, res) => {
 
     entries.forEach((entry, index) => {
       entry.entryIndex = (index + 1).toString().padStart(2, "0");
-      entry.createdAt= moment().format("YYYY-MM-DD HH:mm:ss");
+      entry.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
     });
 
     const data = await Tenants.create({
@@ -1156,7 +1156,7 @@ router.post("/tenant", async (req, res) => {
     });
 
     data.entries = entries;
- 
+
     const tenantRentalAddress = entries[0].rental_adress;
 
     const matchingRental = await Rentals.findOne({
@@ -1183,7 +1183,7 @@ router.post("/tenant", async (req, res) => {
         console.log("Conditions not met for setting isrenton to true.");
       }
     }
- 
+
     if (entries[0].tenant_residentStatus) {
       const info = await transporter.sendMail({
         from: '"302 Properties" <info@cloudpress.host>',
@@ -2460,7 +2460,10 @@ router.get("/rental-address/:id", async (req, res) => {
     }
 
     // Extract and send the rental addresses
-    const rentalAddresses = tenant.entries.map((entry) => entry.rental_adress);
+    const rentalAddresses = tenant.entries.map((entry) => ([{
+      rental_adress: entry.rental_adress,
+      rental_units: entry.rental_units
+    }]));
 
     res.status(200).json({ rentalAddresses });
   } catch (err) {
