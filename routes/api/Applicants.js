@@ -76,7 +76,6 @@ router.get("/applicant", async (req, res) => {
   }
 });
 
-
 //appicants data get mobile number wise and stutus wise  like  approved
 
 // router.get("/applicant_get", async (req, res) => {
@@ -364,86 +363,6 @@ router.get("/applicant_summary/:id", async (req, res) => {
     });
   }
 });
-
-// router.put("/applicant/:id/checklist", async (req, res) => {
-//   try {
-//     const applicantId = req.params.id;
-//     const checklist = req.body.applicant_checklist;
-
-//     if (!applicantId || !checklist) {
-//       return res.status(400).json({
-//         statusCode: 400,
-//         message: "Invalid request. Please provide 'applicant_checklist'.",
-//       });
-//     }
-
-//     let statusToUpdate = "Rejected";
-
-//     if (checklist.includes("Approved")) {
-//       statusToUpdate = "Approved";
-//     }
-
-//     const applicant = await Applicant.findByIdAndUpdate(
-//       applicantId,
-//       { applicant_checklist: checklist, status: statusToUpdate },
-//       { new: true }
-//     );
-
-//     if (!applicant) {
-//       return res.status(404).json({
-//         statusCode: 404,
-//         message: "Applicant not found.",
-//       });
-//     }
-
-//     if (applicant.status === "Approved") {
-//       // Find tenant information
-//       const {
-//         tenant_firstName,
-//         tenant_lastName,
-//         tenant_email,
-//         tenant_mobileNumber,
-//         tenant_workNumber,
-//         tenant_homeNumber,
-//         tenant_faxPhoneNumber,
-//       } = applicant;
-
-//       // Update the status of other records with the same tenant information and status=""
-//       await Applicant.updateMany(
-//         {
-//           _id: { $ne: applicantId }, // Exclude the current record
-//           tenant_firstName,
-//           tenant_lastName,
-//           tenant_email,
-//           tenant_mobileNumber,
-//           tenant_workNumber,
-//           tenant_homeNumber,
-//           tenant_faxPhoneNumber,
-//           status: "",
-//         },
-//         { $set: { status: "Rejected" } }
-//       );
-//     } else {
-//       // If status is not Approved, assume it is Rejected
-//       // Update only the current record without affecting other records
-//       await Applicant.updateOne(
-//         { _id: applicantId },
-//         { $set: { status: "Rejected" } }
-//       );
-//     }
-
-//     res.json({
-//       updatedApplicant: applicant,
-//       statusCode: 200,
-//       message: `Applicant checklist updated successfully. Status set to: ${statusToUpdate}`,
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
 
 router.put("/applicant/:id/checklist", async (req, res) => {
   try {

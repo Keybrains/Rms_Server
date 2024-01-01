@@ -8,6 +8,7 @@ var moment = require("moment");
 router.post("/workorder", async (req, res) => {
   try {
     const createdAt = moment().add(1, "seconds").format("YYYY-MM-DD HH:mm:ss");
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
     const {
       workOrderImage,
       workorder_id,
@@ -30,8 +31,26 @@ router.post("/workorder", async (req, res) => {
       priority,
       upload_file,
       final_total_amount,
+      statusUpdatedBy,
       entries, // Array of parts and labor entries
     } = req.body;
+
+    // const { statusUpdatedBy, ...restOfReqBody } = req.body;
+
+    const workdata = {
+      //...restOfReqBody,
+      //createAt: createdAt,
+      workorder_status: [
+        {
+          statusUpdatedBy: statusUpdatedBy || "", 
+          status: status,
+          due_date: due_date,
+          staffmember_name: staffmember_name,
+          updateAt: updatedAt,
+          createdAt: createdAt,
+        },
+      ],
+    };
 
     const data = await Workorder.create({
       createdAt:createdAt,
@@ -56,7 +75,9 @@ router.post("/workorder", async (req, res) => {
       priority,
       upload_file,
       final_total_amount,
-      entries, // Store the array of entries
+      entries,
+      ...workdata,
+    
     });
 
     // Remove the _id fields from the entries
@@ -93,6 +114,60 @@ router.get("/workorder", async (req, res) => {
     res.json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+
+router.put("/workorder/:id/status", async (req, res) => {
+  try {
+    const Id = req.params.id;
+    const newStatus = req.body.status;
+    const newDuedate = req.body.due_date;
+    const newStaff = req.body.staffmember_name;
+    const statusUpdatedBy = req.body.statusUpdatedBy;
+
+    if (!Id || !newStatus) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Invalid request. Please provide 'status'.",
+      });
+    }
+
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const updatedWorkorder = await Workorder.findByIdAndUpdate(
+      Id,
+      {
+        $push: {
+          workorder_status: {
+            statusUpdatedBy: statusUpdatedBy,
+            status: newStatus,
+            due_date: newDuedate,
+            staffmember_name: newStaff,
+            updateAt: updatedAt,
+            
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedWorkorder) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Workorder not found.",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedWorkorder,
+      message: "Workorder Status Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
     });
   }
 });
