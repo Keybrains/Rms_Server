@@ -41,6 +41,8 @@ workorder_status: [
     createdAt: String,
     status: String,
     updateAt: String,
+    due_date: String,
+    staffmember_name: String,
     statusUpdatedBy: String,
   },
 ],

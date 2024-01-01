@@ -84,13 +84,60 @@ router.get("/prop_id/:id", async (req, res) => {
 
 
 
+// router.put("/propertyunit/:id", async (req, res) => {
+//   try {
+
+//     let updatedPropertyUnit = await PropertyUnit.findByIdAndUpdate(req.params.id, req.body);
+
+//     await PropertyUnit.updateMany(
+//       { rentalId: updatedPropertyUnit.rentalId },
+//       {
+//         $set: {
+//           rental_adress: req.body.rental_adress || updatedPropertyUnit.rental_adress,
+//           rental_city: req.body.rental_city || updatedPropertyUnit.rental_city,
+//           rental_country: req.body.rental_country || updatedPropertyUnit.rental_country,
+//           rental_postcode: req.body.rental_postcode || updatedPropertyUnit.rental_postcode,
+//           // Add more fields as needed
+//         },
+//       }
+//     );
+
+
+//     await Rentals.updateOne(
+//       {
+//         _id: updatedPropertyUnit.rentalId,
+//         'entries._id': updatedPropertyUnit._id,
+//       },
+//       {
+//         $set: {
+//           'entries.$.rental_adress': req.body.rental_adress || updatedPropertyUnit.rental_adress,
+//           'entries.$.rental_city': req.body.rental_city || updatedPropertyUnit.rental_city,
+//           'entries.$.rental_country': req.body.rental_country || updatedPropertyUnit.rental_country,
+//           'entries.$.rental_postcode': req.body.rental_postcode || updatedPropertyUnit.rental_postcode,
+//           // Add more fields as needed
+//         },
+//       }
+//     );
+
+//     res.json({
+//       statusCode: 200,
+//       data: updatedPropertyUnit,
+//       message: "Property-Unit Data Updated Successfully",
+//     });
+//   } catch (err) {
+//     res.json({
+//       statusCode: 500,
+//       message: err.message,
+//     });
+//   }
+// });
 router.put("/propertyunit/:id", async (req, res) => {
   try {
 
     let updatedPropertyUnit = await PropertyUnit.findByIdAndUpdate(req.params.id, req.body);
 
     await PropertyUnit.updateMany(
-      { rentalId: updatedPropertyUnit.rentalId },
+      { propertyId: updatedPropertyUnit.propertyId },
       {
         $set: {
           rental_adress: req.body.rental_adress || updatedPropertyUnit.rental_adress,
@@ -102,10 +149,9 @@ router.put("/propertyunit/:id", async (req, res) => {
       }
     );
 
-
     await Rentals.updateOne(
       {
-        _id: updatedPropertyUnit.rentalId,
+        _id: updatedPropertyUnit.propertyId,
         'entries._id': updatedPropertyUnit._id,
       },
       {
@@ -131,7 +177,6 @@ router.put("/propertyunit/:id", async (req, res) => {
     });
   }
 });
-
 
 // router.get("/rentals_property/:rental_adress", async (req, res) => {
 //   try {

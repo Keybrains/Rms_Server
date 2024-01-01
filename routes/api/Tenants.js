@@ -1859,7 +1859,7 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.json({ statusCode: 402, message: "Enter Valid Password" });
     }
-
+    console.log(user,"]====================")
     const tokens = await createToken({
       _id: user._id,
       // userName: user.userName,

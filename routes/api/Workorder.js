@@ -44,6 +44,8 @@ router.post("/workorder", async (req, res) => {
         {
           statusUpdatedBy: statusUpdatedBy || "", 
           status: status,
+          due_date: due_date,
+          staffmember_name: staffmember_name,
           updateAt: updatedAt,
           createdAt: createdAt,
         },
@@ -183,6 +185,8 @@ router.put("/workorder/:id/status", async (req, res) => {
   try {
     const Id = req.params.id;
     const newStatus = req.body.status;
+    const newDuedate = req.body.due_date;
+    const newStaff = req.body.staffmember_name;
     const statusUpdatedBy = req.body.statusUpdatedBy;
 
     if (!Id || !newStatus) {
@@ -201,6 +205,8 @@ router.put("/workorder/:id/status", async (req, res) => {
           workorder_status: {
             statusUpdatedBy: statusUpdatedBy,
             status: newStatus,
+            due_date: newDuedate,
+            staffmember_name: newStaff,
             updateAt: updatedAt,
             
           },
@@ -228,7 +234,6 @@ router.put("/workorder/:id/status", async (req, res) => {
     });
   }
 });
-
 
 router.put('/workorder_enteries/:mainDocId/:entryId', async (req, res) => {
   try {
