@@ -1209,19 +1209,20 @@ router.post("/passwordmail", async (req, res) => {
     tokenExpirationMap.set(token, expirationTimestamp);
 
     const info = await transporter.sendMail({
-      from: '"302 Properties" <info@cloudpress.host>',
-      to: tenant_email,
-      subject: "Welcome to your new resident center with 302 Properties",
-      text: `
-        Hello Sir/Ma'am,
+    from: '"302 Properties" <info@cloudpress.host>',
+    to: tenant_email,
+    subject: "Welcome to your new resident center with 302 Properties",
+    html: `
+        <p>Hello Sir/Ma'am,</p>
+
+        <p>Change your password now:</p>
+        <p><a href="${`https://propertymanager.cloudpress.host/auth/changepassword?token=` + token}" style="text-decoration: none;">Reset Password Link</a></p>
         
-        Change your password now:
-        ${"https://propertymanager.cloudpress.host/auth/changepassword?token=" + token}
-        
-        Best regards,
-        The 302 Properties Team
-      `,
+        <p>Best regards,<br>
+        The 302 Properties Team</p>
+    `,
     });
+
 
     res.json({
       statusCode: 200,
@@ -1251,7 +1252,7 @@ function scheduleTokenCleanup() {
         console.log(`Token expired for email: ${decrypt(token)}`);
       }
     }
-  }, 5 * 60 * 1000); // Run the cleanup task every 5 seconds for demonstration purposes
+  }, 60 * 5 * 1000); // Run the cleanup task every 5 seconds for demonstration purposes
 }
 
 router.get("/check_token_status/:token", (req, res) => {
