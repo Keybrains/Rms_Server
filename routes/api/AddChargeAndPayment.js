@@ -117,7 +117,6 @@ router.get("/financial", async (req, res) => {
         { unit: { $elemMatch: { unit: unit } } },
         { unit: { $elemMatch: { unit: "" } } },
       ],
-      "unit.paymentAndCharges.tenant_id": tenant_id,
     };
 
     // Remove undefined parameters from the query object
@@ -126,33 +125,36 @@ router.get("/financial", async (req, res) => {
     );
 
     // Use the constructed query object to filter the data
-    const data = await AddPaymentAndCharge.find(query, { "unit.$": 1 });
+    const data = await AddPaymentAndCharge.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $unwind: "$unit",
+      },
+      {
+        $match: {
+          "unit.paymentAndCharges.tenant_id": tenant_id,
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          unit: { $push: "$unit" },
+        },
+      },
+    ]);
 
-    // Iterate through the result and calculate "Total" and "Balance" for each element
+    // Process the data as needed
     const processedData = data.map((item) => ({
-      ...item.toObject(), // Convert Mongoose document to plain JavaScript object
+      ...item,
       unit: item.unit.map((unitItem) => ({
-        ...unitItem.toObject(),
-        paymentAndCharges: unitItem.paymentAndCharges.map((charge) => ({
-          ...charge.toObject(),
-          Balance: charge.type === "Charge" ? charge.amount : -charge.amount,
-          Total: 0, // Initialize Total to 0
-        })),
+        ...unitItem,
+        paymentAndCharges: unitItem.paymentAndCharges.filter(
+          (charge) => charge.tenant_id === tenant_id
+        ),
       })),
     }));
-
-    // Iterate through the result and calculate "Total" and "RunningTotal" for each element
-    processedData.forEach((item) => {
-      item.unit.forEach((unit) => {
-        let runningTotal = 0;
-
-        unit.paymentAndCharges.forEach((charge) => {
-          charge.RunningTotal = runningTotal;
-          charge.Total = runningTotal + charge.Balance;
-          runningTotal = charge.Total;
-        });
-      });
-    });
 
     const sortedData = processedData.map((item) => ({
       ...item,
@@ -164,9 +166,25 @@ router.get("/financial", async (req, res) => {
       })),
     }));
 
+    // Iterate through the result and calculate "Total" and "RunningTotal" for each element
+    sortedData.forEach((item) => {
+      item.unit.forEach((unit) => {
+        let runningTotal = 0;
+
+        unit.paymentAndCharges.reverse().forEach((charge) => {
+          charge.RunningTotal = runningTotal;
+          charge.Total = runningTotal + charge.amount; // Assuming the amount is the correct property
+          runningTotal = charge.Total;
+      });
+
+        // Reverse the paymentAndCharges array back to its original order
+        unit.paymentAndCharges.reverse();
+      });
+    });
+
     res.json({
       statusCode: 200,
-      data: sortedData,
+      data: processedData,
       message: "Read Filtered PaymentAndCharge",
     });
   } catch (error) {
@@ -340,9 +358,6 @@ router.get("/financial_unit", async (req, res) => {
         unitItem.paymentAndCharges.reverse();
       });
     });
-
-
-
 
     res.json({
       statusCode: 200,
