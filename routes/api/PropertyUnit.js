@@ -84,53 +84,6 @@ router.get("/prop_id/:id", async (req, res) => {
 
 
 
-// router.put("/propertyunit/:id", async (req, res) => {
-//   try {
-
-//     let updatedPropertyUnit = await PropertyUnit.findByIdAndUpdate(req.params.id, req.body);
-
-//     await PropertyUnit.updateMany(
-//       { rentalId: updatedPropertyUnit.rentalId },
-//       {
-//         $set: {
-//           rental_adress: req.body.rental_adress || updatedPropertyUnit.rental_adress,
-//           rental_city: req.body.rental_city || updatedPropertyUnit.rental_city,
-//           rental_country: req.body.rental_country || updatedPropertyUnit.rental_country,
-//           rental_postcode: req.body.rental_postcode || updatedPropertyUnit.rental_postcode,
-//           // Add more fields as needed
-//         },
-//       }
-//     );
-
-
-//     await Rentals.updateOne(
-//       {
-//         _id: updatedPropertyUnit.rentalId,
-//         'entries._id': updatedPropertyUnit._id,
-//       },
-//       {
-//         $set: {
-//           'entries.$.rental_adress': req.body.rental_adress || updatedPropertyUnit.rental_adress,
-//           'entries.$.rental_city': req.body.rental_city || updatedPropertyUnit.rental_city,
-//           'entries.$.rental_country': req.body.rental_country || updatedPropertyUnit.rental_country,
-//           'entries.$.rental_postcode': req.body.rental_postcode || updatedPropertyUnit.rental_postcode,
-//           // Add more fields as needed
-//         },
-//       }
-//     );
-
-//     res.json({
-//       statusCode: 200,
-//       data: updatedPropertyUnit,
-//       message: "Property-Unit Data Updated Successfully",
-//     });
-//   } catch (err) {
-//     res.json({
-//       statusCode: 500,
-//       message: err.message,
-//     });
-//   }
-// });
 router.put("/propertyunit/:id", async (req, res) => {
   try {
 
@@ -246,12 +199,11 @@ router.put("/propertyunit/:id", async (req, res) => {
 
 
 // Teneant Name Get
-router.get("/propertyunit/:rentalId", async (req, res) => {
+router.get("/propertyunits/:propertyId", async (req, res) => {
   try {
-    const rentalId = req.params.rentalId;
-    console.log(rentalId, "rentalId");
+    const propertyId = req.params.propertyId;
 
-    if (!rentalId) {
+    if (!propertyId) {
       res.json({
         statusCode: 400,
         message: "Data not found",
@@ -259,7 +211,7 @@ router.get("/propertyunit/:rentalId", async (req, res) => {
     }
 
     // Find PropertyUnit data
-    const propertyUnitData = await PropertyUnit.find({ rentalId });
+    const propertyUnitData = await PropertyUnit.find({ propertyId });
 
     // Initialize an array to store the final response data
     const responseData = [];

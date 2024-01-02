@@ -38,11 +38,11 @@ createdAt: { type: String },
 workOrderImage:{type: Array },
 workorder_status: [
   {
+    due_date: String,
+    staffmember_name: String,
     createdAt: String,
     status: String,
     updateAt: String,
-    due_date: String,
-    staffmember_name: String,
     statusUpdatedBy: String,
   },
 ],

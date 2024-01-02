@@ -118,6 +118,60 @@ router.get("/workorder", async (req, res) => {
   }
 });
 
+router.put("/workorder/:id/status", async (req, res) => {
+  try {
+    const Id = req.params.id;
+    const newStatus = req.body.status;
+    const newDuedate = req.body.due_date;
+    const newStaff = req.body.staffmember_name;
+    const statusUpdatedBy = req.body.statusUpdatedBy;
+
+    if (!Id || !newStatus) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Invalid request. Please provide 'status'.",
+      });
+    }
+
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const updatedWorkorder = await Workorder.findByIdAndUpdate(
+      Id,
+      {
+        $push: {
+          workorder_status: {
+            statusUpdatedBy: statusUpdatedBy,
+            status: newStatus,
+            due_date: newDuedate,
+            staffmember_name: newStaff,
+            updateAt: updatedAt,
+            
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedWorkorder) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Workorder not found.",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedWorkorder,
+      message: "Workorder Status Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 // get workorder
 router.get("/findworkorderbyId/:workorder_id", async (req, res) => {
   try {
@@ -413,6 +467,56 @@ router.get("/workorder/tenant/:rental_addresses/:rental_units", async (req, res)
       const singleUnit = rentalUnits[0];
 
       const data = await Workorder.find({ rental_adress: singleAddress, rental_units: singleUnit });
+      if (data) {
+        res.json({
+          data: data,
+          statusCode: 200,
+          message: "Workorder details retrieved successfully",
+        });
+      } else {
+        res.status(404).json({
+          statusCode: 404,
+          message: "Workorder details not found for the single rental address",
+        });
+      }
+    } else {
+      // Handle multiple rental addresses
+      const data = await Workorder.find({
+        rental_adress: { $in: rentalAddresses },
+        rental_units: { $in: rentalUnits }
+      });
+      if (data && data.length > 0) {
+        res.json({
+          data: data,
+          statusCode: 200,
+          message:
+            "Workorder details retrieved successfully for multiple rental addresses",
+        });
+      } else {
+        res.status(404).json({
+          statusCode: 404,
+          message:
+            "Workorder details not found for the multiple rental addresses",
+        });
+      }
+    }
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+router.get("/workorder/tenant/:rental_addresses", async (req, res) => {
+  try {
+    const rentalAddresses = req.params.rental_addresses.split("^");
+    // const rentalUnits = req.params.rental_units.split('^');
+
+    if (rentalAddresses.length === 1) {
+      const singleAddress = rentalAddresses[0];
+      // const singleUnit = rentalUnits[0];
+
+      const data = await Workorder.find({ rental_adress: singleAddress });
       if (data) {
         res.json({
           data: data,
