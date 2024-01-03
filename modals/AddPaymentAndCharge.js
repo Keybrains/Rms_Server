@@ -45,7 +45,7 @@ const paymentAndChargeSchema = new mongoose.Schema({
     type: String,
   },
   isPaid:{ type:Boolean,default: false },
-  islatefee:{ type:Boolean }
+  islatefee:{ type:Boolean },
 });
 
 // Define the 'Unit' schema
