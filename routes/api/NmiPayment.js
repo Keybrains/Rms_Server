@@ -752,7 +752,7 @@ router.post("/nmi", async (req, res) => {
         // gymId: gymOwner.parentId,
         // paymentplanId: gymOwner.nmiplanId,
         // memberId: gymOwner._id,
-        nmiSubscriptionId: req.body.event_body.subscription_id,
+        nmisubscriptionId: req.body.event_body.subscription_id,
         email: webhook.event_body.billing_address.email,
         description: "Recurring charging added",
         amount: webhook.event_body.plan.amount,
