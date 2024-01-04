@@ -134,6 +134,7 @@ cron.schedule("47 17 * * *", async () => {
   }
 });
 
+//rent cron job
 cron.schedule("18 16 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
@@ -962,6 +963,7 @@ cron.schedule("18 16 * * *", async () => {
   }
 });
 
+//simple test cronjob
 cron.schedule("49 5 * * *", async () => {
   try {
     const cronjobs = await Cronjobs.find();
@@ -986,7 +988,851 @@ cron.schedule("49 5 * * *", async () => {
   }
 });
 
+//recurring cron job
+cron.schedule("55 15 * * *", async () => {
+  try {
+    const cronjobs = await Cronjobs.find();
+    const isCronjobRunning = cronjobs[0].isCronjobRunning;
+    if (isCronjobRunning === false) {
+      await Cronjobs.updateOne(
+        { _id: cronjobs[0]._id },
+        { isCronjobRunning: true }
+      );
 
+      console.log("Cron hitt...!!!");
+      const currentDate = new Date().toISOString().split("T")[0];
+
+      const tenants = await Tenants.find();
+
+      tenants.forEach(async (tenant) => {
+        tenant.entries.forEach(async (entry) => {
+          const startDate = entry.start_date
+            ? new Date(entry.start_date).toISOString().split("T")[0]
+            : null;
+          const endDate = entry.end_date
+            ? new Date(entry.end_date).toISOString().split("T")[0]
+            : null;
+          const nextDueDate = entry.nextDue_date
+            ? new Date(entry.nextDue_date).toISOString().split("T")[0]
+            : null;
+          const rentCycle = entry.rent_cycle;
+          const paymentMethod = entry.paymentMethod;
+          const recurring = entry.recurring_charges;
+          console.log(
+            "start-end-due",
+            startDate + " " + endDate + " " + nextDueDate + " " + paymentMethod
+          );
+          // console.log("currentDate", currentDate);
+          // console.log("rentCycle", rentCycle);
+          // console.log(" Cron middle hitt ...!!!");
+
+          // Monthly cronjob condition
+          if (
+            startDate &&
+            endDate &&
+            nextDueDate && // Ensure these dates exist
+            currentDate >= startDate &&
+            currentDate <= endDate &&
+            currentDate === nextDueDate &&
+            rentCycle === "Monthly" && 
+            //paymentMethod === "Manually"
+            recurring.length > 0
+          ) {
+
+            // Update the nextDue_date to current date + 1 month
+            const nextDueDatePlusOneMonth = new Date(currentDate);
+            nextDueDatePlusOneMonth.setMonth(
+              nextDueDatePlusOneMonth.getMonth() + 1
+            );
+
+            entry.nextDue_date = nextDueDatePlusOneMonth
+              .toISOString()
+              .split("T")[0]; // Update nextDue_date
+
+            console.log("Monthly Cron end...!!!");
+            // Save the changes to the database
+            await tenant.save();
+
+            //post data static after cron run for the monthly ----------------------------------------
+            const rentalAdress = tenant.entries[0].rental_adress;
+            const propertyId = tenant.entries[0].property_id;
+            const unit = tenant.entries[0].rental_units;
+            const unitId = tenant.entries[0].unit_id;
+
+            for (const recurringCharge of recurring) {
+
+            const existingEntry = await PaymentCharges.findOne({
+              "properties.rental_adress": rentalAdress,
+              "properties.property_id": propertyId,
+              "unit.unit": unit,
+              "unit.unit_id": unitId,
+            });
+          
+            if (existingEntry) {
+              // Entry exists, add payment information to existing entry
+              existingEntry.unit[0].paymentAndCharges.push({
+                type: "Charge",
+                charge_type: "Recurring",
+                account: recurringCharge.recuring_account,
+                amount: recurringCharge.recuring_amount,
+                rental_adress: rentalAdress,
+                tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                tenant_id: tenant._id,
+                memo: "recurring cron",
+                date: currentDate,
+                month_year: `${currentDate.split("-")[1]}-${
+                  currentDate.split("-")[0]
+                }`,
+                rent_cycle: "Monthly", 
+              });
+
+              try {
+                await existingEntry.save(); 
+                console.log(
+                  "Data appended to an existing entry in payment-charges collection."
+                );
+              } catch (error) {
+                console.error(
+                  "Error appending data to an existing entry:",
+                  error
+                );
+              }
+            } else {
+              // Entry doesn't exist, create a new entry
+              const postData = {
+                properties: {
+                  rental_adress: rentalAdress,
+                  property_id: propertyId,
+                },
+                unit: [
+                  {
+                    unit: unit,
+                    unit_id: unitId,
+                    paymentAndCharges: [
+                      {
+                        type: "Charge",
+                        charge_type: "Recurring",
+                        account: recurringCharge.recuring_account,
+                        amount: recurringCharge.recuring_amount,
+                        rental_adress: rentalAdress,
+                        tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                        tenant_id: tenant._id,
+                        memo: "test",
+                        date: currentDate,
+                        month_year: `${currentDate.split("-")[1]}-${
+                          currentDate.split("-")[0]
+                        }`,
+                        rent_cycle: "Monthly", 
+                      },
+                    ],
+                  },
+                ],
+              };
+
+              try {
+                const paymentCharge = new PaymentCharges(postData);
+                await paymentCharge.save(); // Save the new entry
+                console.log("Data saved to payment-charges collection.");
+              } catch (error) {
+                console.error(
+                  "Error saving data to payment-charges collection:",
+                  error
+                );
+              }
+            }
+          }
+        }
+          //**************************************************************************************************************************************************************************************************************** */
+          // Weekly cronjob condition
+          if (
+            startDate &&
+            endDate &&
+            nextDueDate && // Ensure these dates exist
+            currentDate >= startDate &&
+            currentDate <= endDate &&
+            currentDate === nextDueDate &&
+            rentCycle === "Weekly"
+          ) {
+            console.log("Weekly Cron hitt...!!!");
+
+            // Update the nextDue_date to current date + 1 week
+            const nextDueDatePlusOneWeek = new Date(currentDate);
+            nextDueDatePlusOneWeek.setDate(
+              nextDueDatePlusOneWeek.getDate() + 7
+            );
+
+            entry.nextDue_date = nextDueDatePlusOneWeek
+              .toISOString()
+              .split("T")[0]; // Update nextDue_date
+            console.log("Weekly Cron hitt...!!!");
+            // Save the changes to the database
+            await tenant.save();
+
+            //Data Post Logic Here for Weekly
+            //post data static after cron run for the Weekly ----------------------------------------
+            const rentalAdress = tenant.entries[0].rental_adress;
+            const propertyId = tenant.entries[0].property_id;
+            const unit = tenant.entries[0].rental_units;
+            const unitId = tenant.entries[0].unit_id;
+
+            for (const recurringCharge of recurring) {
+
+            const existingEntry = await PaymentCharges.findOne({
+              "properties.rental_adress": rentalAdress,
+              "properties.property_id": propertyId,
+              "unit.unit": unit,
+              "unit.unit_id": unitId,
+            });
+
+            if (existingEntry) {
+              // Entry exists, add payment information to existing entry
+              existingEntry.unit[0].paymentAndCharges.push({
+                type: "Charge",
+                charge_type: "Recurring",
+                account: recurringCharge.recuring_account,
+                amount: recurringCharge.recuring_amount,
+                rental_adress: rentalAdress,
+                tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                tenant_id: tenant._id,
+                memo: "mansi cron",
+                date: currentDate,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]}`,
+                rent_cycle: "Weekly", 
+              });
+
+              try {
+                await existingEntry.save(); 
+                console.log(
+                  "Data appended to an existing entry in payment-charges collection."
+                );
+              } catch (error) {
+                console.error(
+                  "Error appending data to an existing entry:",
+                  error
+                );
+              }
+            } else {
+              // Entry doesn't exist, create a new entry
+              const postData = {
+                properties: {
+                  rental_adress: rentalAdress,
+                  property_id: propertyId,
+                },
+                unit: [
+                  {
+                    unit: unit,
+                    unit_id: unitId,
+                    paymentAndCharges: [
+                      {
+                        type: "Charge",
+                        charge_type: "Recurring",
+                        account: recurringCharge.recuring_account,
+                        amount: recurringCharge.recuring_amount,
+                        rental_adress: rentalAdress,
+                        tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                        tenant_id: tenant._id,
+                        memo: "mansi cron",
+                        date: currentDate,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
+                        rent_cycle: "Weekly", 
+                      },
+                    ],
+                  },
+                ],
+              };
+
+              try {
+                const paymentCharge = new PaymentCharges(postData);
+                await paymentCharge.save(); // Save the new entry
+                console.log("Data saved to payment-charges collection.");
+              } catch (error) {
+                console.error(
+                  "Error saving data to payment-charges collection:",
+                  error
+                );
+              }
+            }
+          }
+          }
+
+          // Daily cronjob condition
+          if (
+            startDate &&
+            endDate &&
+            nextDueDate && // Ensure these dates exist
+            currentDate >= startDate &&
+            currentDate <= endDate &&
+            currentDate === nextDueDate &&
+            rentCycle === "Daily"
+          ) {
+            console.log("Daily Cron hitt...!!!");
+
+            // Update the nextDue_date to current date + 1 day
+            const nextDueDatePlusOneDay = new Date(currentDate);
+            nextDueDatePlusOneDay.setDate(nextDueDatePlusOneDay.getDate() + 1);
+
+            entry.nextDue_date = nextDueDatePlusOneDay
+              .toISOString()
+              .split("T")[0]; // Update nextDue_date
+
+            console.log("Daily Cron end...!!!");
+            // Save the changes to the database
+            await tenant.save();
+
+            //post data static after cron run for the Daily ----------------------------------------
+            const rentalAdress = tenant.entries[0].rental_adress;
+            const propertyId = tenant.entries[0].property_id;
+            const unit = tenant.entries[0].rental_units;
+            const unitId = tenant.entries[0].unit_id;
+
+            for (const recurringCharge of recurring) {
+
+            const existingEntry = await PaymentCharges.findOne({
+              "properties.rental_adress": rentalAdress,
+              "properties.property_id": propertyId,
+              "unit.unit": unit,
+              "unit.unit_id": unitId,
+            });
+
+            if (existingEntry) {
+              // Entry exists, add payment information to existing entry
+              existingEntry.unit[0].paymentAndCharges.push({
+                type: "Charge",
+                charge_type: "Recurring",
+                account: recurringCharge.recuring_account,
+                amount: recurringCharge.recuring_amount,
+                rental_adress: rentalAdress,
+                tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                tenant_id: tenant._id,
+                memo: "mansi cron",
+                date: currentDate,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                  }`,
+                rent_cycle: "Daily", // Change this accordingly
+              });
+
+              try {
+                await existingEntry.save(); // Save the updated entry
+                console.log(
+                  "Data appended to an existing entry in payment-charges collection."
+                );
+              } catch (error) {
+                console.error(
+                  "Error appending data to an existing entry:",
+                  error
+                );
+              }
+            } else {
+              // Entry doesn't exist, create a new entry
+              const postData = {
+                properties: {
+                  rental_adress: rentalAdress,
+                  property_id: propertyId,
+                },
+                unit: [
+                  {
+                    unit: unit,
+                    unit_id: unitId,
+                    paymentAndCharges: [
+                      {
+                        type: "Charge",
+                        charge_type: "Recurring",
+                        account: recurringCharge.recuring_account,
+                        amount: recurringCharge.recuring_amount,
+                        rental_adress: rentalAdress,
+                        tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                        tenant_id: tenant._id,
+                        memo: "mansi cron",
+                        date: currentDate,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
+                        rent_cycle: "Daily", 
+                      },
+                    ],
+                  },
+                ],
+              };
+
+              try {
+                const paymentCharge = new PaymentCharges(postData);
+                await paymentCharge.save(); // Save the new entry
+                console.log("Data saved to payment-charges collection.");
+              } catch (error) {
+                console.error(
+                  "Error saving data to payment-charges collection:",
+                  error
+                );
+              }
+            }
+          }
+          }
+
+          // Every Two months cronjob condition
+          if (
+            startDate &&
+            endDate &&
+            nextDueDate && // Ensure these dates exist
+            currentDate >= startDate &&
+            currentDate <= endDate &&
+            currentDate === nextDueDate &&
+            rentCycle === "Every two months"
+          ) {
+            console.log("Every two months Cron hitt...!!!");
+
+            // Update the nextDue_date to current date + 2 months
+            const nextDueDatePlusTwoMonths = new Date(currentDate);
+            nextDueDatePlusTwoMonths.setMonth(
+              nextDueDatePlusTwoMonths.getMonth() + 2
+            );
+
+            entry.nextDue_date = nextDueDatePlusTwoMonths
+              .toISOString()
+              .split("T")[0]; // Update nextDue_date
+            console.log("Every two months Cron end...!!!");
+            // Save the changes to the database
+            await tenant.save();
+
+            //post data static after cron run for the Every two months ----------------------------------------
+            const rentalAdress = tenant.entries[0].rental_adress;
+            const propertyId = tenant.entries[0].property_id;
+            const unit = tenant.entries[0].rental_units;
+            const unitId = tenant.entries[0].unit_id;
+
+            for (const recurringCharge of recurring) {
+
+            const existingEntry = await PaymentCharges.findOne({
+              "properties.rental_adress": rentalAdress,
+              "properties.property_id": propertyId,
+              "unit.unit": unit,
+              "unit.unit_id": unitId,
+            });
+
+            if (existingEntry) {
+              // Entry exists, add payment information to existing entry
+              existingEntry.unit[0].paymentAndCharges.push({
+                type: "Charge",
+                charge_type: "Recurring",
+                account: recurringCharge.recuring_account,
+                amount: recurringCharge.recuring_amount,
+                rental_adress: rentalAdress,
+                tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                tenant_id: tenant._id,
+                memo: "mansi cron",
+                date: currentDate,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                  }`,
+                rent_cycle: "Every two months", 
+              });
+
+              try {
+                await existingEntry.save(); // Save the updated entry
+                console.log(
+                  "Data appended to an existing entry in payment-charges collection."
+                );
+              } catch (error) {
+                console.error(
+                  "Error appending data to an existing entry:",
+                  error
+                );
+              }
+            } else {
+              // Entry doesn't exist, create a new entry
+              const postData = {
+                properties: {
+                  rental_adress: rentalAdress,
+                  property_id: propertyId,
+                },
+                unit: [
+                  {
+                    unit: unit,
+                    unit_id: unitId,
+                    paymentAndCharges: [
+                      {
+                        type: "Charge",
+                        charge_type: "Recurring",
+                        account: recurringCharge.recuring_account,
+                        amount: recurringCharge.recuring_amount,
+                        rental_adress: rentalAdress,
+                        tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                        tenant_id: tenant._id,
+                        memo: "mansi cron",
+                        date: currentDate,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
+                        rent_cycle: "Every two months", 
+                      },
+                    ],
+                  },
+                ],
+              };
+
+              try {
+                const paymentCharge = new PaymentCharges(postData);
+                await paymentCharge.save(); // Save the new entry
+                console.log("Data saved to payment-charges collection.");
+              } catch (error) {
+                console.error(
+                  "Error saving data to payment-charges collection:",
+                  error
+                );
+              }
+            }
+          }
+          }
+
+          // Every Two Week cronjob condition
+          if (
+            startDate &&
+            endDate &&
+            nextDueDate && // Ensure these dates exist
+            currentDate >= startDate &&
+            currentDate <= endDate &&
+            currentDate === nextDueDate &&
+            rentCycle === "Every two weeks"
+          ) {
+            console.log("Every two weeks Cron hitt...!!!");
+
+            // Update the nextDue_date to current date + 2 weeks
+            const nextDueDatePlusTwoWeeks = new Date(currentDate);
+            nextDueDatePlusTwoWeeks.setDate(
+              nextDueDatePlusTwoWeeks.getDate() + 14
+            );
+
+            entry.nextDue_date = nextDueDatePlusTwoWeeks
+              .toISOString()
+              .split("T")[0]; // Update nextDue_date
+            console.log("Every two weeks Cron end...!!!");
+            // Save the changes to the database
+            await tenant.save();
+
+            //post data static after cron run for the Every two weeks ----------------------------------------
+            const rentalAdress = tenant.entries[0].rental_adress;
+            const propertyId = tenant.entries[0].property_id;
+            const unit = tenant.entries[0].rental_units;
+            const unitId = tenant.entries[0].unit_id;
+
+            for (const recurringCharge of recurring) {
+
+            const existingEntry = await PaymentCharges.findOne({
+              "properties.rental_adress": rentalAdress,
+              "properties.property_id": propertyId,
+              "unit.unit": unit,
+              "unit.unit_id": unitId,
+            });
+
+            if (existingEntry) {
+              // Entry exists, add payment information to existing entry
+              existingEntry.unit[0].paymentAndCharges.push({
+                type: "Charge",
+                charge_type: "Recurring",
+                account: recurringCharge.recuring_account,
+                amount: recurringCharge.recuring_amount,
+                rental_adress: rentalAdress,
+                tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                tenant_id: tenant._id,
+                memo: "mansi cron",
+                date: currentDate,
+                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                  }`,
+                rent_cycle: "Every two weeks", 
+              });
+
+              try {
+                await existingEntry.save(); // Save the updated entry
+                console.log(
+                  "Data appended to an existing entry in payment-charges collection."
+                );
+              } catch (error) {
+                console.error(
+                  "Error appending data to an existing entry:",
+                  error
+                );
+              }
+            } else {
+              // Entry doesn't exist, create a new entry
+              const postData = {
+                properties: {
+                  rental_adress: rentalAdress,
+                  property_id: propertyId,
+                },
+                unit: [
+                  {
+                    unit: unit,
+                    unit_id: unitId,
+                    paymentAndCharges: [
+                      {
+                        type: "Charge",
+                        charge_type: "Recurring",
+                        account: recurringCharge.recuring_account,
+                        amount: recurringCharge.recuring_amount,
+                        rental_adress: rentalAdress,
+                        tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                        tenant_id: tenant._id,
+                        memo: "mansi cron",
+                        date: currentDate,
+                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                          }`,
+                        rent_cycle: "Every two weeks", 
+                      },
+                    ],
+                  },
+                ],
+              };
+
+              try {
+                const paymentCharge = new PaymentCharges(postData);
+                await paymentCharge.save(); // Save the new entry
+                console.log("Data saved to payment-charges collection.");
+              } catch (error) {
+                console.error(
+                  "Error saving data to payment-charges collection:",
+                  error
+                );
+              }
+            }
+          }
+          }
+
+          // quarterly cronjob condition
+          if (
+            startDate &&
+            endDate &&
+            nextDueDate && // Ensure these dates exist
+            currentDate >= startDate &&
+            currentDate <= endDate &&
+            currentDate === nextDueDate &&
+            rentCycle === "Quarterly"
+          ) {
+            console.log("Quarterly Cron hitt...!!!");
+
+            // Update the nextDue_date to current date + 3 months
+            const nextDueDatePlusThreeMonths = new Date(currentDate);
+            nextDueDatePlusThreeMonths.setMonth(
+              nextDueDatePlusThreeMonths.getMonth() + 3
+            );
+
+            entry.nextDue_date = nextDueDatePlusThreeMonths
+              .toISOString()
+              .split("T")[0]; // Update nextDue_date
+
+            console.log("Quarterly Cron end...!!!");
+            // Save the changes to the database
+            await tenant.save();
+
+             //post data static after cron run for the monthly ----------------------------------------
+             const rentalAdress = tenant.entries[0].rental_adress;
+             const propertyId = tenant.entries[0].property_id;
+             const unit = tenant.entries[0].rental_units;
+             const unitId = tenant.entries[0].unit_id;
+
+             for (const recurringCharge of recurring) {
+ 
+             const existingEntry = await PaymentCharges.findOne({
+               "properties.rental_adress": rentalAdress,
+               "properties.property_id": propertyId,
+               "unit.unit": unit,
+               "unit.unit_id": unitId,
+             });
+ 
+             if (existingEntry) {
+               // Entry exists, add payment information to existing entry
+               existingEntry.unit[0].paymentAndCharges.push({
+                 type: "Charge",
+                 charge_type: "Recurring",
+                 account: recurringCharge.recuring_account,
+                 amount: recurringCharge.recuring_amount,
+                 rental_adress: rentalAdress,
+                 tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                 tenant_id: tenant._id,
+                 memo: "mansi cron",
+                 date: currentDate,
+                 month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                   }`,
+                 rent_cycle: "Quarterly", // Change this accordingly
+               });
+ 
+               try {
+                 await existingEntry.save(); // Save the updated entry
+                 console.log(
+                   "Data appended to an existing entry in payment-charges collection."
+                 );
+               } catch (error) {
+                 console.error(
+                   "Error appending data to an existing entry:",
+                   error
+                 );
+               }
+             } else {
+               // Entry doesn't exist, create a new entry
+               const postData = {
+                 properties: {
+                   rental_adress: rentalAdress,
+                   property_id: propertyId,
+                 },
+                 unit: [
+                   {
+                     unit: unit,
+                     unit_id: unitId,
+                     paymentAndCharges: [
+                       {
+                         type: "Charge",
+                         charge_type: "Recurring",
+                         account: recurringCharge.recuring_account,
+                         amount: recurringCharge.recuring_amount,
+                         rental_adress: rentalAdress,
+                         tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                         tenant_id: tenant._id,
+                         memo: "mansi cron",
+                         date: currentDate,
+                         month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                           }`,
+                         rent_cycle: "Quarterly", // Change this accordingly
+                       },
+                     ],
+                   },
+                 ],
+               };
+ 
+               try {
+                 const paymentCharge = new PaymentCharges(postData);
+                 await paymentCharge.save(); // Save the new entry
+                 console.log("Data saved to payment-charges collection.");
+               } catch (error) {
+                 console.error(
+                   "Error saving data to payment-charges collection:",
+                   error
+                 );
+               }
+             }
+            }
+           }
+          
+          // Yearly cronjob condition
+          if (
+            startDate &&
+            endDate &&
+            nextDueDate && // Ensure these dates exist
+            currentDate >= startDate &&
+            currentDate <= endDate &&
+            currentDate === nextDueDate &&
+            rentCycle === "Yearly"
+          ) {
+            console.log("Yearly Cron hitt...!!!");
+
+            // Update the nextDue_date to current date + 1 year
+            const nextDueDatePlusOneYear = new Date(currentDate);
+            nextDueDatePlusOneYear.setFullYear(
+              nextDueDatePlusOneYear.getFullYear() + 1
+            );
+
+            entry.nextDue_date = nextDueDatePlusOneYear
+              .toISOString()
+              .split("T")[0]; // Update nextDue_date
+
+            console.log("Yearly Cron end...!!!");
+            // Save the changes to the database
+            await tenant.save();
+
+             //post data static after cron run for the Weekly ----------------------------------------
+             const rentalAdress = tenant.entries[0].rental_adress;
+             const propertyId = tenant.entries[0].property_id;
+             const unit = tenant.entries[0].rental_units;
+             const unitId = tenant.entries[0].unit_id;
+
+             for (const recurringCharge of recurring) {
+ 
+             const existingEntry = await PaymentCharges.findOne({
+               "properties.rental_adress": rentalAdress,
+               "properties.property_id": propertyId,
+               "unit.unit": unit,
+               "unit.unit_id": unitId,
+             });
+ 
+             if (existingEntry) {
+               // Entry exists, add payment information to existing entry
+               existingEntry.unit[0].paymentAndCharges.push({
+                 type: "Charge",
+                 charge_type: "Recurring",
+                 account: recurringCharge.recuring_account,
+                 amount: recurringCharge.recuring_amount,
+                 rental_adress: rentalAdress,
+                 tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                 tenant_id: tenant._id,
+                 memo: "mansi cron",
+                 date: currentDate,
+                 month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                   }`,
+                 rent_cycle: "Yearly", // Change this accordingly
+               });
+ 
+               try {
+                 await existingEntry.save(); // Save the updated entry
+                 console.log(
+                   "Data appended to an existing entry in payment-charges collection."
+                 );
+               } catch (error) {
+                 console.error(
+                   "Error appending data to an existing entry:",
+                   error
+                 );
+               }
+             } else {
+               // Entry doesn't exist, create a new entry
+               const postData = {
+                 properties: {
+                   rental_adress: rentalAdress,
+                   property_id: propertyId,
+                 },
+                 unit: [
+                   {
+                     unit: unit,
+                     unit_id: unitId,
+                     paymentAndCharges: [
+                       {
+                         type: "Charge",
+                         charge_type: "Recurring",
+                         account: recurringCharge.recuring_account,
+                         amount: recurringCharge.recuring_amount,
+                         rental_adress: rentalAdress,
+                         tenant_firstName: `${tenant.tenant_firstName} ${tenant.tenant_lastName}`,
+                         tenant_id: tenant._id,
+                         memo: "mansi cron",
+                         date: currentDate,
+                         month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
+                           }`,
+                         rent_cycle: "Yearly", 
+                       },
+                     ],
+                   },
+                 ],
+               };
+ 
+               try {
+                 const paymentCharge = new PaymentCharges(postData);
+                 await paymentCharge.save(); // Save the new entry
+                 console.log("Data saved to payment-charges collection.");
+               } catch (error) {
+                 console.error(
+                   "Error saving data to payment-charges collection:",
+                   error
+                 );
+               }
+             }
+            }
+          }
+        });
+      });
+      await Cronjobs.updateOne(
+        { _id: cronjobs[0]._id },
+        { isCronjobRunning: false }
+      );
+      //console.log("cron updated to false");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+});
 
 // Helper function to send a request to the NMI API
 const sendNmiRequest = async (config, paymentDetails) => {
@@ -1018,7 +1864,6 @@ const sendNmiRequest = async (config, paymentDetails) => {
   }
 };
 
-
 const nodemailer = require("nodemailer");
 const { createTransport } = require("nodemailer");
 
@@ -1039,13 +1884,13 @@ const encrypt = (text) => {
   return encrypted;
 };
 
-  const decrypt = (text) => {
-    // Make sure to require the crypto module
-    const decipher = crypto.createDecipher("aes-256-cbc", "mansi");
-    let decrypted = decipher.update(text, "hex", "utf-8");
-    decrypted += decipher.final("utf-8");
-    return decrypted;
-  };
+const decrypt = (text) => {
+  // Make sure to require the crypto module
+  const decipher = crypto.createDecipher("aes-256-cbc", "mansi");
+  let decrypted = decipher.update(text, "hex", "utf-8");
+  decrypted += decipher.final("utf-8");
+  return decrypted;
+};
 
 const tokenExpirationMap = new Map();
 
@@ -1120,7 +1965,6 @@ router.get("/check_token_status/:token", (req, res) => {
     res.json({ expired: true });
   }
 });
-
 
 router.put("/reset_password/:mail", async (req, res) => {
   try {
@@ -1525,8 +2369,6 @@ router.delete("/tenant", async (req, res) => {
   }
 });
 
-
-
 //edit tenant
 // PUT request to update tenant data old
 // router.put("/tenant/:id", async (req, res) => {
@@ -1619,6 +2461,7 @@ router.delete("/tenant", async (req, res) => {
 //     });
 //   }
 // });
+
 router.put("/tenant/:id", async (req, res) => {
   try {
     const tenantId = req.params.id;
