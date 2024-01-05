@@ -1156,6 +1156,10 @@ function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
 // });
 
 router.post("/nmi", async (req, res) => {
+
+  console.log(req.body);
+  console.log(req.body.postData);
+  console.log(req.body.putObject);
   try {
     const signingKey = "CC8775A4CFD933614985209F6F68768B";
     const webhookBody = JSON.stringify(req.body.postData); // Assuming body is JSON
