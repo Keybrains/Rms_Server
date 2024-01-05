@@ -2,6 +2,7 @@
 var express = require("express");
 var router = express.Router();
 var NmiPayment = require("../../modals/NmiPayment");
+var Tenant = require("../../modals/Tenants");
 var PaymentPlans = require("../../modals/PaymentPlans");
 var AutoRecPayments = require("../../modals/AutoRecPayments");
 var axios = require("axios");
@@ -715,7 +716,6 @@ function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
   return sig === calculatedSig;
 }
 
-
 router.post("/nmi", async (req, res) => {
   try {
     const signingKey = "CC8775A4CFD933614985209F6F68768B";
@@ -748,11 +748,14 @@ router.post("/nmi", async (req, res) => {
       //console.log("successfully update recurring subscription");
       // const gymOwner = await User.findOne({nmiSubscriptionId: parsedWebhook.event_body.subscription_id})
       // if(gymOwner) {
+
+    
+
       const payment = await AutoRecPayments.create({
         // gymId: gymOwner.parentId,
         // paymentplanId: gymOwner.nmiplanId,
         // memberId: gymOwner._id,
-        nmiSubscriptionId: req.body.event_body.subscription_id,
+        nmisubscriptionId: req.body.event_body.subscription_id,
         email: webhook.event_body.billing_address.email,
         description: "Recurring charging added",
         amount: webhook.event_body.plan.amount,
@@ -762,6 +765,14 @@ router.post("/nmi", async (req, res) => {
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
+
+     // Update Tenant record with the subscription ID
+      await Tenant.findOneAndUpdate(
+        { tenant_email: webhook.event_body.billing_address.email }, // Assuming email is the matching field
+        { $set: { subscription_id: req.body.event_body.subscription_id } }
+      );
+
+     // await tenant.save();
       //update user payment status to true
       // await User.findOneAndUpdate(
       //     {
