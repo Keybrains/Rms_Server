@@ -767,8 +767,8 @@ router.post("/nmi", async (req, res) => {
       await payment.save();
 
 const tenant_email = webhook.event_body.billing_address.email;
-const rental = webhook.event_body.billing_address.address1;
-const unit = webhook.event_body.billing_address.address2;
+const rental = webhook.event_body.billing_address.address_1;
+const unit = webhook.event_body.billing_address.address_2;
 const subscription_id = req.body.event_body.subscription_id;
 
     console.log("alll----------------: ", tenant_email , rental, unit, subscription_id);
