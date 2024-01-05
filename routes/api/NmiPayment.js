@@ -469,7 +469,7 @@ router.post("/custom-add-subscription", async (req, res) => {
     };
     axios(config)
       .then(async (response) => {
-        console.log(response.data.transactionid, "---------------------gettedData-------------------------");
+        console.log(response.data, "---------------------gettedData-------------------------");
         const parsedResponse = querystring.parse(response.data);
         // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
