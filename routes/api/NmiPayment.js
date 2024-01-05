@@ -771,6 +771,7 @@ const rental = webhook.event_body.billing_address.address1;
 const unit = webhook.event_body.billing_address.address2;
 const subscription_id = req.body.event_body.subscription_id;
 
+    console.log("alll----------------: ", tenant_email , rental, unit, subscription_id);
 const updatedTenant = await Tenant.findOneAndUpdate(
   {
     tenant_email: tenant_email,
