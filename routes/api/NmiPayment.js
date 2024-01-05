@@ -469,12 +469,11 @@ router.post("/custom-add-subscription", async (req, res) => {
     };
     axios(config)
       .then(async (response) => {
-        console.log(response.data, "---------------------gettedData-------------------------");
         const parsedResponse = querystring.parse(response.data);
         // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
-          sendResponse(res, `Custom subscription added successfully. TransactionId: ${response.data}`);
+          sendResponse(res, `Custom subscription added successfully. TransactionId:` + parsedResponse.transactionid);
         } else {
           // Handle subscription creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
