@@ -772,7 +772,8 @@ router.post("/nmi", async (req, res) => {
       
       await Tenant.findOneAndUpdate(
         { tenant_email: tenant_email },
-        { $set: { subscription_id: subscription_id } }
+        { $set: { subscription_id: subscription_id } },
+        { new: true }
       );
       
       console.log("tenant detail is here : ", tenant_email, subscription_id);
