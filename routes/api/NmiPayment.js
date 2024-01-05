@@ -766,11 +766,28 @@ router.post("/nmi", async (req, res) => {
       //Save payment details of the user in payment collection
       await payment.save();
 
-     // Update Tenant record with the subscription ID
-      await Tenant.findOneAndUpdate(
-        { tenant_email: webhook.event_body.billing_address.email }, // Assuming email is the matching field
-        { $set: { subscription_id: req.body.event_body.subscription_id } }
-      );
+const tenant_email = webhook.event_body.billing_address.email;
+const rental = webhook.event_body.billing_address.address_1;
+const unit = webhook.event_body.billing_address.address_2;
+const subscription_id = req.body.event_body.subscription_id;
+
+    console.log("alll----------------: ", tenant_email , rental, unit, subscription_id);
+const updatedTenant = await Tenant.findOneAndUpdate(
+  {
+    tenant_email: tenant_email,
+    'entries.rental_adress': rental,
+    'entries.rental_units': unit
+  },
+  {
+    $set: {
+      'entries.$.subscription_id': subscription_id
+    }
+  },
+  { new: true }
+);
+
+console.log("Updated tenant detail ---------:", updatedTenant);
+     
 
      // await tenant.save();
       //update user payment status to true
