@@ -410,87 +410,7 @@ router.post("/add-plan", async (req, res) => {
   }
 });
 
-// router.post("/custom-add-subscription", async (req, res) => {
-//   try {
-//     console.log("................started...............");
-//     const {
-//       security_key,
-//       recurring,
-//       plan_payments,
-//       //planName,
-//       //planId,
-//       plan_amount,
-//       dayFrequency,
-//       ccnumber,
-//       ccexp,
-//       first_name,
-//       last_name,
-//       address,
-//       email,
-//       // start_date,
-//       // city,
-//       // state,
-//       // zip,
-//       /* Other necessary parameters for subscription */
-//     } = req.body;
-
-//     let postData = {
-//       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-//       recurring: "add_subscription",
-//       plan_payments,
-//       //plan_name: planName,
-//       //plan_id: planId,
-//       plan_amount,
-//       day_frequency: dayFrequency ? dayFrequency : 30,
-//       ccnumber,
-//       email,
-//       ccexp,
-//       first_name: first_name,
-//       last_name: last_name,
-//       address1: address,
-//       // next_charge_date: nextDue_date,
-//       // start_date: start_date,
-//       // city: city,
-//       // state: state,
-//       // zip: zip,
-//       /* Include other necessary parameters for subscription */
-//     };
-//     console.log("...........postData..........", postData);
-
-//     postData = querystring.stringify(postData);
-
-//     var config = {
-//       method: "post",
-//       url: "https://secure.nmi.com/api/transact.php",
-//       headers: {
-//         "Content-Type": "application/x-www-form-urlencoded",
-//       },
-//       data: postData,
-//     };
-//     axios(config)
-//       .then(async (response) => {
-//         const parsedResponse = querystring.parse(response.data);
-//         // console.log("ek ek krne", parsedResponse);
-//         if (parsedResponse.response_code == 100) {
-//           // Handle successful subscription creation
-//           sendResponse(res, "Custom subscription added successfully.");
-//         } else {
-//           // Handle subscription creation failure
-//           sendResponse(res, parsedResponse.responsetext, 403);
-//         }
-//       })
-//       .catch(function (error) {
-//         sendResponse(res, error, 500);
-//       });
-//   } catch (error) {
-//     sendResponse(res, "Something went wrong!", 500);
-//   }
-// });
-
 router.post("/custom-add-subscription", async (req, res) => {
-  const paymentDetails = req.body.paymentDetails; // Accessing paymentDetails object
-  const putObject = req.body.putObject;
-
   try {
     console.log("................started...............");
     const {
@@ -506,14 +426,13 @@ router.post("/custom-add-subscription", async (req, res) => {
       first_name,
       last_name,
       address,
-      address2,
       email,
       // start_date,
       // city,
       // state,
       // zip,
       /* Other necessary parameters for subscription */
-    } = paymentDetails;
+    } = req.body;
 
     let postData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
@@ -529,7 +448,6 @@ router.post("/custom-add-subscription", async (req, res) => {
       first_name: first_name,
       last_name: last_name,
       address1: address,
-      address2: address2,
       // next_charge_date: nextDue_date,
       // start_date: start_date,
       // city: city,
@@ -547,88 +465,12 @@ router.post("/custom-add-subscription", async (req, res) => {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      data: { postData: postData, putObject: putObject },
+      data: postData,
     };
     axios(config)
       .then(async (response) => {
         const parsedResponse = querystring.parse(response.data);
         // console.log("ek ek krne", parsedResponse);
-        if (parsedResponse.response_code == 100) {
-          // Handle successful subscription creation
-          sendResponse(res, "Custom subscription added successfully.");
-        } else {
-          // Handle subscription creation failure
-          sendResponse(res, parsedResponse.responsetext, 403);
-        }
-      })
-      .catch(function (error) {
-        sendResponse(res, error, 500);
-      });
-  } catch (error) {
-    sendResponse(res, "Something went wrong!", 500);
-  }
-});
-
-router.post("/withvault-add-subscription", async (req, res) => {
-  try {
-    const {
-      security_key,
-      recurring,
-      plan_payments,
-      planName,
-      //planId,
-      plan_amount,
-      dayFrequency,
-      ccnumber,
-      ccexp,
-      firstName,
-      lastName,
-      address,
-      city,
-      state,
-      zip,
-      /* Other necessary parameters for subscription */
-    } = req.body;
-
-    let postData = {
-      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-      recurring: "add_subscription",
-      customer_vault: "add_billing",
-      customer_vault_id: 123,
-      billing_id: "BillingId1",
-      company: "Company Inc.",
-      plan_payments,
-      plan_name: planName,
-      //plan_id: planId,
-      plan_amount,
-      day_frequency: dayFrequency ? dayFrequency : 30,
-      ccnumber,
-      ccexp,
-      first_name: firstName,
-      last_name: lastName,
-      address1: address,
-      city: city,
-      state: state,
-      zip: zip,
-      phone: "+1 (847) 352 4850",
-      email: "test@example.com",
-      /* Include other necessary parameters for subscription */
-    };
-
-    postData = querystring.stringify(postData);
-
-    var config = {
-      method: "post",
-      url: "https://secure.nmi.com/api/transact.php",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      data: postData,
-    };
-    console.log("tum se hi", config);
-    axios(config)
-      .then(async (response) => {
-        const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
           sendResponse(res, "Custom subscription added successfully.");
@@ -798,371 +640,10 @@ function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
   return sig === calculatedSig;
 }
 
-// router.post("/nmi", async (req, res) => {
-//   try {
-//     const signingKey = "CC8775A4CFD933614985209F6F68768B";
-//     const webhookBody = JSON.stringify(req.body); // Assuming body is JSON
-//     const sigHeader = req.headers["webhook-signature"];
-
-//     if (!sigHeader || sigHeader.length < 1) {
-//       throw new Error("Invalid webhook - signature header missing");
-//     }
-
-//     const sigMatches = sigHeader.match(/t=(.*),s=(.*)/);
-//     if (!sigMatches || sigMatches.length !== 3) {
-//       throw new Error("Unrecognized webhook signature format");
-//     }
-
-//     const nonce = sigMatches[1];
-//     const signature = sigMatches[2];
-
-//     if (!webhookIsVerified(webhookBody, signingKey, nonce, signature)) {
-//       throw new Error(
-//         "Invalid webhook - invalid signature, cannot verify sender"
-//       );
-//     }
-
-//     // Webhook is now verified to have been sent by you, continue processing
-//     console.log("Webhook is verified");
-//     const webhook = req.body; // Assuming JSON payload
-
-//     if (webhook.event_type === "recurring.subscription.add") {
-//       //console.log("successfully update recurring subscription");
-//       // const gymOwner = await User.findOne({nmiSubscriptionId: parsedWebhook.event_body.subscription_id})
-//       // if(gymOwner) {
-
-    
-
-//       const payment = await AutoRecPayments.create({
-//         // gymId: gymOwner.parentId,
-//         // paymentplanId: gymOwner.nmiplanId,
-//         // memberId: gymOwner._id,
-//         nmisubscriptionId: req.body.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging added",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       console.log("payment is here : ", payment);
-//       console.log("req.body is here : ", req.body);
-//       // console.log("email from NMI resp: ", webhook.event_body.email);
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-
-// const tenant_email = webhook.event_body.billing_address.email;
-// const rental = webhook.event_body.billing_address.address_1;
-// const unit = webhook.event_body.billing_address.address_2;
-// const subscription_id = req.body.event_body.subscription_id;
-
-//     console.log("alll----------------: ", tenant_email , rental, unit, subscription_id);
-// const updatedTenant = await Tenant.findOneAndUpdate(
-//   {
-//     tenant_email: tenant_email,
-//     'entries.rental_adress': rental,
-//     'entries.rental_units': unit
-//   },
-//   {
-//     $set: {
-//       'entries.$.subscription_id': subscription_id
-//     }
-//   },
-//   { new: true }
-// );
-
-// console.log("Updated tenant detail ---------:", updatedTenant);
-     
-
-//      // await tenant.save();
-//       //update user payment status to true
-//       // await User.findOneAndUpdate(
-//       //     {
-//       //         nmiSubscriptionId: parsedWebhook.event_body.subscription_id,
-//       //         userRole: ROLE_MEMBER
-//       //     },
-//       //     {
-//       //         paymentStatus: true
-//       //     }
-//       //   );
-//       // }
-//     } else if (webhook.event_type === "recurring.subscription.update") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging subscription update",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "recurring.subscription.delete") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging subscription delete",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "recurring.plan.add") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging plan add",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "recurring.plan.update") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging plan update",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "recurring.plan.delete") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging plan delete",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.auth.failure") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction auth failure",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.auth.success") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction auth success",
-//         amount: webhook.event_body.plan.amount,
-//       });
-
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.auth.unknown") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction auth unknown",
-//         amount: webhook.event_body.plan.amount,
-//       });
-
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.capture.success") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction capture success",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.capture.failure") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction capture failure",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.capture.unknown") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction capture unknown",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.credit.success") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction credit success",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.credit.failure") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction credit failure",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.credit.unknown") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction credit unknown",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "settlement.batch.complete") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging settlement batch complete",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "settlement.batch.failure") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging settlement batch failure",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.sale.failure") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction sale failure",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.sale.success") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction sale success",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.sale.unknown") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction sale unknown",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.void.success") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction void success",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.void.failure") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction void failure",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.void.unknown") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction void unknown",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.refund.success") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction refund success",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.refund.failure") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction refund failure",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.refund.unknown") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction refund unknown",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.validate.success") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction validate success",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.validate.failure") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction validate failure",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "transaction.validate.unknown") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging transaction validate unknown",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     } else if (webhook.event_type === "chargeback.batch.complete") {
-//       const payment = await AutoRecPayments.create({
-//         nmisubscriptionId: webhook.event_body.subscription_id,
-//         email: webhook.event_body.billing_address.email,
-//         description: "Recurring charging chargeback batch complete",
-//         amount: webhook.event_body.plan.amount,
-//       });
-//       //Save payment details of the user in payment collection
-//       await payment.save();
-//     }
-
-//     res.status(200).send("Webhook processed successfully");
-//   } catch (error) {
-//     console.error("Error handling webhook:", error);
-//     res.status(500).send("Error processing webhook");
-//   }
-// });
-
 router.post("/nmi", async (req, res) => {
-
-  console.log(req.body);
-  console.log(req.body.postData);
-  console.log(req.body.putObject);
   try {
     const signingKey = "CC8775A4CFD933614985209F6F68768B";
-    const webhookBody = JSON.stringify(req.body.postData); // Assuming body is JSON
+    const webhookBody = JSON.stringify(req.body); // Assuming body is JSON
     const sigHeader = req.headers["webhook-signature"];
 
     if (!sigHeader || sigHeader.length < 1) {
@@ -1185,12 +666,14 @@ router.post("/nmi", async (req, res) => {
 
     // Webhook is now verified to have been sent by you, continue processing
     console.log("Webhook is verified");
-    const webhook = req.body.postData; // Assuming JSON payload
+    const webhook = req.body; // Assuming JSON payload
 
     if (webhook.event_type === "recurring.subscription.add") {
       //console.log("successfully update recurring subscription");
       // const gymOwner = await User.findOne({nmiSubscriptionId: parsedWebhook.event_body.subscription_id})
       // if(gymOwner) {
+
+    
 
       const payment = await AutoRecPayments.create({
         // gymId: gymOwner.parentId,
@@ -1202,180 +685,46 @@ router.post("/nmi", async (req, res) => {
         amount: webhook.event_body.plan.amount,
       });
       console.log("payment is here : ", payment);
-      console.log("req.body is here : ", req.body.postData);
+      console.log("req.body is here : ", req.body);
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
 
-      // const tenant_email = webhook.event_body.billing_address.email;
-      const rental = webhook.event_body.billing_address.address_1;
-      const unit = webhook.event_body.billing_address.address_2;
-      const subscription_id = req.body.postData.event_body.subscription_id;
+const tenant_email = webhook.event_body.billing_address.email;
+const rental = webhook.event_body.billing_address.address_1;
+const unit = webhook.event_body.billing_address.address_2;
+const subscription_id = req.body.event_body.subscription_id;
 
-      console.log(
-        "alll----------------: ",
-        tenant_email,
-        rental,
-        unit,
-        subscription_id
-      );
+    console.log("alll----------------: ", tenant_email , rental, unit, subscription_id);
+const updatedTenant = await Tenant.findOneAndUpdate(
+  {
+    tenant_email: tenant_email,
+    'entries.rental_adress': rental,
+    'entries.rental_units': unit
+  },
+  {
+    $set: {
+      'entries.$.subscription_id': subscription_id
+    }
+  },
+  { new: true }
+);
 
-      const existingTenant = await Tenant.findOne({
-        tenant_mobileNumber: req.body.putObject.tenant_mobileNumber,
-      });
+console.log("Updated tenant detail ---------:", updatedTenant);
+     
 
-      if (existingTenant) {
-        return res.status(201).json({
-          statusCode: 201,
-          message: "Tenant with the same mobile number already exists",
-        });
-      }
-
-      var count = await Tenant.count();
-      function pad(num) {
-        num = num.toString();
-        while (num.length < 2) num = "0" + num;
-        return num;
-      }
-      req.body.putObject["tenant_id"] = pad(count + 1);
-      req.body.putObject["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-
-      const {
-        tenant_id,
-        tenant_firstName,
-        tenant_lastName,
-        tenant_unitNumber,
-        tenant_mobileNumber,
-        tenant_workNumber,
-        tenant_homeNumber,
-        tenant_faxPhoneNumber,
-        tenant_email,
-        tenant_password,
-        alternate_email,
-        tenant_residentStatus,
-        birth_date,
-        textpayer_id,
-        comments,
-        contact_name,
-        relationship_tenants,
-        email,
-        emergency_PhoneNumber,
-        entries,
-      } = req.body.putObject;
-
-      const currentDate = new Date();
-      const endDate = new Date(req.body.putObject.end_date);
-
-      if (endDate <= currentDate) {
-        req.body.putObject["propertyOnRent"] = true;
-      } else {
-        req.body.putObject["propertyOnRent"] = false;
-      }
-
-      entries.forEach((entry, index) => {
-        entry.entryIndex = (index + 1).toString().padStart(2, "0");
-        entry.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-      });
-
-      const data = await Tenant.create({
-        tenant_id,
-        tenant_firstName,
-        tenant_lastName,
-        tenant_unitNumber,
-        tenant_mobileNumber,
-        tenant_workNumber,
-        tenant_homeNumber,
-        tenant_faxPhoneNumber,
-        tenant_email,
-        tenant_password,
-        alternate_email,
-        tenant_residentStatus,
-        birth_date,
-        textpayer_id,
-        comments,
-        contact_name,
-        relationship_tenants,
-        email,
-        emergency_PhoneNumber,
-        entries,
-        createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-      });
-
-      data.entries = entries;
-
-      const tenantRentalAddress = entries[0].rental_adress;
-
-      const matchingRental = await Rentals.findOne({
-        "entries.rental_adress": tenantRentalAddress,
-      });
-
-      //console.log("Matching Rental:", matchingRental);
-
-      if (matchingRental) {
-        const matchingEntry = matchingRental.entries.find(
-          (entry) => entry.rental_adress === tenantRentalAddress
-        );
-
-        //console.log("Matching Entry:", matchingEntry);
-
-        if (
-          matchingEntry &&
-          matchingEntry.rental_adress.trim() === tenantRentalAddress.trim()
-        ) {
-          console.log("Setting isrenton to true");
-          matchingEntry.isrenton = true;
-          await matchingRental.save();
-        } else {
-          console.log("Conditions not met for setting isrenton to true.");
-        }
-      }
-
-      if (entries[0].tenant_residentStatus) {
-        const info = await transporter.sendMail({
-          from: '"302 Properties" <info@cloudpress.host>',
-          to: tenant_email,
-          subject: "Welcome to your new resident center with 302 Properties",
-          text: `
-      Hello ${tenant_firstName},
-          
-      Thank you for registering with 302 Properties. Your account has been created.
-          
-      You're invited to join our Resident Center! After signing in, you can enjoy many benefits including the ability to:
-          
-      - Pay rent online and set up autopay
-      - Submit maintenance requests and general inquiries
-      - Record information about your renters insurance policy
-      - Check out the resident center video library to see everything the site has to offer.
-      
-      Activate your account now:
-      ${"https://propertymanager.cloudpress.host/auth/login"}
-      
-      Username: ${tenant_email}
-      password: ${tenant_password}
-      
-      Want to easily find the sign-in page in the future? Bookmark the page in your preferred browser!
-      
-      Best regards,
-      The 302 Properties Team
-      `,
-        });
-      }
-
-      const updatedTenant = await Tenant.findOneAndUpdate(
-        {
-          tenant_email: tenant_email,
-          "entries.rental_adress": rental,
-          "entries.rental_units": unit,
-        },
-        {
-          $set: {
-            "entries.$.subscription_id": subscription_id,
-          },
-        },
-        { new: true }
-      );
-
-      console.log("Updated tenant detail ---------:", updatedTenant);
+     // await tenant.save();
+      //update user payment status to true
+      // await User.findOneAndUpdate(
+      //     {
+      //         nmiSubscriptionId: parsedWebhook.event_body.subscription_id,
+      //         userRole: ROLE_MEMBER
+      //     },
+      //     {
+      //         paymentStatus: true
+      //     }
+      //   );
+      // }
     } else if (webhook.event_type === "recurring.subscription.update") {
       const payment = await AutoRecPayments.create({
         nmisubscriptionId: webhook.event_body.subscription_id,
