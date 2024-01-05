@@ -474,7 +474,7 @@ router.post("/custom-add-subscription", async (req, res) => {
         // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
-          sendResponse(res, `Custom subscription added successfully. TransactionId: ${response.data.transactionid}`);
+          sendResponse(res, `Custom subscription added successfully. TransactionId: ${response.data}`);
         } else {
           // Handle subscription creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
@@ -690,43 +690,6 @@ router.post("/nmi", async (req, res) => {
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
-
-const tenant_email = webhook.event_body.billing_address.email;
-const rental = webhook.event_body.billing_address.address_1;
-const unit = webhook.event_body.billing_address.address_2;
-const subscription_id = req.body.event_body.subscription_id;
-
-    console.log("alll----------------: ", tenant_email , rental, unit, subscription_id);
-const updatedTenant = await Tenant.findOneAndUpdate(
-  {
-    tenant_email: tenant_email,
-    'entries.rental_adress': rental,
-    'entries.rental_units': unit
-  },
-  {
-    $set: {
-      'entries.$.subscription_id': subscription_id
-    }
-  },
-  { new: true }
-);
-
-console.log("Updated tenant detail ---------:", updatedTenant);
-     
-
-     // await tenant.save();
-      //update user payment status to true
-      // await User.findOneAndUpdate(
-      //     {
-      //         nmiSubscriptionId: parsedWebhook.event_body.subscription_id,
-      //         userRole: ROLE_MEMBER
-      //     },
-      //     {
-      //         paymentStatus: true
-      //     }
-      //   );
-      // }
-      // res.status(200).json({ data: subscription_id });
     } else if (webhook.event_type === "recurring.subscription.update") {
       const payment = await AutoRecPayments.create({
         nmisubscriptionId: webhook.event_body.subscription_id,
