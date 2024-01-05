@@ -726,7 +726,7 @@ console.log("Updated tenant detail ---------:", updatedTenant);
       //     }
       //   );
       // }
-          res.status(200).send(subscription_id);
+          // res.status(200).send(subscription_id);
     } else if (webhook.event_type === "recurring.subscription.update") {
       const payment = await AutoRecPayments.create({
         nmisubscriptionId: webhook.event_body.subscription_id,
