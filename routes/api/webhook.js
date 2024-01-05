@@ -42,7 +42,7 @@ function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
 router.post("/nmi", async(req, res) => {
   try {
     const signingKey = 'CC8775A4CFD933614985209F6F68768B';
-    const webhookBody = JSON.stringify(req.body); // Assuming body is JSON
+    const webhookBody = JSON.stringify(req.body); 
     const sigHeader = req.headers['webhook-signature'];
 
     if (!sigHeader || sigHeader.length < 1) {
