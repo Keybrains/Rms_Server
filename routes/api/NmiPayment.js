@@ -768,15 +768,17 @@ router.post("/nmi", async (req, res) => {
 
      // Update Tenant record with the subscription ID
       const tenant_email = webhook.event_body.billing_address.email; // Assuming email is the matching field
-      const subscription_id = req.body.event_body.subscription_id;
-      
-      await Tenant.findOneAndUpdate(
-        { tenant_email: tenant_email },
-        { $set: { subscription_id: subscription_id } },
-        { new: true }
-      );
-      
-      console.log("tenant detail is here : ", tenant_email, subscription_id);
+     const subscription_id = req.body.event_body.subscription_id;
+     
+     const sahil = await Tenant.findOneAndUpdate(
+       { tenant_email: tenant_email },
+       { $set: { subscription_id: subscription_id } },
+       { new: true }
+     );
+
+     console.log('sahil---------- :>> ', sahil);
+     
+     console.log("tenant detail is here : ", tenant_email, subscription_id);
 
 
 
