@@ -473,83 +473,7 @@ router.post("/custom-add-subscription", async (req, res) => {
         // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
-          sendResponse(res, "Custom subscription added successfully.");
-        } else {
-          // Handle subscription creation failure
-          sendResponse(res, parsedResponse.responsetext, 403);
-        }
-      })
-      .catch(function (error) {
-        sendResponse(res, error, 500);
-      });
-  } catch (error) {
-    sendResponse(res, "Something went wrong!", 500);
-  }
-});
-
-router.post("/withvault-add-subscription", async (req, res) => {
-  try {
-    const {
-      security_key,
-      recurring,
-      plan_payments,
-      planName,
-      //planId,
-      plan_amount,
-      dayFrequency,
-      ccnumber,
-      ccexp,
-      firstName,
-      lastName,
-      address,
-      city,
-      state,
-      zip,
-      /* Other necessary parameters for subscription */
-    } = req.body;
-
-    let postData = {
-      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-      recurring: "add_subscription",
-      customer_vault: "add_billing",
-      customer_vault_id: 123,
-      billing_id: "BillingId1",
-      company: "Company Inc.",
-      plan_payments,
-      plan_name: planName,
-      //plan_id: planId,
-      plan_amount,
-      day_frequency: dayFrequency ? dayFrequency : 30,
-      ccnumber,
-      ccexp,
-      first_name: firstName,
-      last_name: lastName,
-      address1: address,
-      city: city,
-      state: state,
-      zip: zip,
-      phone: "+1 (847) 352 4850",
-      email: "test@example.com",
-      /* Include other necessary parameters for subscription */
-    };
-
-    postData = querystring.stringify(postData);
-
-    var config = {
-      method: "post",
-      url: "https://secure.nmi.com/api/transact.php",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      data: postData,
-    };
-    console.log("tum se hi", config);
-    axios(config)
-      .then(async (response) => {
-        const parsedResponse = querystring.parse(response.data);
-        if (parsedResponse.response_code == 100) {
-          // Handle successful subscription creation
-          sendResponse(res, "Custom subscription added successfully.");
+          sendResponse(res, `Custom subscription added successfully. TransactionId:` + parsedResponse.transactionid);
         } else {
           // Handle subscription creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
@@ -765,42 +689,6 @@ router.post("/nmi", async (req, res) => {
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
-
-const tenant_email = webhook.event_body.billing_address.email;
-const rental = webhook.event_body.billing_address.address_1;
-const unit = webhook.event_body.billing_address.address_2;
-const subscription_id = req.body.event_body.subscription_id;
-
-    console.log("alll----------------: ", tenant_email , rental, unit, subscription_id);
-const updatedTenant = await Tenant.findOneAndUpdate(
-  {
-    tenant_email: tenant_email,
-    'entries.rental_adress': rental,
-    'entries.rental_units': unit
-  },
-  {
-    $set: {
-      'entries.$.subscription_id': subscription_id
-    }
-  },
-  { new: true }
-);
-
-console.log("Updated tenant detail ---------:", updatedTenant);
-     
-
-     // await tenant.save();
-      //update user payment status to true
-      // await User.findOneAndUpdate(
-      //     {
-      //         nmiSubscriptionId: parsedWebhook.event_body.subscription_id,
-      //         userRole: ROLE_MEMBER
-      //     },
-      //     {
-      //         paymentStatus: true
-      //     }
-      //   );
-      // }
     } else if (webhook.event_type === "recurring.subscription.update") {
       const payment = await AutoRecPayments.create({
         nmisubscriptionId: webhook.event_body.subscription_id,
