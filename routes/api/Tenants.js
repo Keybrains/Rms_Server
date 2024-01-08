@@ -2271,6 +2271,7 @@ router.get("/tenants", async (req, res) => {
               Security_amount: entry.Security_amount,
               createdAt: entry.createdAt,
               updateAt: entry.updateAt,
+              subscription_id: entry.subscription_id,
               // recuring_amount: entry.recuring_amount,
               // recuring_account: entry.recuring_account,
               // recuringnextDue_date: entry.recuringnextDue_date,

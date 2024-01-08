@@ -101,7 +101,7 @@ const entrySchema = new Schema({
   paymentMethod: { type: String },
   card_number: { type: String },
   exp_date: { type: String },
-  subscription_id: { type: String },
+  subscription_id: { type: String, default:"" },
 });
 
 const tenantsSchema = new Schema({
