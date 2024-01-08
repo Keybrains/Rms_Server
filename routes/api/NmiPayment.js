@@ -473,7 +473,7 @@ router.post("/custom-add-subscription", async (req, res) => {
         // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
-          sendResponse(res, "Custom subscription added successfully.");
+          sendResponse(res, `Custom subscription added successfully. TransactionId:` + parsedResponse.transactionid);
         } else {
           // Handle subscription creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
@@ -487,55 +487,43 @@ router.post("/custom-add-subscription", async (req, res) => {
   }
 });
 
-router.post("/withvault-add-subscription", async (req, res) => {
+//custom update subscription NMI API
+router.post("/custom-update-subscription", async (req, res) => {
   try {
     const {
       security_key,
-      recurring,
+      subscription_id,
       plan_payments,
-      planName,
-      //planId,
       plan_amount,
       dayFrequency,
       ccnumber,
       ccexp,
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       address,
-      city,
-      state,
-      zip,
-      /* Other necessary parameters for subscription */
+      email,
     } = req.body;
 
     let postData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-      recurring: "add_subscription",
-      customer_vault: "add_billing",
-      customer_vault_id: 123,
-      billing_id: "BillingId1",
-      company: "Company Inc.",
-      plan_payments,
-      plan_name: planName,
-      //plan_id: planId,
-      plan_amount,
+      recurring: "update_subscription",
+      subscription_id : subscription_id,
       day_frequency: dayFrequency ? dayFrequency : 30,
-      ccnumber,
-      ccexp,
-      first_name: firstName,
-      last_name: lastName,
+      first_name,
       address1: address,
-      city: city,
-      state: state,
-      zip: zip,
-      phone: "+1 (847) 352 4850",
-      email: "test@example.com",
-      /* Include other necessary parameters for subscription */
     };
+
+    // Update specific fields if provided in the request
+    if (plan_payments !== undefined) postData.plan_payments = plan_payments;
+    if (plan_amount !== undefined && parseFloat(plan_amount) > 0) postData.plan_amount = plan_amount;
+    if (ccnumber !== undefined) postData.ccnumber = ccnumber;
+    if (email !== undefined) postData.email = email;
+    if (ccexp !== undefined) postData.ccexp = ccexp;
+    if (last_name !== undefined) postData.last_name = last_name;
 
     postData = querystring.stringify(postData);
 
-    var config = {
+    const config = {
       method: "post",
       url: "https://secure.nmi.com/api/transact.php",
       headers: {
@@ -543,15 +531,57 @@ router.post("/withvault-add-subscription", async (req, res) => {
       },
       data: postData,
     };
-    console.log("tum se hi", config);
+
     axios(config)
       .then(async (response) => {
         const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
-          // Handle successful subscription creation
-          sendResponse(res, "Custom subscription added successfully.");
+          sendResponse(res, "Custom subscription updated successfully.");
         } else {
-          // Handle subscription creation failure
+          sendResponse(res, parsedResponse.responsetext, 403);
+        }
+      })
+      .catch(function (error) {
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+//custom delete subscription NMI API
+router.post("/custom-delete-subscription", async (req, res) => {
+  try {
+    const {
+      security_key,
+      subscription_id 
+    } = req.body;
+
+    let postData = {
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      recurring: "delete_subscription",
+      subscription_id : subscription_id 
+    };
+
+    postData = querystring.stringify(postData);
+    console.log('mansi -------------', postData)
+    const config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: postData,
+    };
+
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+        if (parsedResponse.response_code == 100) {
+          // Handle successful subscription deletion
+          sendResponse(res, "Custom subscription deleted successfully.");
+        } else {
+          // Handle subscription deletion failure
           sendResponse(res, parsedResponse.responsetext, 403);
         }
       })
@@ -765,14 +795,26 @@ router.post("/nmi", async (req, res) => {
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
-
      // Update Tenant record with the subscription ID
-      await Tenant.findOneAndUpdate(
-        { tenant_email: webhook.event_body.billing_address.email }, // Assuming email is the matching field
-        { $set: { subscription_id: req.body.event_body.subscription_id } }
-      );
-
-     // await tenant.save();
+    //  const tenant_email = webhook.event_body.billing_address.email;
+    //  const rental = webhook.event_body.billing_address.address1;
+    //  const unit = webhook.event_body.billing_address.address2;
+    //  const subscription_id = req.body.event_body.subscription_id;
+     
+    //  const updatedTenant = await Tenant.findOneAndUpdate(
+    //    {
+    //      tenant_email: tenant_email,
+    //      'entries.rental_adress': rental,
+    //      'entries.rental_units': unit
+    //    },
+    //    {
+    //      $set: {
+    //        'entries.$.subscription_id': subscription_id
+    //      }
+    //    },
+    //    { new: true }
+    //  );
+    
       //update user payment status to true
       // await User.findOneAndUpdate(
       //     {
