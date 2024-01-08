@@ -1941,19 +1941,17 @@ router.post("/passwordmail", async (req, res) => {
 });
 
 function scheduleTokenCleanup() {
-  // Schedule a task to clean up expired tokens periodically
   setInterval(() => {
     const currentTimestamp = Date.now();
 
     for (const [token, expirationTimestamp] of tokenExpirationMap.entries()) {
       if (currentTimestamp > expirationTimestamp) {
-        // Token has expired, remove it from the map
         tokenExpirationMap.delete(token);
         console.log(`Token generated for email: ${decrypt(token)}, Expiration: ${new Date(expirationTimestamp)}`);
 
       }
     }
-  }, 15 * 60 * 1000); // Run the cleanup task every 5 seconds for demonstration purposes
+  }, 15 * 60 * 1000);
 }
 
 router.get("/check_token_status/:token", (req, res) => {

@@ -292,7 +292,7 @@ router.post("/purchase", async (req, res) => {
   } catch (error) {
     // Handle errors
     console.error("Error:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).send(error);
   }
 });
 
