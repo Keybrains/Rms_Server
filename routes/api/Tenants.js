@@ -1949,10 +1949,11 @@ function scheduleTokenCleanup() {
       if (currentTimestamp > expirationTimestamp) {
         // Token has expired, remove it from the map
         tokenExpirationMap.delete(token);
-        console.log(`Token expired for email: ${decrypt(token)}`);
+        console.log(`Token generated for email: ${decrypt(token)}, Expiration: ${new Date(expirationTimestamp)}`);
+
       }
     }
-  }, 60 * 5 * 1000); // Run the cleanup task every 5 seconds for demonstration purposes
+  }, 15 * 60 * 1000); // Run the cleanup task every 5 seconds for demonstration purposes
 }
 
 router.get("/check_token_status/:token", (req, res) => {
@@ -2011,6 +2012,8 @@ router.put("/reset_password/:mail", async (req, res) => {
 function isTokenValid(email) {
   const token = encrypt(email);
   const expirationTimestamp = tokenExpirationMap.get(token);
+  console.log(`Token: ${token}, Expiration: ${new Date(expirationTimestamp)}, Current: ${new Date()}`);
+
   return expirationTimestamp && Date.now() < expirationTimestamp;
 }
 
