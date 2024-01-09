@@ -19,7 +19,7 @@ const axios = require("axios");
 const crypto = require("crypto");
 
 //cron job for the late fee for unpaid rent charge
-cron.schedule("51 16 * * *", async () => {
+cron.schedule("36 16 * * *", async () => {
   try {
     console.log("sahil");
     const cronjobs = await Cronjobs.find();
@@ -41,8 +41,8 @@ cron.schedule("51 16 * * *", async () => {
               if (unit.paymentAndCharges && unit.paymentAndCharges.length > 0) {
                 for (const charge of unit.paymentAndCharges) {
                   if (
-                    charge.type === "Charges" &&
-                    charge.account === "Last Month's Rent" &&
+                    charge.type === "Charge" &&
+                    charge.charge_type === "Last Month's Rent" &&
                     charge.rent_cycle === "Monthly" &&
                     charge.isPaid === false &&
                     charge.islatefee === false
@@ -65,8 +65,8 @@ cron.schedule("51 16 * * *", async () => {
                         const foundUnit = payment.unit.find(u =>
                           u.paymentAndCharges.some(c =>
                             c._id === charge._id &&
-                            c.type === "Charges" &&
-                            c.account === "Last Month's Rent" &&
+                            c.type === "Charge" &&
+                            c.charge_type === "Last Month's Rent" &&
                             c.rent_cycle === "Monthly" &&
                             c.isPaid === false &&
                             c.islatefee === false
@@ -79,8 +79,8 @@ cron.schedule("51 16 * * *", async () => {
                         const foundUnitIndex = unitToUpdate.unit.findIndex(u =>
                           u.paymentAndCharges.some(c =>
                             c._id === charge._id &&
-                            c.type === "Charges" &&
-                            c.account === "Last Month's Rent" &&
+                            c.type === "Charge" &&
+                            c.charge_type === "Last Month's Rent" &&
                             c.rent_cycle === "Monthly" &&
                             c.isPaid === false &&
                             c.islatefee === false
@@ -90,8 +90,8 @@ cron.schedule("51 16 * * *", async () => {
                         const foundChargeIndex = unitToUpdate.unit[foundUnitIndex].paymentAndCharges.findIndex(
                           c =>
                             c._id === charge._id &&
-                            c.type === "Charges" &&
-                            c.account === "Last Month's Rent" &&
+                            c.type === "Charge" &&
+                            c.charge_type === "Last Month's Rent" &&
                             c.rent_cycle === "Monthly" &&
                             c.isPaid === false &&
                             c.islatefee === false
@@ -163,7 +163,6 @@ cron.schedule("51 16 * * *", async () => {
 //   }
 
 // });
-
 
 //cron job for the rent chare for every tenant
 cron.schedule("11 15 * * *", async () => {
