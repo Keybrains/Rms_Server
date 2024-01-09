@@ -29,9 +29,6 @@ router.post("/purchase", async (req, res) => {
       propertyId: paymentDetails.propertyId,
     });
 
-    // Save the payment details to the database
-
-    // Integrate with NMI transaction API to process the payment
     const nmiConfig = {
       recurring: "process_sale",
       amount: paymentDetails.amount,
