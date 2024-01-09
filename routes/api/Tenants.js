@@ -21,7 +21,6 @@ const crypto = require("crypto");
 //cron job for the late fee for unpaid rent charge
 cron.schedule("47 17 * * *", async () => {
   try {
-    console.log("sahil");
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
     if (isCronjobRunning === false) {
