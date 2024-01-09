@@ -3,7 +3,7 @@ var router = express.Router();
 var Rentals = require("../../modals/Rentals");
 var Tenants = require("../../modals/Tenants");
 var PropertyUnit = require("../../modals/PropertyUnit");
-var moment = require("moment")
+var moment = require("moment");
 // var {verifyToken} = require("../authentication");
 
 // Post api working
@@ -143,7 +143,7 @@ router.post("/rentals", async (req, res) => {
 
       // Check if the rental_adress already exists within the same rental
       // const existingAddressInRental = existingRental.entries.find(
-      //   e => e.rental_adress === rental_adress 
+      //   e => e.rental_adress === rental_adress
       // );
 
       // console.log(existingAddressInRental, "----------");
@@ -158,7 +158,7 @@ router.post("/rentals", async (req, res) => {
       let existingRentals = await Rentals.findOne({
         "entries.rental_adress": rental_adress,
       });
-      
+
       // Check if the rental_adress already exists in any rental
       if (existingRentals) {
         return res.status(201).json({
@@ -178,8 +178,10 @@ router.post("/rentals", async (req, res) => {
         rental_postcode,
         staffMember,
         type,
-        entryIndex: (existingRental.entries.length + 1).toString().padStart(2, '0'), 
-        createdAt: moment().format("YYYY-MM-DD HH:mm:ss"), 
+        entryIndex: (existingRental.entries.length + 1)
+          .toString()
+          .padStart(2, "0"),
+        createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
       };
 
       existingRental.entries.push(newEntry);
@@ -188,7 +190,8 @@ router.post("/rentals", async (req, res) => {
       await existingRental.save();
 
       // Get the _id of the new entry
-      const newEntryId = existingRental.entries[existingRental.entries.length - 1]._id;
+      const newEntryId =
+        existingRental.entries[existingRental.entries.length - 1]._id;
 
       // Process commercial or residential entries and create PropertyUnits
       const unitDataArray = commercial || residential || [];
@@ -210,7 +213,8 @@ router.post("/rentals", async (req, res) => {
             propertyres_image: unitData.propertyres_image,
             rental_sqft: unitData.rental_sqft || unitData.rentalcom_sqft,
             rental_units: unitData.rental_units || unitData.rentalcom_units,
-            rental_unitsAdress: unitData.rental_unitsAdress || unitData.rentalcom_unitsAdress,
+            rental_unitsAdress:
+              unitData.rental_unitsAdress || unitData.rentalcom_unitsAdress,
             property_image: unitData.property_image,
             propertyId: newEntryId, // Assigning the _id of the new entry to propertyId
           };
@@ -260,7 +264,7 @@ router.get("/existing/rentals", async (req, res) => {
           _id: {
             firstName: "$rentalOwner_firstName",
             lastName: "$rentalOwner_lastName",
-            phoneNumber: "$rentalOwner_phoneNumber"
+            phoneNumber: "$rentalOwner_phoneNumber",
           },
           record: { $first: "$$ROOT" },
         },
@@ -282,8 +286,6 @@ router.get("/existing/rentals", async (req, res) => {
     });
   }
 });
-
-
 
 router.get("/rental", async (req, res) => {
   try {
@@ -431,8 +433,6 @@ router.delete("/rental/:rentalId/entry/:entryIndex", async (req, res) => {
       "entries.rental_adress": { $in: propNamesToDelete },
     });
     console.log(assignedProperty, "xyz");
-
-    console.log(assignedProperty.includes(propNamesToDelete), "abc");
 
     if (assignedProperty.length > 0) {
       return res.status(201).json({
@@ -910,12 +910,12 @@ router.put("/rental/:id/entry/:entryIndex", async (req, res) => {
       return res
         .status(404)
         .json({ statusCode: 404, message: "Entry not found" });
-    }  
+    }
     updatedEntryData["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     rental.set(updatedData);
     Object.assign(entryToUpdate, updatedEntryData);
 
-    const result = await rental.save();;
+    const result = await rental.save();
 
     res.json({
       statusCode: 200,
