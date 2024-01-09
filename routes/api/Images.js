@@ -215,9 +215,41 @@ router.put(
       if (fs.existsSync(filePath)) {
         // Delete the file
         fs.unlinkSync(filePath);
-        res
-          .status(200)
-          .json({ status: "success", message: "File deleted successfully!" });
+        const uploadedFiles = req.file;
+        let data;
+        if (
+          uploadedFiles.mimetype === "image/jpeg" ||
+          uploadedFiles.mimetype === "image/jpg" ||
+          uploadedFiles.mimetype === "image/png" ||
+          uploadedFiles.mimetype === "image/gif" ||
+          uploadedFiles.mimetype === "image/bmp"
+        ) {
+          const url = "/images/" + uploadedFiles.filename;
+          data = {
+            fileType: uploadedFiles.mimetype.split("/")[1],
+            filename: uploadedFiles.filename,
+            url: url,
+          };
+        } else if (uploadedFiles.mimetype === "application/pdf") {
+          const url = "/pdf/" + uploadedFiles.filename;
+          data = {
+            fileType: uploadedFiles.mimetype.split("/")[1],
+            filename: uploadedFiles.filename,
+            url: url,
+          };
+        } else {
+          const url = "/docs/" + uploadedFiles.filename;
+          data = {
+            fileType: uploadedFiles.mimetype.split("/")[1],
+            filename: uploadedFiles.filename,
+            url: url,
+          };
+        }
+        return res.status(200).json({
+          status: "ok",
+          message: "Files Updated successfully!",
+          files: data,
+        });
       } else {
         res.status(404).json({ status: "error", message: "File not found" });
       }
