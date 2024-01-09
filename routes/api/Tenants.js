@@ -15,27 +15,119 @@ const cron = require("node-cron");
 const PaymentCharges = require("../../modals/AddPaymentAndCharge");
 var NmiPayment = require("../../modals/NmiPayment");
 var Cronjobs = require("../../modals/cronjobs");
-const axios = require('axios');
-const crypto = require('crypto');
+const axios = require("axios");
+const crypto = require("crypto");
 
-cron.schedule("49 5 * * *", async () => {
+//cron job for the late fee for unpaid rent charge
+cron.schedule("47 17 * * *", async () => {
   try {
+    console.log("sahil");
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
-    // console.log("isCronjobRunning", isCronjobRunning);
-
     if (isCronjobRunning === false) {
       await Cronjobs.updateOne(
         { _id: cronjobs[0]._id },
         { isCronjobRunning: true }
       );
-
-      //here set interveral of 20 sec
+      console.log("Cron hitt...!!!");
+      const currentDate = new Date().toISOString().split("T")[0];
+      console.log('105', currentDate)
+      const fetchedchargespayaments = await PaymentCharges.find();
+      if (fetchedchargespayaments && fetchedchargespayaments.length > 0) {
+        for (const payment of fetchedchargespayaments) {
+          if (payment.unit && payment.unit.length > 0) {
+            for (const unit of payment.unit) {
+              if (unit.paymentAndCharges && unit.paymentAndCharges.length > 0) {
+                for (const charge of unit.paymentAndCharges) {
+                  if (
+                    charge.type === "Charge" &&
+                    charge.charge_type === "Last Month's Rent" &&
+                    charge.rent_cycle === "Monthly" &&
+                    charge.isPaid === false &&
+                    charge.islatefee === false
+                  ) {
+                    const chargeDate = new Date(charge.date);
+                    const differenceInTime = Math.abs(
+                      chargeDate - new Date(currentDate)
+                    );
+                    const differenceInDays = Math.ceil(
+                      differenceInTime / (1000 * 60 * 60 * 24)
+                    );
+                    console.log("chargeDate", chargeDate);
+                    console.log("differenceInTime", differenceInTime);
+                    console.log("differenceInDays", differenceInDays);
+                    if (differenceInDays > 5) {
+                      console.log("The late fee will be charged.");
+                      const unitToUpdate = fetchedchargespayaments.find(payment => {
+                        const foundUnit = payment.unit.find(u =>
+                          u.paymentAndCharges.some(c =>
+                            c._id === charge._id &&
+                            c.type === "Charge" &&
+                            c.charge_type === "Last Month's Rent" &&
+                            c.rent_cycle === "Monthly" &&
+                            c.isPaid === false &&
+                            c.islatefee === false
+                          )
+                        );
+                        return !!foundUnit;
+                      });
+                      if (unitToUpdate) {
+                        const foundUnitIndex = unitToUpdate.unit.findIndex(u =>
+                          u.paymentAndCharges.some(c =>
+                            c._id === charge._id &&
+                            c.type === "Charge" &&
+                            c.charge_type === "Last Month's Rent" &&
+                            c.rent_cycle === "Monthly" &&
+                            c.isPaid === false &&
+                            c.islatefee === false
+                          )
+                        );
+                        const foundChargeIndex = unitToUpdate.unit[foundUnitIndex].paymentAndCharges.findIndex(
+                          c =>
+                            c._id === charge._id &&
+                            c.type === "Charge" &&
+                            c.charge_type === "Last Month's Rent" &&
+                            c.rent_cycle === "Monthly" &&
+                            c.isPaid === false &&
+                            c.islatefee === false
+                        );
+                        // Push the late fee to the specific unit's paymentAndCharges array
+                        unitToUpdate.unit[foundUnitIndex].paymentAndCharges.push({
+                          type: "Charge",
+                          charge_type: "Rent Late Fee",
+                          account: "Rent Late Fee",
+                          amount: charge.amount * (10 / 100),
+                          rental_adress: charge.rental_adress,
+                          tenant_firstName: `${charge.tenant_firstName}`,
+                          tenant_id: charge.tenant_id,
+                          memo: "Late fee for Rent",
+                          date: currentDate,
+                          rent_cycle: "Monthly", // Change this accordingly
+                        });
+                        console.log("Late fee added to the payment details.");
+                        // Update the specific charge's islatefee to true in the fetched data
+                        unitToUpdate.unit[foundUnitIndex].paymentAndCharges[foundChargeIndex].islatefee = true;
+                        await PaymentCharges.updateOne(
+                          { _id: unitToUpdate._id },
+                          { unit: unitToUpdate.unit }
+                        );
+                        console.log("Updated islatefee to true for the charge.");
+                      }
+                    } else {
+                      console.log("Charge object:", charge);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
       await Cronjobs.updateOne(
         { _id: cronjobs[0]._id },
         { isCronjobRunning: false }
       );
-      //console.log("updated to false");
+      console.log("cronjob updated to false");
     }
   } catch (error) {
     console.error("Error:", error);
@@ -89,7 +181,6 @@ cron.schedule("18 16 * * *", async () => {
             rentCycle === "Monthly" 
             //paymentMethod === "Manually"
           ) {
-
             // Update the nextDue_date to current date + 1 month
             const nextDueDatePlusOneMonth = new Date(currentDate);
             nextDueDatePlusOneMonth.setMonth(
@@ -129,8 +220,11 @@ cron.schedule("18 16 * * *", async () => {
                 tenant_id: tenant._id,
                 memo: "sahil cron",
                 date: currentDate,
-                month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]}`,
-                rent_cycle: "Monthly", 
+                month_year: `${currentDate.split("-")[1]}-${
+                  currentDate.split("-")[0]
+                }`,
+                rent_cycle: "Monthly", // Change this accordingly
+                islatefee: false, // Change this accordingly
               });
 
               try {
@@ -166,9 +260,11 @@ cron.schedule("18 16 * * *", async () => {
                         tenant_id: tenant._id,
                         memo: "test",
                         date: currentDate,
-                        month_year: `${currentDate.split("-")[1]}-${currentDate.split("-")[0]
-                          }`,
-                        rent_cycle: "Monthly", 
+                        month_year: `${currentDate.split("-")[1]}-${
+                          currentDate.split("-")[0]
+                        }`,
+                        rent_cycle: "Monthly", // Change this accordingly
+                        islatefee: false, // Change this accordingly
                       },
                     ],
                   },
@@ -866,121 +962,31 @@ cron.schedule("18 16 * * *", async () => {
   }
 });
 
-//cron job for the late fee for unpaid rent charge
-cron.schedule("47 17 * * *", async () => {
+cron.schedule("49 5 * * *", async () => {
   try {
-    console.log("sahil");
     const cronjobs = await Cronjobs.find();
     const isCronjobRunning = cronjobs[0].isCronjobRunning;
+    // console.log("isCronjobRunning", isCronjobRunning);
+
     if (isCronjobRunning === false) {
       await Cronjobs.updateOne(
         { _id: cronjobs[0]._id },
         { isCronjobRunning: true }
       );
-      console.log("Cron hitt...!!!");
-      const currentDate = new Date().toISOString().split("T")[0];
-      console.log('105', currentDate)
-      const fetchedchargespayaments = await PaymentCharges.find();
-      if (fetchedchargespayaments && fetchedchargespayaments.length > 0) {
-        for (const payment of fetchedchargespayaments) {
-          if (payment.unit && payment.unit.length > 0) {
-            for (const unit of payment.unit) {
-              if (unit.paymentAndCharges && unit.paymentAndCharges.length > 0) {
-                for (const charge of unit.paymentAndCharges) {
-                  if (
-                    charge.type === "Charge" &&
-                    charge.charge_type === "Last Month's Rent" &&
-                    charge.rent_cycle === "Monthly" &&
-                    charge.isPaid === false &&
-                    charge.islatefee === false
-                  ) {
-                    const chargeDate = new Date(charge.date);
-                    const differenceInTime = Math.abs(
-                      chargeDate - new Date(currentDate)
-                    );
-                    const differenceInDays = Math.ceil(
-                      differenceInTime / (1000 * 60 * 60 * 24)
-                    );
-                    console.log("chargeDate", chargeDate);
-                    console.log("differenceInTime", differenceInTime);
-                    console.log("differenceInDays", differenceInDays);
-                    if (differenceInDays > 5) {
-                      console.log("The late fee will be charged.");
-                      const unitToUpdate = fetchedchargespayaments.find(payment => {
-                        const foundUnit = payment.unit.find(u =>
-                          u.paymentAndCharges.some(c =>
-                            c._id === charge._id &&
-                            c.type === "Charge" &&
-                            c.charge_type === "Last Month's Rent" &&
-                            c.rent_cycle === "Monthly" &&
-                            c.isPaid === false &&
-                            c.islatefee === false
-                          )
-                        );
-                        return !!foundUnit;
-                      });
-                      if (unitToUpdate) {
-                        const foundUnitIndex = unitToUpdate.unit.findIndex(u =>
-                          u.paymentAndCharges.some(c =>
-                            c._id === charge._id &&
-                            c.type === "Charge" &&
-                            c.charge_type === "Last Month's Rent" &&
-                            c.rent_cycle === "Monthly" &&
-                            c.isPaid === false &&
-                            c.islatefee === false
-                          )
-                        );
-                        const foundChargeIndex = unitToUpdate.unit[foundUnitIndex].paymentAndCharges.findIndex(
-                          c =>
-                            c._id === charge._id &&
-                            c.type === "Charge" &&
-                            c.charge_type === "Last Month's Rent" &&
-                            c.rent_cycle === "Monthly" &&
-                            c.isPaid === false &&
-                            c.islatefee === false
-                        );
-                        // Push the late fee to the specific unit's paymentAndCharges array
-                        unitToUpdate.unit[foundUnitIndex].paymentAndCharges.push({
-                          type: "Charge",
-                          charge_type: "Rent Late Fee",
-                          account: "Rent Late Fee",
-                          amount: charge.amount * (10 / 100),
-                          rental_adress: charge.rental_adress,
-                          tenant_firstName: `${charge.tenant_firstName}`,
-                          tenant_id: charge.tenant_id,
-                          memo: "Late fee for Rent",
-                          date: currentDate,
-                          rent_cycle: "Monthly", // Change this accordingly
-                        });
-                        console.log("Late fee added to the payment details.");
-                        // Update the specific charge's islatefee to true in the fetched data
-                        unitToUpdate.unit[foundUnitIndex].paymentAndCharges[foundChargeIndex].islatefee = true;
-                        await PaymentCharges.updateOne(
-                          { _id: unitToUpdate._id },
-                          { unit: unitToUpdate.unit }
-                        );
-                        console.log("Updated islatefee to true for the charge.");
-                      }
-                    } else {
-                      console.log("Charge object:", charge);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+
+      //here set interveral of 20 sec
       await Cronjobs.updateOne(
         { _id: cronjobs[0]._id },
         { isCronjobRunning: false }
       );
-      console.log("cronjob updated to false");
+      //console.log("updated to false");
     }
   } catch (error) {
     console.error("Error:", error);
   }
 });
+
+
 
 // Helper function to send a request to the NMI API
 const sendNmiRequest = async (config, paymentDetails) => {
@@ -2588,7 +2594,7 @@ router.get('/findData', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send("Internal Server Error");
   }
 });
 
