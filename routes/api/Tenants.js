@@ -1948,7 +1948,6 @@ function scheduleTokenCleanup() {
       if (currentTimestamp > expirationTimestamp) {
         tokenExpirationMap.delete(token);
         console.log(`Token generated for email: ${decrypt(token)}, Expiration: ${new Date(expirationTimestamp)}`);
-
       }
     }
   }, 15 * 60 * 1000);
