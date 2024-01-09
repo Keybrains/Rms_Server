@@ -98,7 +98,9 @@ const entrySchema = new Schema({
 
   moveout_date: { type: String },
   moveout_notice_given_date: { type: String },
-  paymentMethod: { type: String }
+  paymentMethod: { type: String },
+  card_number: { type: String },
+  exp_date: { type: String },
 });
 
 const tenantsSchema = new Schema({

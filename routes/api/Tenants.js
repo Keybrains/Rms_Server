@@ -1253,22 +1253,20 @@ router.post("/passwordmail", async (req, res) => {
     const token = encryptedEmail;
 
     const info = await transporter.sendMail({
-      from: '"302 Properties" <info@cloudpress.host>',
-      to: tenant_email,
-      subject: "Welcome to your new resident center with 302 Properties",
-      text: `
-        Hello Sir/Ma'am,
+    from: '"302 Properties" <info@cloudpress.host>',
+    to: tenant_email,
+    subject: "Welcome to your new resident center with 302 Properties",
+    html: `
+        <p>Hello Sir/Ma'am,</p>
+
+        <p>Change your password now:</p>
+        <p><a href="${`https://propertymanager.cloudpress.host/auth/changepassword?token=` + token}" style="text-decoration: none;">Reset Password Link</a></p>
         
-        Change your password now:
-        ${
-          "https://propertymanager.cloudpress.host/auth/changepassword?token=" +
-          token
-        }
-        
-        Best regards,
-        The 302 Properties Team
-        `,
+        <p>Best regards,<br>
+        The 302 Properties Team</p>
+    `,
     });
+
 
     res.json({
       statusCode: 200,
@@ -1282,6 +1280,81 @@ router.post("/passwordmail", async (req, res) => {
     });
   }
 });
+
+function scheduleTokenCleanup() {
+  // Schedule a task to clean up expired tokens periodically
+  setInterval(() => {
+    const currentTimestamp = Date.now();
+
+    for (const [token, expirationTimestamp] of tokenExpirationMap.entries()) {
+      if (currentTimestamp > expirationTimestamp) {
+        // Token has expired, remove it from the map
+        tokenExpirationMap.delete(token);
+        console.log(`Token expired for email: ${decrypt(token)}`);
+      }
+    }
+  }, 60 * 5 * 1000); // Run the cleanup task every 5 seconds for demonstration purposes
+}
+
+router.get("/check_token_status/:token", (req, res) => {
+  const { token } = req.params;
+  const expirationTimestamp = tokenExpirationMap.get(token);
+
+  if (expirationTimestamp && Date.now() < expirationTimestamp) {
+    res.json({ expired: false });
+  } else {
+    res.json({ expired: true });
+  }
+});
+
+
+router.put("/reset_password/:mail", async (req, res) => {
+  try {
+    const encryptmail = req.params.mail;
+    const email = decrypt(encryptmail);
+
+    // Check if the token is still valid
+    if (!isTokenValid(email)) {
+      return res.json({
+        statusCode: 401,
+        message: "Token expired. Please request a new password reset email.",
+      });
+    }
+
+    const updateData = req.body;
+    const result = await Tenants.findOneAndUpdate(
+      { tenant_email: email },
+      updateData,
+      { new: true }
+    );
+
+    if (result) {
+      // Password changed successfully, remove the token from the map
+      tokenExpirationMap.delete(encrypt(email));
+      return res.json({
+        statusCode: 200,
+        data: result,
+        message: "Password Updated Successfully",
+      });
+    } else {
+      return res.json({
+        statusCode: 404,
+        message: "No matching record found for the provided email",
+      });
+    }
+  } catch (err) {
+    return res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+function isTokenValid(email) {
+  const token = encrypt(email);
+  const expirationTimestamp = tokenExpirationMap.get(token);
+  return expirationTimestamp && Date.now() < expirationTimestamp;
+}
 
 router.post("/tenant", async (req, res) => {
   try {
