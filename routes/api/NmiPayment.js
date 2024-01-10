@@ -606,12 +606,12 @@ router.post("/create-customer-vault", async (req, res) => {
       country,
       phone,
       email,
-      /* Other necessary parameters for customer creation */
     } = req.body;
 
     let customerData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-      customer_vault: "add_customer",
+      customer_vault: "add_billing",
+      customer_vault_id : 794813587,
       first_name,
       last_name,
       ccnumber,
@@ -624,7 +624,257 @@ router.post("/create-customer-vault", async (req, res) => {
       country,
       phone,
       email,
-      /* Include other necessary parameters for customer creation */
+    };
+
+    customerData = querystring.stringify(customerData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: customerData,
+    };
+    console.log("API request: ", config);
+
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+        if (parsedResponse.response_code == 100) {
+          // Handle successful customer creation
+          sendResponse(res, "Customer vault created successfully.");
+        } else {
+          // Handle customer creation failure
+          sendResponse(res, parsedResponse.responsetext, 403);
+        }
+      })
+      .catch(function (error) {
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+router.post("/update-customer-vault", async (req, res) => {
+  try {
+    const {
+      security_key,
+      customer_vault_id,
+      first_name,
+      last_name,
+      ccnumber,
+      ccexp,
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+      country,
+      phone,
+      email,
+    } = req.body;
+
+    let customerData = {
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      customer_vault: "update_customer",
+      customer_vault_id,
+      first_name,
+      last_name,
+      ccnumber,
+      ccexp,
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+      country,
+      phone,
+      email,
+    };
+
+    customerData = querystring.stringify(customerData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: customerData,
+    };
+    console.log("API request: ", config);
+
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+        if (parsedResponse.response_code == 100) {
+          // Handle successful customer creation
+          sendResponse(res, "Customer vault created successfully.");
+        } else {
+          // Handle customer creation failure
+          sendResponse(res, parsedResponse.responsetext, 403);
+        }
+      })
+      .catch(function (error) {
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+router.post("/read-customer-vault", async (req, res) => {
+  try {
+    const {
+      security_key,
+      customer_vault_id, 
+    } = req.body;
+
+    let customerData = {
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      customer_vault: "get_customer",
+      customer_vault_id,
+    };
+
+    customerData = querystring.stringify(customerData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: customerData,
+    };
+    console.log("API request: ", config);
+
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+        if (parsedResponse.response_code == 100) {
+          // Handle successful customer retrieval
+          const customerInfo = parsedResponse.customer_vault;
+          sendResponse(res, customerInfo);
+        } else {
+          // Handle customer retrieval failure
+          sendResponse(res, parsedResponse.responsetext, 403);
+        }
+      })
+      .catch(function (error) {
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+router.post("/create-customer-billing", async (req, res) => {
+  try {
+    const {
+      security_key,
+      first_name,
+      last_name,
+      ccnumber,
+      ccexp,
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+      country,
+      phone,
+      email,
+      customer_vault_id,
+      billing_id,
+    } = req.body;
+
+    let customerData = {
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      customer_vault: "add_billing",
+      billing_id,
+      customer_vault_id,
+      first_name,
+      last_name,
+      ccnumber,
+      ccexp,
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+      country,
+      phone,
+      email,
+    };
+
+    customerData = querystring.stringify(customerData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: customerData,
+    };
+    console.log("API request: ", config);
+
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+        if (parsedResponse.response_code == 100) {
+          // Handle successful customer creation
+          sendResponse(res, "Customer vault created successfully.");
+        } else {
+          // Handle customer creation failure
+          sendResponse(res, parsedResponse.responsetext, 403);
+        }
+      })
+      .catch(function (error) {
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+router.post("/update-customer-billing", async (req, res) => {
+  try {
+    const {
+      security_key,
+      first_name,
+      last_name,
+      ccnumber,
+      ccexp,
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+      country,
+      phone,
+      email,
+      billing_id,
+    } = req.body;
+
+    let customerData = {
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      customer_vault: "update_billing",
+      billing_id,
+      first_name,
+      last_name,
+      ccnumber,
+      ccexp,
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+      country,
+      phone,
+      email,
     };
 
     customerData = querystring.stringify(customerData);

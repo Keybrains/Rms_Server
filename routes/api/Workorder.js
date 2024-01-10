@@ -118,6 +118,25 @@ router.get("/workorder", async (req, res) => {
   }
 });
 
+router.get("/workorder/count", async (req, res) => {
+  try {
+    const uniqueAddresses = await Workorder.distinct('_id');
+
+    const totalCount = uniqueAddresses.length;
+
+    res.json({
+      totalCount,
+      statusCode: 200,
+      message: "Count of Workorder",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.put("/workorder/:id/status", async (req, res) => {
   try {
     const Id = req.params.id;
