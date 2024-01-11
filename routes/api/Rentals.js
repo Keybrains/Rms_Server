@@ -256,6 +256,45 @@ router.get("/rentals", async (req, res) => {
   }
 });
 
+router.get("/rentals/count", async (req, res) => {
+  try {
+    const uniqueAddresses = await Rentals.distinct('entries.rental_adress');
+
+    const totalCount = uniqueAddresses.length;
+
+    res.json({
+      totalCount,
+      statusCode: 200,
+      message: "Count of Unique Rental Addresses",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/rentalowner/count", async (req, res) => {
+  try {
+    const uniqueAddresses = await Rentals.distinct('_id');
+
+    const totalCount = uniqueAddresses.length;
+
+    res.json({
+      totalCount,
+      statusCode: 200,
+      message: "Count of rental owner",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
 router.get("/existing/rentals", async (req, res) => {
   try {
     const uniqueRecords = await Rentals.aggregate([
