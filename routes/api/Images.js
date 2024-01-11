@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const baseUrl = process.env.REACT_APP_BASE_URL;
+const baseUrl = "http://localhost:4000/api/images/upload";
 
 //set currunt time to add before filename to identify
 function getCurrentDateAndTime() {
