@@ -10,7 +10,7 @@ const propertyUnitSchema = new Schema({
   rental_postcode: { type: String },
   rental_state: { type: String },
 
-
+  isrenton: { type: Boolean, default: false },
   rentalId: { type: String },
   propertyId: { type: String },
   description: { type: String },

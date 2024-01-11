@@ -13,7 +13,7 @@ var querystring = require("querystring");
 
 router.post("/purchase", async (req, res) => {
   try {
-    // Extract necessary data from the request body
+    // Extract necessary data from the request
     const { paymentDetails, planId } = req.body;
 
     // Save the payment details to MongoDB
@@ -42,7 +42,7 @@ router.post("/purchase", async (req, res) => {
     if (nmiResponse.response_code === "100") {
       // Payment was successful
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
-      console.log(successMessage);
+      console.log(nmiResponse);
       await nmiPayment.save();
       return res.status(200).json({
         statusCode: 100,
@@ -53,7 +53,7 @@ router.post("/purchase", async (req, res) => {
       console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
       return res.status(200).json({
         statusCode: 200,
-        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`
       });
     } else if (nmiResponse.response_code === "201") {
       // Duplicate transaction
@@ -297,13 +297,13 @@ router.post("/purchase", async (req, res) => {
 const sendNmiRequest = async (config, paymentDetails) => {
   // Include the card number and expiration date in the request
   config.ccnumber = paymentDetails.card_number;
-  config.ccexp = paymentDetails.expiration_date; // Assuming expiration_date is in the format MMYY
+  config.ccexp = paymentDetails.expiration_date; 
 
   const postData = querystring.stringify(config);
 
   const nmiConfig = {
     method: "post",
-    url: "https://secure.nmi.com/api/transact.php",
+    url: "https://secure.networkmerchants.com/api/transact.php",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
@@ -364,12 +364,10 @@ router.post("/add-plan", async (req, res) => {
       },
       data: postData,
     };
-    console.log("API hitt middle", config);
 
     axios(config)
       .then(async (response) => {
         const parsedResponse = querystring.parse(response.data);
-        console.log("parsedResponse", parsedResponse);
 
         if (parsedResponse.response_code == 100) {
           const newPaymentPlan = await PaymentPlans.create({
@@ -407,6 +405,7 @@ router.post("/add-plan", async (req, res) => {
   }
 });
 
+//custom create subscription NMI API
 router.post("/custom-add-subscription", async (req, res) => {
   try {
     console.log("................started...............");
@@ -590,6 +589,7 @@ router.post("/custom-delete-subscription", async (req, res) => {
   }
 });
 
+//create customer vault NMI API
 router.post("/create-customer-vault", async (req, res) => {
   try {
     const {
@@ -657,6 +657,7 @@ router.post("/create-customer-vault", async (req, res) => {
   }
 });
 
+//update customer vault NMI API
 router.post("/update-customer-vault", async (req, res) => {
   try {
     const {
@@ -711,7 +712,7 @@ router.post("/update-customer-vault", async (req, res) => {
         const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
           // Handle successful customer creation
-          sendResponse(res, "Customer vault created successfully.");
+          sendResponse(res, "Customer vault updated successfully.");
         } else {
           // Handle customer creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
@@ -725,17 +726,18 @@ router.post("/update-customer-vault", async (req, res) => {
   }
 });
 
-router.post("/read-customer-vault", async (req, res) => {
+//delete customer vault NMI API
+router.post("/delete-customer-vault", async (req, res) => {
   try {
     const {
       security_key,
-      customer_vault_id, 
+      customer_vault_id,
     } = req.body;
 
     let customerData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-      customer_vault: "get_customer",
-      customer_vault_id,
+      customer_vault: "delete_customer",
+      customer_vault_id
     };
 
     customerData = querystring.stringify(customerData);
@@ -754,11 +756,10 @@ router.post("/read-customer-vault", async (req, res) => {
       .then(async (response) => {
         const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
-          // Handle successful customer retrieval
-          const customerInfo = parsedResponse.customer_vault;
-          sendResponse(res, customerInfo);
+          // Handle successful customer creation
+          sendResponse(res, "Customer vault deleted successfully.");
         } else {
-          // Handle customer retrieval failure
+          // Handle customer creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
         }
       })
@@ -770,6 +771,52 @@ router.post("/read-customer-vault", async (req, res) => {
   }
 });
 
+//get customer vault NMI API
+router.post("/get-customer-vault", async (req, res) => {
+  try {
+    const { security_key, customer_vault_id } = req.body;
+
+    const requestData = {
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r", // Replace with your actual NMI security key
+      customer_vault: "get_customer",
+      customer_vault_id,
+    };
+
+    const config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: querystring.stringify(requestData),
+    };
+
+    const response = await axios(config);
+    const parsedResponse = querystring.parse(response.data);
+
+    console.log("NMI API Response:", parsedResponse);
+
+    if (parsedResponse.response_code == 100) {
+      // Handle successful retrieval of customer data
+      const customerData = {
+        first_name: parsedResponse.first_name,
+        last_name: parsedResponse.last_name,
+        // ... other fields
+      };
+
+      sendResponse(res, customerData);
+    } else {
+      // Handle failure to retrieve customer data
+      console.error("NMI API Error:", parsedResponse);
+      sendResponse(res, parsedResponse.responsetext, 403);
+    }
+  } catch (error) {
+    console.error("Server Error:", error);
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+//create customer vault billing NMI API
 router.post("/create-customer-billing", async (req, res) => {
   try {
     const {
@@ -826,7 +873,7 @@ router.post("/create-customer-billing", async (req, res) => {
         const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
           // Handle successful customer creation
-          sendResponse(res, "Customer vault created successfully.");
+          sendResponse(res, "Customer vault billing created successfully.");
         } else {
           // Handle customer creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
@@ -840,6 +887,7 @@ router.post("/create-customer-billing", async (req, res) => {
   }
 });
 
+//update customer vault billing NMI API
 router.post("/update-customer-billing", async (req, res) => {
   try {
     const {
@@ -856,12 +904,14 @@ router.post("/update-customer-billing", async (req, res) => {
       country,
       phone,
       email,
+      customer_vault_id,
       billing_id,
     } = req.body;
 
     let customerData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       customer_vault: "update_billing",
+      customer_vault_id,
       billing_id,
       first_name,
       last_name,
@@ -894,7 +944,54 @@ router.post("/update-customer-billing", async (req, res) => {
         const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
           // Handle successful customer creation
-          sendResponse(res, "Customer vault created successfully.");
+          sendResponse(res, "Customer vault billing updated successfully.");
+        } else {
+          // Handle customer creation failure
+          sendResponse(res, parsedResponse.responsetext, 403);
+        }
+      })
+      .catch(function (error) {
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+//delete customer vault billing NMI API
+router.post("/delete-customer-billing", async (req, res) => {
+  try {
+    const {
+      security_key,
+      customer_vault_id,
+      billing_id,
+    } = req.body;
+
+    let customerData = {
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      customer_vault: "delete_billing",
+      customer_vault_id,
+      billing_id,
+    };
+
+    customerData = querystring.stringify(customerData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: customerData,
+    };
+    console.log("API request: ", config);
+
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+        if (parsedResponse.response_code == 100) {
+          // Handle successful customer creation
+          sendResponse(res, "Customer vault billing deleted successfully.");
         } else {
           // Handle customer creation failure
           sendResponse(res, parsedResponse.responsetext, 403);

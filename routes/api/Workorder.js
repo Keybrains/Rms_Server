@@ -300,8 +300,6 @@ router.put('/workorder_enteries/:mainDocId/:entryId', async (req, res) => {
   }
 });
 
-
-
 // delete workorder
 router.delete("/delete_workorder", async (req, res) => {
   try {
