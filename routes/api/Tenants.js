@@ -2188,6 +2188,25 @@ router.get("/tenant", async (req, res) => {
   }
 });
 
+router.get("/tenants/count", async (req, res) => {
+  try {
+    const uniqueAddresses = await Tenants.distinct('_id');
+
+    const totalCount = uniqueAddresses.length;
+
+    res.json({
+      totalCount,
+      statusCode: 200,
+      message: "Count of Tenants",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.get("/existing/tenant", async (req, res) => {
   try {
     // Group records by tenant_mobileNumber and select one record for each group

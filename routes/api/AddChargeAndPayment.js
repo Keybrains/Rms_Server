@@ -103,60 +103,243 @@ router.get("/get_entry/:entryId", async (req, res) => {
   }
 });
 
+// router.get("/financial", async (req, res) => {
+//   try {
+//     const { rental_adress, property_id, unit, tenant_id } = req.query;
+
+//     // Construct the query object based on the provided parameters
+//     const query = {
+//       "properties.rental_adress": rental_adress,
+//       "properties.property_id": property_id,
+//       $or: [
+//         { "unit.unit": unit },
+//         { unit: { $exists: false } },
+//         { unit: { $elemMatch: { unit: unit } } },
+//         { unit: { $elemMatch: { unit: "" } } },
+//       ],
+//     };
+
+//     // Remove undefined parameters from the query object
+//     Object.keys(query).forEach(
+//       (key) => query[key] === undefined && delete query[key]
+//     );
+
+//     // Use the constructed query object to filter the data
+//     const data = await AddPaymentAndCharge.aggregate([
+//       {
+//         $match: query,
+//       },
+//       {
+//         $unwind: "$unit",
+//       },
+//       {
+//         $match: {
+//           "unit.paymentAndCharges.tenant_id": tenant_id,
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$_id",
+//           unit: { $push: "$unit" },
+//         },
+//       },
+//     ]);
+
+//     // Process the data as needed
+//     const processedData = data.map((item) => ({
+//       ...item,
+//       unit: item.unit.map((unitItem) => ({
+//         ...unitItem,
+//         paymentAndCharges: unitItem.paymentAndCharges.filter(
+//           (charge) => charge.tenant_id === tenant_id
+//         ),
+//       })),
+//     }));
+
+//     const sortedData = processedData.map((item) => ({
+//       ...item,
+//       unit: item.unit.map((unitItem) => ({
+//         ...unitItem,
+//         paymentAndCharges: unitItem.paymentAndCharges.sort(
+//           (a, b) => new Date(b.date) - new Date(a.date)
+//         ),
+//       })),
+//     }));
+
+//     // Iterate through the result and calculate "Total" and "RunningTotal" for each element
+//     sortedData.forEach((item) => {
+//       item.unit.forEach((unit) => {
+//         let runningTotal = 0;
+
+//         unit.paymentAndCharges.reverse().forEach((charge) => {
+//           charge.RunningTotal = runningTotal;
+//           charge.Total = runningTotal + charge.amount; // Assuming the amount is the correct property
+//           runningTotal = charge.Total;
+//       });
+
+//         // Reverse the paymentAndCharges array back to its original order
+//         unit.paymentAndCharges.reverse();
+//       });
+//     });
+
+//     res.json({
+//       statusCode: 200,
+//       data: processedData,
+//       message: "Read Filtered PaymentAndCharge",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+
 router.get("/financial", async (req, res) => {
   try {
     const { rental_adress, property_id, unit, tenant_id } = req.query;
 
-    // Construct the query object based on the provided parameters
-    const query = {
-      "properties.rental_adress": rental_adress,
-      "properties.property_id": property_id,
-      $or: [
-        { "unit.unit": unit },
-        { unit: { $exists: false } },
-        { unit: { $elemMatch: { unit: unit } } },
-        { unit: { $elemMatch: { unit: "" } } },
-      ],
-    };
-
-    // Remove undefined parameters from the query object
-    Object.keys(query).forEach(
-      (key) => query[key] === undefined && delete query[key]
-    );
-
     // Use the constructed query object to filter the data
     const data = await AddPaymentAndCharge.aggregate([
       {
-        $match: query,
+        $match: {
+          "properties.rental_adress": rental_adress,
+          "properties.property_id": property_id,
+        },
       },
       {
         $unwind: "$unit",
       },
+      // {
+      //   $match: {
+      //     "unit.paymentAndCharges.tenant_id": tenant_id,
+      //   },
+      // },
+      
+      {
+        $addFields: {
+          "unit.paymentAndCharges": {
+            $filter: {
+              input: "$unit.paymentAndCharges",
+              as: "charge",
+              cond: {
+                $eq: ["$$charge.tenant_id", tenant_id],
+              },
+            },
+          },
+        },
+      },
       {
         $match: {
-          "unit.paymentAndCharges.tenant_id": tenant_id,
+          "unit.paymentAndCharges": { $ne: [] },
+        },
+      },
+      {
+        $addFields: {
+          "unit.paymentAndCharges": {
+            $map: {
+              input: "$unit.paymentAndCharges",
+              as: "charge",
+              in: {
+                $mergeObjects: [
+                  "$$charge",
+                  {
+                    Total: 0, // Initialize Total to 0
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          "unit.paymentAndCharges": { $ne: [] },
+        },
+      },
+      {
+        $addFields: {
+          "unit.paymentAndCharges": {
+            $map: {
+              input: "$unit.paymentAndCharges",
+              as: "charge",
+              in: {
+                $mergeObjects: [
+                  "$$charge",
+                  {
+                    Total: 0, // Initialize Total to 0
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          "unit.paymentAndCharges": {
+            $map: {
+              input: "$unit.paymentAndCharges",
+              as: "charge",
+              in: {
+                $mergeObjects: [
+                  "$$charge",
+                  {
+                    Balance: {
+                      $cond: {
+                        if: { $eq: ["$$charge.type", "Charge"] },
+                        then: "$$charge.amount",
+                        else: { $subtract: [0, "$$charge.amount"] }, // for Payment type
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          "unit.paymentAndCharges": {
+            $map: {
+              input: "$unit.paymentAndCharges",
+              as: "charge",
+              in: {
+                $mergeObjects: [
+                  "$$charge",
+                  {
+                    Total: {
+                      $add: ["$$charge.Total", "$$charge.Balance"], // Update Total with Balance
+                    },
+                  },
+                ],
+              },
+            },
+          },
         },
       },
       {
         $group: {
           _id: "$_id",
+          properties: { $first: "$properties" },
           unit: { $push: "$unit" },
         },
       },
     ]);
 
-    // Process the data as needed
-    const processedData = data.map((item) => ({
-      ...item,
-      unit: item.unit.map((unitItem) => ({
-        ...unitItem,
-        paymentAndCharges: unitItem.paymentAndCharges.filter(
-          (charge) => charge.tenant_id === tenant_id
-        ),
-      })),
-    }));
+    // // Process the data as needed
+    // const processedData = data.map((item) => ({
+    //   ...item,
+    //   unit: item.unit.map((unitItem) => ({
+    //     ...unitItem,
+    //     paymentAndCharges: unitItem.paymentAndCharges.filter(
+    //       (charge) => charge.tenant_id === tenant_id
+    //     ),
+    //   })),
+    // }));
 
-    const sortedData = processedData.map((item) => ({
+    const sortedData = data.map((item) => ({
       ...item,
       unit: item.unit.map((unitItem) => ({
         ...unitItem,
@@ -184,7 +367,7 @@ router.get("/financial", async (req, res) => {
 
     res.json({
       statusCode: 200,
-      data: processedData,
+      data: sortedData,
       message: "Read Filtered PaymentAndCharge",
     });
   } catch (error) {
@@ -198,7 +381,6 @@ router.get("/financial", async (req, res) => {
 router.get("/financial_unit", async (req, res) => {
   try {
     const { rental_adress, property_id, unit, tenant_id } = req.query;
-    console.log(req.query, "-------------------------");
 
     const data = await AddPaymentAndCharge.aggregate([
       {
@@ -303,35 +485,6 @@ router.get("/financial_unit", async (req, res) => {
         },
       },
     ]);
-
-    // Iterate through the result and calculate "Total" and "RunningTotal" for each element
-    // for (let i = 0; i < data.length; i++) {
-    //   const item = data[i];
-    //   let runningTotal = 0;
-
-    //   for (let j = 0; j < item.unit.length; j++) {
-    //     const unit = item.unit[j];
-
-    //     for (let k = 0; k < unit.paymentAndCharges.length; k++) {
-    //       const charge = unit.paymentAndCharges[k];
-    //       charge.RunningTotal = runningTotal;
-    //       charge.Total = runningTotal + charge.Balance;
-    //       runningTotal = charge.Total;
-    //     }
-    //   }
-    // }
-
-    // const sortedData = data.map((item) => ({
-    //   ...item,
-    //   unit: item.unit.map((unitItem) => ({
-    //     ...unitItem,
-    //     paymentAndCharges: unitItem.paymentAndCharges.sort(
-    //       (a, b) => new Date(b.date) - new Date(a.date)
-    //     ),
-    //   })),
-    // }));
-
-
 
     const sortedData = data.map((item) => ({
       ...item,

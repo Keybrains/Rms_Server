@@ -49,6 +49,25 @@ router.get("/addstaffmember", async (req, res) => {
   }
 });
 
+router.get("/staff/count", async (req, res) => {
+  try {
+    const staff = await AddStaffMember.distinct('_id');
+
+    const totalCount = staff.length;
+
+    res.json({
+      totalCount,
+      statusCode: 200,
+      message: "Count of Workorder",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.delete("/delete_staffmember", async (req, res) => {
   try {
     const staffIdsToDelete = req.body;
