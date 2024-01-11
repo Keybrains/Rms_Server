@@ -281,6 +281,7 @@ router.get("/propertyunits/:propertyId", async (req, res) => {
     });
   }
 });
+
 // Delete Property-Unit
 router.delete("/propertyunit/:id", async (req, res) => {
   try {
@@ -319,8 +320,21 @@ router.get("/property/:rental_adress/:rental_units", async (req, res) => {
       rental_adress: rental_adress,
       rental_units: rental_units,
     });
-    console.log(rental_adress, rental_units)
-    console.log(result)
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/property/:rental_adress", async (req, res) => {
+  try {
+    const { rental_adress } = req.params;
+
+    // Find property units that match the given rental_adress and rental_units
+    const result = await PropertyUnit.find({
+      rental_adress: rental_adress,
+    });
     res.json(result);
   } catch (error) {
     console.error(error);
