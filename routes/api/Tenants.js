@@ -62,9 +62,9 @@ const transporter = nodemailer.createTransport({
 });
 
 const encrypt = (text) => {
-  const cipher = crypto.createCipher('aes-256-cbc', 'mansi');
-  let encrypted = cipher.update(text, 'utf-8', 'hex');
-  encrypted += cipher.final('hex');
+  const cipher = crypto.createCipher("aes-256-cbc", "mansi");
+  let encrypted = cipher.update(text, "utf-8", "hex");
+  encrypted += cipher.final("hex");
   return encrypted;
 };
 
@@ -93,20 +93,22 @@ router.post("/passwordmail", async (req, res) => {
     tokenExpirationMap.set(token, expirationTimestamp);
 
     const info = await transporter.sendMail({
-    from: '"302 Properties" <info@cloudpress.host>',
-    to: tenant_email,
-    subject: "Welcome to your new resident center with 302 Properties",
-    html: `
+      from: '"302 Properties" <info@cloudpress.host>',
+      to: tenant_email,
+      subject: "Welcome to your new resident center with 302 Properties",
+      html: `
         <p>Hello Sir/Ma'am,</p>
 
         <p>Change your password now:</p>
-        <p><a href="${`https://propertymanager.cloudpress.host/auth/changepassword?token=` + token}" style="text-decoration: none;">Reset Password Link</a></p>
+        <p><a href="${
+          `https://propertymanager.cloudpress.host/auth/changepassword?token=` +
+          token
+        }" style="text-decoration: none;">Reset Password Link</a></p>
         
         <p>Best regards,<br>
         The 302 Properties Team</p>
     `,
     });
-
 
     res.json({
       statusCode: 200,
@@ -131,7 +133,11 @@ function scheduleTokenCleanup() {
     for (const [token, expirationTimestamp] of tokenExpirationMap.entries()) {
       if (currentTimestamp > expirationTimestamp) {
         tokenExpirationMap.delete(token);
-        console.log(`Token generated for email: ${decrypt(token)}, Expiration: ${new Date(expirationTimestamp)}`);
+        console.log(
+          `Token generated for email: ${decrypt(token)}, Expiration: ${new Date(
+            expirationTimestamp
+          )}`
+        );
       }
     }
   }, 15 * 60 * 1000);
@@ -193,7 +199,11 @@ router.put("/reset_password/:mail", async (req, res) => {
 function isTokenValid(email) {
   const token = encrypt(email);
   const expirationTimestamp = tokenExpirationMap.get(token);
-  console.log(`Token: ${token}, Expiration: ${new Date(expirationTimestamp)}, Current: ${new Date()}`);
+  console.log(
+    `Token: ${token}, Expiration: ${new Date(
+      expirationTimestamp
+    )}, Current: ${new Date()}`
+  );
 
   return expirationTimestamp && Date.now() < expirationTimestamp;
 }
@@ -316,7 +326,7 @@ router.post("/tenant", async (req, res) => {
 
     if (entries[0].tenant_residentStatus) {
       const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
+        from: '"302 Properties" <mailto:info@cloudpress.host>',
         to: tenant_email,
         subject: "Welcome to your new resident center with 302 Properties",
         text: `
@@ -378,7 +388,7 @@ router.get("/tenant", async (req, res) => {
 
 router.get("/tenants/count", async (req, res) => {
   try {
-    const uniqueAddresses = await Tenants.distinct('_id');
+    const uniqueAddresses = await Tenants.distinct("_id");
 
     const totalCount = uniqueAddresses.length;
 
@@ -1519,8 +1529,6 @@ router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
       entryIndex: entry.entries[0].entryIndex, // Assuming there's only one entry
     }));
 
-    console.log("tenantData", tenantData);
-
     res.json({
       data: tenantData,
       statusCode: 200,
@@ -1583,10 +1591,12 @@ router.get("/rental-address/:id", async (req, res) => {
     }
 
     // Extract and send the rental addresses
-    const rentalAddresses = tenant.entries.map((entry) => ([{
-      rental_adress: entry.rental_adress,
-      rental_units: entry.rental_units
-    }]));
+    const rentalAddresses = tenant.entries.map((entry) => [
+      {
+        rental_adress: entry.rental_adress,
+        rental_units: entry.rental_units,
+      },
+    ]);
 
     res.status(200).json({ rentalAddresses });
   } catch (err) {
@@ -1627,21 +1637,31 @@ router.get("/rental-address/:id", async (req, res) => {
 //   }
 // });
 
-router.get('/findData', async (req, res) => {
+router.get("/findData", async (req, res) => {
   try {
-    const currentDate = new Date().toISOString().split('T')[0]; // Get current date in 'YYYY-MM-DD' format
+    const currentDate = new Date().toISOString().split("T")[0]; // Get current date in 'YYYY-MM-DD' format
 
     // Query to find data
     const result = await Tenants.find({
-      'entries.start_date': { $lte: currentDate },
-      'entries.end_date': { $gt: currentDate },
-      $or: [
-        { 'entries.rental_adress': req.query.rental_adress },
-        { 'entries.rental_units': req.query.rental_units }
-      ]
+      "entries.start_date": { $lte: currentDate },
+      "entries.end_date": { $gt: currentDate },
+      $and: [
+        { "entries.rental_adress": req.query.rental_adress },
+        { "entries.rental_units": req.query.rental_units },
+      ],
     });
 
-    res.json(result);
+    const data = result.map((item) => {
+      const object = {
+        _id: item._id,
+        tenant_id: item.tenant_id,
+        tenant_firstName: item.tenant_firstName,
+        tenant_lastName: item.tenant_lastName,
+      };
+      return object;
+    });
+
+    res.json(data);
   } catch (error) {
     console.error(error);
     res.status(500).send("Internal Server Error");
