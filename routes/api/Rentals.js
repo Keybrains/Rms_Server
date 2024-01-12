@@ -1028,4 +1028,51 @@ router.put("/proparty_image/:id/:entryId", async (req, res) => {
   }
 });
 
+router.get("/rentals_workorder/:id", async (req, res) => {
+  try {
+    const userId = req.params.id; 
+    var data = await Rentals.findOne(
+      { "entries._id": userId }
+    );
+    if (data) {
+      const entry = data.entries.find(entry => entry._id.toString() === userId);
+      
+      if (entry) {
+        // Return both rentalOwner and the specific entry
+        res.json({
+          data: {
+            rentalOwner: {
+              _id: data._id,
+              rentalOwner_firstName: data.rentalOwner_firstName,
+              rentalOwner_lastName: data.rentalOwner_lastName,
+            },
+            entry: {
+              _id : entry._id,
+              entryIndex : entry.entryIndex,
+              rental_adress : entry.rental_adress,
+            },
+          },
+          statusCode: 200,
+          message: "SummaryGet Successfully",
+        });
+      }else {
+        res.status(404).json({
+          statusCode: 404,
+          message: "Entry not found in the summary",
+        });
+      }
+    } else {
+      res.status(404).json({
+        statusCode: 404,
+        message: "Summary not found",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;
