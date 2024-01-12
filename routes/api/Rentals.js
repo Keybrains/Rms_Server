@@ -86,6 +86,7 @@ var moment = require("moment");
 // });
 
 //updated by mansi with unique rental_adress condition
+
 router.post("/rentals", async (req, res) => {
   try {
     const {
@@ -293,7 +294,6 @@ router.get("/rentalowner/count", async (req, res) => {
     });
   }
 });
-
 
 router.get("/existing/rentals", async (req, res) => {
   try {

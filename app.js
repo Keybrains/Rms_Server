@@ -32,6 +32,7 @@ var AddChargeAndPaymentRouter = require("./routes/api/AddChargeAndPayment")
 var NmiPaymentRouter = require("./routes/api/NmiPayment")
 var webhookRoutes = require('./routes/api/webhook')
 var imagesRouter = require('./routes/api/Images')
+var cronjobRoutes = require('./routes/api/Cronjob')
 
 var app = express();
 
@@ -61,15 +62,14 @@ app.use("/api/vendor", VendorRouter);
 app.use("/api/workorder", WorkorderRouter);
 app.use("/api/ledger", LedgerRouter);
 app.use("/api/notification", NotificationRouter);
-// app.use("/uploadfile",UploadFile);
 app.use("/api/recurringAcc", AddRicuringAcc);
 app.use("/api/onetimecharge", OneTimeChargeAcc);
 app.use("/api/payment", PaymentRouter);
-// catch 404 and forward to error handler
 app.use("/api/propertyunit",PropertyUnitRouter);
 app.use("/api/payment_charge",AddChargeAndPaymentRouter);
 app.use("/api/nmipayment",NmiPaymentRouter);
 app.use('/api/webhook', webhookRoutes)
+app.use('/api/cronjob', cronjobRoutes)
 app.use('/api/images', imagesRouter)
 app.use(function (req, res, next) {
   next(createError(404));

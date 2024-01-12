@@ -13,11 +13,17 @@ const propertiesSchema = new mongoose.Schema({
 
 // Define the 'Payment and Charge' schema
 const paymentAndChargeSchema = new mongoose.Schema({
-  
+
   type: {
     type: String,
   },
   charge_type:{
+    type: String,
+  },
+  payment_type: {
+    type: String,
+  },
+  transaction_id: {
     type: String,
   },
   account: {
