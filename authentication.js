@@ -89,6 +89,25 @@ const verifyToken = (req, res, next) => {
 
 
 
+const verifyToken2 = (req, res, next) => {
+  const token = req.body.token || req.query.token || req.headers["x-access-token"];
+
+  if (!token) {
+      sendResponse(res,"Authentication token required",HTTP_CODE_403);
+      return false;
+  }
+  
+  try {
+    const decoded = jwt.verify(token, config.TOKEN_SECRET);
+    req.body.user = decoded;
+  } catch (err) {
+    sendResponse(res,"Invalid token",HTTP_CODE_401);
+    return false;
+  }
+  return next();
+};
+
+
 // const verifyToken = (req, res, next) => {
 //   try {
 //     const token = req.headers.authorization.split(" ")[1]; // Assuming the token is provided as "Bearer <token>"
@@ -134,6 +153,7 @@ const verifyToken = (req, res, next) => {
 
 module.exports = {
   verifyToken,
+  verifyToken2,
   hashPassword,
   hashCompare,
   createToken,
