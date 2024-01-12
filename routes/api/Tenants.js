@@ -2096,6 +2096,7 @@ router.post("/tenant", async (req, res) => {
       relationship_tenants,
       email,
       emergency_PhoneNumber,
+      card_detail,
       entries,
     } = req.body;
 
@@ -2133,11 +2134,13 @@ router.post("/tenant", async (req, res) => {
       relationship_tenants,
       email,
       emergency_PhoneNumber,
+      card_detail,
       entries,
       createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
     });
 
     data.entries = entries;
+    data.card_detail = card_detail;
 
     const tenantRentalAddress = entries[0].rental_adress;
 
@@ -2168,7 +2171,7 @@ router.post("/tenant", async (req, res) => {
 
     if (entries[0].tenant_residentStatus) {
       const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
+        from: '"302 Properties" <mailto:info@cloudpress.host>',
         to: tenant_email,
         subject: "Welcome to your new resident center with 302 Properties",
         text: `
@@ -3370,8 +3373,6 @@ router.get("/tenant-name/tenant/:rental_address", async (req, res) => {
       _id: entry._id,
       entryIndex: entry.entries[0].entryIndex, // Assuming there's only one entry
     }));
-
-    console.log("tenantData", tenantData);
 
     res.json({
       data: tenantData,
