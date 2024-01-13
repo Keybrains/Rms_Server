@@ -41,7 +41,7 @@ router.post("/purchase", async (req, res) => {
     };
 
     const nmiResponse = await sendNmiRequest(nmiConfig, paymentDetails);
-
+    
     // Check the response from NMI
     if (nmiResponse.response_code === "100") {
       // Payment was successful
@@ -680,6 +680,7 @@ router.post("/custom-update-subscription", async (req, res) => {
 
 //custom delete subscription NMI API
 router.post("/custom-delete-subscription", async (req, res) => {
+  
   try {
     const { security_key, subscription_id } = req.body;
 
@@ -1240,7 +1241,7 @@ router.post("/nmi", async (req, res) => {
     // Webhook is now verified to have been sent by you, continue processing
     console.log("Webhook is verified");
     const webhook = req.body; // Assuming JSON payload
-
+console.log("webhookBody------------",webhook);
     if (webhook.event_type === "recurring.subscription.add") {
       //console.log("successfully update recurring subscription");
       // const gymOwner = await User.findOne({nmiSubscriptionId: parsedWebhook.event_body.subscription_id})
