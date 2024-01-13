@@ -5,7 +5,7 @@ var NmiPayment = require("../../modals/NmiPayment");
 var Tenant = require("../../modals/Tenants");
 var PaymentPlans = require("../../modals/PaymentPlans");
 var AutoRecPayments = require("../../modals/AutoRecPayments");
-const auth = require("../../authentication")
+const auth = require("../../authentication");
 var axios = require("axios");
 var crypto = require("crypto");
 var querystring = require("querystring");
@@ -16,7 +16,7 @@ router.post("/purchase", async (req, res) => {
   try {
     // Extract necessary data from the request
     const { paymentDetails, planId } = req.body;
-
+    console.log("paymentDetails", paymentDetails);
     // Save the payment details to MongoDB
     const nmiPayment = await NmiPayment.create({
       first_name: paymentDetails.first_name,
@@ -31,8 +31,11 @@ router.post("/purchase", async (req, res) => {
     });
 
     const nmiConfig = {
-      recurring: "process_sale",
+      type: "sale",
       amount: paymentDetails.amount,
+      first_name: paymentDetails.first_name,
+      last_name: paymentDetails.last_name,
+      email: paymentDetails.email_name,
       plan_id: planId,
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
     };
@@ -54,7 +57,7 @@ router.post("/purchase", async (req, res) => {
       console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
       return res.status(200).json({
         statusCode: 200,
-        message: `Failed to process payment: ${nmiResponse.responsetext}`
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
       });
     } else if (nmiResponse.response_code === "201") {
       // Duplicate transaction
@@ -294,11 +297,135 @@ router.post("/purchase", async (req, res) => {
   }
 });
 
+router.post("/refund", async (req, res) => {
+  try {
+    const { transactionId, amount, paymentType } = req.body;
+
+    if (!transactionId || !amount || !paymentType) {
+      return sendResponse(res, "Missing required parameters.", 400);
+    }
+
+    const nmiConfig = {
+      type: "refund",
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      transactionid: transactionId,
+      amount: amount,
+      payment: paymentType,
+    };
+
+    const nmiResponse = await sendNmiRequestrefund(nmiConfig);
+
+    if (nmiResponse.response_code === "100") {
+      // Refund successful
+      const successMessage = `Refund processed successfully! Transaction ID: ${nmiResponse.transactionid}`;
+      console.log(successMessage);
+      return sendResponse(res, successMessage, 200);
+    } else {
+      // Refund failed
+      console.log(`Failed to process refund: ${nmiResponse.responsetext}`);
+      return sendResponse(res, `Failed to process refund: ${nmiResponse.responsetext}`, 400);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+router.post("/void", async (req, res) => {
+  try {
+    const { transactionId, paymentType } = req.body;
+
+    if (!transactionId || !paymentType) {
+      return sendResponse(res, "Missing required parameters.", 400);
+    }
+
+    const nmiConfig = {
+      type: "update",
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      transactionid: transactionId,
+      payment: paymentType,
+    };
+
+    const nmiResponse = await sendNmiRequestrefund(nmiConfig);
+
+    if (nmiResponse.response_code === "100") {
+      // Void successful
+      const successMessage = `Void processed successfully! Transaction ID: ${nmiResponse.transactionid}`;
+      console.log(successMessage);
+      return sendResponse(res, successMessage, 200);
+    } else {
+      // Void failed
+      console.log(`Failed to process void: ${nmiResponse.responsetext}`);
+      return sendResponse(res, `Failed to process void: ${nmiResponse.responsetext}`, 400);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+router.post("/update", async (req, res) => {
+  try {
+    const { updateData, transactionId } = req.body;
+
+    if (!updateData || !transactionId) {
+      return sendResponse(res, "Missing required parameters.", 400);
+    }
+
+    const nmiConfig = {
+      type: "update", // Update operation (replace with the actual operation)
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      transactionid: transactionId,
+      // Add other parameters specific to your update operation
+      ...updateData,
+    };
+
+    const nmiResponse = await sendNmiRequestrefund(nmiConfig);
+
+    if (nmiResponse.response_code === "100") {
+      // Update successful
+      const successMessage = `Update processed successfully! Transaction ID: ${nmiResponse.transactionid}`;
+      console.log(successMessage);
+      return sendResponse(res, successMessage, 200);
+    } else {
+      // Update failed
+      console.log(`Failed to process update: ${nmiResponse.responsetext}`);
+      return sendResponse(res, `Failed to process update: ${nmiResponse.responsetext}`, 400);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+
+// Utility function to send NMI requests
+async function sendNmiRequestrefund(config) {
+  const postData = querystring.stringify(config);
+
+  const nmiConfig = {
+    method: "post",
+    url: "https://secure.nmi.com/api/transact.php",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: postData,
+  };
+
+  try {
+    const response = await axios(nmiConfig);
+    return querystring.parse(response.data);
+  } catch (error) {
+    console.error("NMI API error:", error.message);
+    throw new Error("Error processing NMI request.");
+  }
+}
+
 // Helper function to send a request to the NMI API
 const sendNmiRequest = async (config, paymentDetails) => {
   // Include the card number and expiration date in the request
   config.ccnumber = paymentDetails.card_number;
-  config.ccexp = paymentDetails.expiration_date; 
+  config.ccexp = paymentDetails.expiration_date;
 
   const postData = querystring.stringify(config);
 
@@ -470,7 +597,11 @@ router.post("/custom-add-subscription", async (req, res) => {
         // console.log("ek ek krne", parsedResponse);
         if (parsedResponse.response_code == 100) {
           // Handle successful subscription creation
-          sendResponse(res, `Custom subscription added successfully. TransactionId:` + parsedResponse.transactionid);
+          sendResponse(
+            res,
+            `Custom subscription added successfully. TransactionId:` +
+              parsedResponse.transactionid
+          );
         } else {
           // Handle subscription creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
@@ -504,7 +635,7 @@ router.post("/custom-update-subscription", async (req, res) => {
     let postData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       recurring: "update_subscription",
-      subscription_id : subscription_id,
+      subscription_id: subscription_id,
       day_frequency: dayFrequency ? dayFrequency : 30,
       first_name,
       address1: address,
@@ -512,7 +643,8 @@ router.post("/custom-update-subscription", async (req, res) => {
 
     // Update specific fields if provided in the request
     if (plan_payments !== undefined) postData.plan_payments = plan_payments;
-    if (plan_amount !== undefined && parseFloat(plan_amount) > 0) postData.plan_amount = plan_amount;
+    if (plan_amount !== undefined && parseFloat(plan_amount) > 0)
+      postData.plan_amount = plan_amount;
     if (ccnumber !== undefined) postData.ccnumber = ccnumber;
     if (email !== undefined) postData.email = email;
     if (ccexp !== undefined) postData.ccexp = ccexp;
@@ -549,19 +681,16 @@ router.post("/custom-update-subscription", async (req, res) => {
 //custom delete subscription NMI API
 router.post("/custom-delete-subscription", async (req, res) => {
   try {
-    const {
-      security_key,
-      subscription_id 
-    } = req.body;
+    const { security_key, subscription_id } = req.body;
 
     let postData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       recurring: "delete_subscription",
-      subscription_id : subscription_id 
+      subscription_id: subscription_id,
     };
 
     postData = querystring.stringify(postData);
-    console.log('mansi -------------', postData)
+    console.log("mansi -------------", postData);
     const config = {
       method: "post",
       url: "https://secure.nmi.com/api/transact.php",
@@ -612,7 +741,7 @@ router.post("/create-customer-vault", async (req, res) => {
     let customerData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       customer_vault: "add_billing",
-      customer_vault_id : 794813587,
+      customer_vault_id: 794813587,
       first_name,
       last_name,
       ccnumber,
@@ -730,15 +859,12 @@ router.post("/update-customer-vault", async (req, res) => {
 //delete customer vault NMI API
 router.post("/delete-customer-vault", async (req, res) => {
   try {
-    const {
-      security_key,
-      customer_vault_id,
-    } = req.body;
+    const { security_key, customer_vault_id } = req.body;
 
     let customerData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       customer_vault: "delete_customer",
-      customer_vault_id
+      customer_vault_id,
     };
 
     customerData = querystring.stringify(customerData);
@@ -962,11 +1088,7 @@ router.post("/update-customer-billing", async (req, res) => {
 //delete customer vault billing NMI API
 router.post("/delete-customer-billing", async (req, res) => {
   try {
-    const {
-      security_key,
-      customer_vault_id,
-      billing_id,
-    } = req.body;
+    const { security_key, customer_vault_id, billing_id } = req.body;
 
     let customerData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
@@ -1124,8 +1246,6 @@ router.post("/nmi", async (req, res) => {
       // const gymOwner = await User.findOne({nmiSubscriptionId: parsedWebhook.event_body.subscription_id})
       // if(gymOwner) {
 
-    
-
       const payment = await AutoRecPayments.create({
         // gymId: gymOwner.parentId,
         // paymentplanId: gymOwner.nmiplanId,
@@ -1140,26 +1260,26 @@ router.post("/nmi", async (req, res) => {
       // console.log("email from NMI resp: ", webhook.event_body.email);
       //Save payment details of the user in payment collection
       await payment.save();
-     // Update Tenant record with the subscription ID
-    //  const tenant_email = webhook.event_body.billing_address.email;
-    //  const rental = webhook.event_body.billing_address.address1;
-    //  const unit = webhook.event_body.billing_address.address2;
-    //  const subscription_id = req.body.event_body.subscription_id;
-     
-    //  const updatedTenant = await Tenant.findOneAndUpdate(
-    //    {
-    //      tenant_email: tenant_email,
-    //      'entries.rental_adress': rental,
-    //      'entries.rental_units': unit
-    //    },
-    //    {
-    //      $set: {
-    //        'entries.$.subscription_id': subscription_id
-    //      }
-    //    },
-    //    { new: true }
-    //  );
-    
+      // Update Tenant record with the subscription ID
+      //  const tenant_email = webhook.event_body.billing_address.email;
+      //  const rental = webhook.event_body.billing_address.address1;
+      //  const unit = webhook.event_body.billing_address.address2;
+      //  const subscription_id = req.body.event_body.subscription_id;
+
+      //  const updatedTenant = await Tenant.findOneAndUpdate(
+      //    {
+      //      tenant_email: tenant_email,
+      //      'entries.rental_adress': rental,
+      //      'entries.rental_units': unit
+      //    },
+      //    {
+      //      $set: {
+      //        'entries.$.subscription_id': subscription_id
+      //      }
+      //    },
+      //    { new: true }
+      //  );
+
       //update user payment status to true
       // await User.findOneAndUpdate(
       //     {
@@ -1648,14 +1768,12 @@ router.post("/nmis", async (req, res) => {
 //   }
 // });
 
-
 // function webhookIsVerified(webhookBody, signingKey, nonce, sig) {
 //   const calculatedSig = crypto.createHmac('sha256', signingKey)
 //     .update(`${nonce}.${webhookBody}`)
 //     .digest('hex');
 //   return sig === calculatedSig;
 // }
-
 
 // router.post("/nmi", (req, res) => {
 //   try {
@@ -1704,14 +1822,13 @@ const sendResponse = (res, data, status = 200) => {
   });
 };
 
-
 //pause tenants subscription
 router.post("/paused-subscription/:id", async (req, res) => {
   try {
-    console.log("hitt")
+    console.log("hitt");
     const { pausedSubscription } = req.body;
     const subscriptionId = req.params.id;
-    console.log("sahil ajmeri...",subscriptionId,pausedSubscription)
+    console.log("sahil ajmeri...", subscriptionId, pausedSubscription);
 
     // Assuming STATUS_ACTIVE, HTTP_CODE_403, and HTTP_CODE_500 are defined constants
     // const checkKeysExists = await User.findOne({
@@ -1720,32 +1837,32 @@ router.post("/paused-subscription/:id", async (req, res) => {
     // });
 
     // if (checkKeysExists && checkKeysExists.nmiPrivateKey) {
-      let postData = {
-        recurring: "update_subscription",
-        subscription_id: subscriptionId,
-        paused_subscription: false,
-        security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-      };
+    let postData = {
+      recurring: "update_subscription",
+      subscription_id: subscriptionId,
+      paused_subscription: false,
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+    };
 
-      postData = querystring.stringify(postData);
+    postData = querystring.stringify(postData);
 
-      var config = {
-        method: "post",
-        url: "https://secure.nmi.com/api/transact.php",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: postData,
-      };
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: postData,
+    };
 
-      const response = await axios(config);
+    const response = await axios(config);
 
-      const parsedResponse = querystring.parse(response.data);
-      if (parsedResponse.response_code == 100) {
-        sendResponse(res, "Subscription updated successfully.");
-      } else {
-        sendResponse(res, parsedResponse.responsetext, HTTP_CODE_403);
-      }
+    const parsedResponse = querystring.parse(response.data);
+    if (parsedResponse.response_code == 100) {
+      sendResponse(res, "Subscription updated successfully.");
+    } else {
+      sendResponse(res, parsedResponse.responsetext, HTTP_CODE_403);
+    }
     // } else {
     //   sendResponse(
     //     res,
@@ -1757,8 +1874,5 @@ router.post("/paused-subscription/:id", async (req, res) => {
     sendResponse(res, "Something went wrong!", HTTP_CODE_500);
   }
 });
-
-
-
 
 module.exports = router;
