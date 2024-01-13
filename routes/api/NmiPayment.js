@@ -5,6 +5,7 @@ var NmiPayment = require("../../modals/NmiPayment");
 var Tenant = require("../../modals/Tenants");
 var PaymentPlans = require("../../modals/PaymentPlans");
 var AutoRecPayments = require("../../modals/AutoRecPayments");
+var PaymentCharges = require("../../modals/AddPaymentAndCharge");
 var axios = require("axios");
 var crypto = require("crypto");
 var querystring = require("querystring");
@@ -43,6 +44,11 @@ router.post("/purchase", async (req, res) => {
       // Payment was successful
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
       console.log(nmiResponse);
+      const paymentData = {
+        
+      }
+      PaymentCharges.save();
+
       await nmiPayment.save();
       return res.status(200).json({
         statusCode: 100,
