@@ -16,7 +16,18 @@ const nmiPaymentSchema = new Schema({
   },
   card_number: {
     type: Number,
-    required: true,
+  },
+  account: {
+    type: String,
+  },
+  paymentType: {
+    type: String,
+  },
+  type2: {
+    type: String,
+  },
+  memo: {
+    type: String,
   },
   amount: {
     type: Number,
@@ -24,24 +35,22 @@ const nmiPaymentSchema = new Schema({
   },
   expiration_date: {
     type: Number,
-    required: true,
   },
   cvv: {
     type: Number,
-    required: true,
   },
-  // tenantId: {
-  //   type: String,
-  //   required: true,
-  // },
-  // propertyId: {
-  //   type: String,
-  //   required: true,
-  // },
-  // unitId: {
-  //   type: String,
-  //   required: true,
-  // },
+  date: {
+    type: String,
+  },
+  tenantId: {
+    type: String,
+  },
+  propertyId: {
+    type: String,
+  },
+  unitId: {
+    type: String,
+  },
   response: {
     type: Number,
   },
