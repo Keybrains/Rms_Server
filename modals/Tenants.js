@@ -16,6 +16,11 @@ const oneTimeChargeSchema = new Schema({
   onetime_memo: { type: String },
 });
 
+const carddetailSchema = new Schema({
+  card_number: { type: String },
+  exp_date: { type: String },
+});
+
 const entrySchema = new Schema({
   updateAt: { type: String },
   createdAt: { type: String },
@@ -67,21 +72,6 @@ const entrySchema = new Schema({
 
   tenant_residentStatus: { type: Boolean },
 
-  // add recuring charge
-
-  // recuring_amount: { type: Number },
-  // recuring_account:{ type: String },
-  // recuringnextDue_date: { type: String },
-  // recuringmemo:{ type: String },
-  // recuringfrequency:{ type: String },
-
-  //add one time charge
-
-  // onetime_amount: { type: Number },
-  // onetime_account:{ type: String },
-  // onetime_Due_date: { type: String },
-  // onetime_memo:{ type: String },
-
   // add account
   account_name: { type: String },
   account_type: { type: String },
@@ -99,8 +89,6 @@ const entrySchema = new Schema({
   moveout_date: { type: String },
   moveout_notice_given_date: { type: String },
   paymentMethod: { type: String },
-  card_number: { type: String },
-  exp_date: { type: String },
   subscription_id: { type: String, default: "" },
 });
 
@@ -126,11 +114,13 @@ const tenantsSchema = new Schema({
   comments: { type: String },
 
   //Emergency contact
-
   contact_name: { type: String },
   relationship_tenants: { type: String },
   email: { type: String },
   emergency_PhoneNumber: { type: Number },
+  
+  //card details
+  card_detail: [carddetailSchema],
   entries: [entrySchema],
 });
 
