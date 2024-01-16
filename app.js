@@ -33,6 +33,7 @@ var NmiPaymentRouter = require("./routes/api/NmiPayment")
 var webhookRoutes = require('./routes/api/webhook')
 var imagesRouter = require('./routes/api/Images')
 var cronjobRoutes = require('./routes/api/Cronjob')
+var creditCardRoutes = require('./routes/api/CreditCard')
 
 var app = express();
 
@@ -71,6 +72,7 @@ app.use("/api/nmipayment",NmiPaymentRouter);
 app.use('/api/webhook', webhookRoutes)
 app.use('/api/cronjob', cronjobRoutes)
 app.use('/api/images', imagesRouter)
+app.use('/api/creditcard', creditCardRoutes)
 app.use(function (req, res, next) {
   next(createError(404));
 });
