@@ -11,9 +11,45 @@ const propertiesSchema = new mongoose.Schema({
   },
 });
 
+// // Define the 'payment' schema
+// const paymentSchema = new mongoose.Schema({
+//   response: {
+//     type: Number,
+//   },
+//   responsetext: {
+//     type: String,
+//   },
+//   authcode: {
+//     type: String,
+//   },
+//   transactionid: {
+//     type: String,
+//   },
+//   avsresponse: {
+//     type: Number,
+//   },
+//   cvvresponse: {
+//     type: String,
+//   },
+//   type: {
+//     type: String,
+//   },
+//   response_code: {
+//     type: String,
+//   },
+//   cc_type: {
+//     type: String,
+//   },
+//   cc_exp: {
+//     type: String,
+//   },
+//   cc_number: {
+//     type: String,
+//   },
+// });
+
 // Define the 'Payment and Charge' schema
 const paymentAndChargeSchema = new mongoose.Schema({
-
   type: {
     type: String,
   },
@@ -21,9 +57,6 @@ const paymentAndChargeSchema = new mongoose.Schema({
     type: String,
   },
   payment_type: {
-    type: String,
-  },
-  transaction_id: {
     type: String,
   },
   account: {
@@ -52,6 +85,7 @@ const paymentAndChargeSchema = new mongoose.Schema({
   },
   isPaid:{ type:Boolean,default: false },
   islatefee:{ type:Boolean },
+  // paymentDetails: [paymentSchema],
 });
 
 // Define the 'Unit' schema
