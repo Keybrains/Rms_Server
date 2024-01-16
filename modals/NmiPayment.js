@@ -30,13 +30,50 @@ const nmiPaymentSchema = new Schema({
     type: Number,
     required: true,
   },
-  tenantId: {
-    type: String,
-    required: true,
+  // tenantId: {
+  //   type: String,
+  //   required: true,
+  // },
+  // propertyId: {
+  //   type: String,
+  //   required: true,
+  // },
+  // unitId: {
+  //   type: String,
+  //   required: true,
+  // },
+  response: {
+    type: Number,
   },
-  propertyId: {
+  responsetext: {
     type: String,
-    required: true,
+  },
+  authcode: {
+    type: String,
+  },
+  transactionid: {
+    type: String,
+  },
+  avsresponse: {
+    type: Number,
+  },
+  cvvresponse: {
+    type: String,
+  },
+  type: {
+    type: String,
+  },
+  response_code: {
+    type: String,
+  },
+  cc_type: {
+    type: String,
+  },
+  cc_exp: {
+    type: String,
+  },
+  cc_number: {
+    type: String,
   },
 });
 
