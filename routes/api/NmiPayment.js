@@ -28,6 +28,7 @@ router.post("/purchase", async (req, res) => {
       cvv: paymentDetails.cvv,
       tenantId: paymentDetails.tenantId,
       propertyId: paymentDetails.propertyId,
+      //paymentType,
     });
 
     const nmiConfig = {
@@ -37,11 +38,12 @@ router.post("/purchase", async (req, res) => {
       last_name: paymentDetails.last_name,
       email: paymentDetails.email_name,
       plan_id: planId,
+      payment: "creditcard",
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
     };
 
     const nmiResponse = await sendNmiRequest(nmiConfig, paymentDetails);
-    
+
     // Check the response from NMI
     if (nmiResponse.response_code === "100") {
       // Payment was successful
@@ -297,6 +299,105 @@ router.post("/purchase", async (req, res) => {
   }
 });
 
+router.post("/sale_cash", async (req, res) => {
+  try {
+    // Extract necessary data from the request
+    const { first_name, last_name, email, amount} = req.body;
+    //console.log("paymentDetails", paymentDetails);
+
+    // // Save the payment details to MongoDB
+    // const nmiPayment = await NmiPayment.create({
+    //   first_name: paymentDetails.first_name,
+    //   last_name: paymentDetails.last_name,
+    //   email_name: paymentDetails.email_name,
+    //   amount: paymentDetails.amount,
+    //   tenantId: paymentDetails.tenantId,
+    //   propertyId: paymentDetails.propertyId,
+    // });
+
+    const nmiConfig = {
+      type: "sale",
+      amount: amount,
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
+      payment: "cash", // Change payment type to "cash"
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+    };
+
+    const nmiResponse = await sendNmiRequestrefund(nmiConfig);
+
+    // Check the response from NMI
+    if (nmiResponse.response_code === "100") {
+      // Payment was successful
+      const successMessage = `payment successful! Transaction ID: ${nmiResponse.transactionid}`;
+      console.log(successMessage);
+      //await nmiPayment.save();
+      return res.status(200).json({
+        statusCode: 100,
+        message: successMessage,
+      });
+    } else {
+      // Payment failed
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(400).json({
+        statusCode: 400,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    }
+  } catch (error) {
+    // Handle errors
+    console.error("Error:", error);
+    res.status(500).send(error);
+  }
+});
+
+router.post("/sale_check", async (req, res) => {
+  try {
+    // Extract necessary data from the request
+    const { first_name, last_name, email, amount, checkname, checkaba, checkaccount } = req.body;
+
+    const nmiConfig = {
+      type: "sale",
+      amount: amount,
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
+      payment: "check", // Change payment type to "check"
+      checkname: checkname, // Add checkname field
+      checkaba: checkaba, // Add checkname field
+      checkaccount: checkaccount, // Add checkaccount field
+
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+    };
+
+    const nmiResponse = await sendNmiRequestrefund(nmiConfig);
+
+    // Check the response from NMI
+    if (nmiResponse.response_code === "100") {
+      // Payment was successful
+      const successMessage = `Payment successful! Transaction ID: ${nmiResponse.transactionid}`;
+      console.log(successMessage);
+      return res.status(200).json({
+        statusCode: 100,
+        message: successMessage,
+      });
+    } else {
+      // Payment failed
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(400).json({
+        statusCode: 400,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    }
+  } catch (error) {
+    // Handle errors
+    console.error("Error:", error);
+    res.status(500).send(error);
+  }
+});
+
+//for refund payments using transactionId
 router.post("/refund", async (req, res) => {
   try {
     const { transactionId, amount, paymentType } = req.body;
@@ -323,7 +424,11 @@ router.post("/refund", async (req, res) => {
     } else {
       // Refund failed
       console.log(`Failed to process refund: ${nmiResponse.responsetext}`);
-      return sendResponse(res, `Failed to process refund: ${nmiResponse.responsetext}`, 400);
+      return sendResponse(
+        res,
+        `Failed to process refund: ${nmiResponse.responsetext}`,
+        400
+      );
     }
   } catch (error) {
     console.error("Error:", error);
@@ -331,6 +436,7 @@ router.post("/refund", async (req, res) => {
   }
 });
 
+//for cancel payments using transactionId
 router.post("/void", async (req, res) => {
   try {
     const { transactionId, paymentType } = req.body;
@@ -340,7 +446,7 @@ router.post("/void", async (req, res) => {
     }
 
     const nmiConfig = {
-      type: "update",
+      type: "void",
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       transactionid: transactionId,
       payment: paymentType,
@@ -356,7 +462,11 @@ router.post("/void", async (req, res) => {
     } else {
       // Void failed
       console.log(`Failed to process void: ${nmiResponse.responsetext}`);
-      return sendResponse(res, `Failed to process void: ${nmiResponse.responsetext}`, 400);
+      return sendResponse(
+        res,
+        `Failed to process void: ${nmiResponse.responsetext}`,
+        400
+      );
     }
   } catch (error) {
     console.error("Error:", error);
@@ -366,18 +476,23 @@ router.post("/void", async (req, res) => {
 
 router.post("/update", async (req, res) => {
   try {
-    const { updateData, transactionId } = req.body;
+    const { transactionId, type, first_name, last_name, email, amount } =
+      req.body;
 
-    if (!updateData || !transactionId) {
-      return sendResponse(res, "Missing required parameters.", 400);
-    }
+    // if (!type || !transactionId || !first_name || !last_name || !email || !amount || !ccnumber) {
+    //   return sendResponse(res, "Missing required parameters.", 400);
+    // }
 
     const nmiConfig = {
       type: "update", // Update operation (replace with the actual operation)
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       transactionid: transactionId,
-      // Add other parameters specific to your update operation
-      ...updateData,
+      type: type,
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
+      amount: amount,
+      //ccnumber:ccnumber,
     };
 
     const nmiResponse = await sendNmiRequestrefund(nmiConfig);
@@ -390,14 +505,17 @@ router.post("/update", async (req, res) => {
     } else {
       // Update failed
       console.log(`Failed to process update: ${nmiResponse.responsetext}`);
-      return sendResponse(res, `Failed to process update: ${nmiResponse.responsetext}`, 400);
+      return sendResponse(
+        res,
+        `Failed to process update: ${nmiResponse.responsetext}`,
+        400
+      );
     }
   } catch (error) {
     console.error("Error:", error);
     return sendResponse(res, "Something went wrong!", 500);
   }
 });
-
 
 // Utility function to send NMI requests
 async function sendNmiRequestrefund(config) {
@@ -680,7 +798,6 @@ router.post("/custom-update-subscription", async (req, res) => {
 
 //custom delete subscription NMI API
 router.post("/custom-delete-subscription", async (req, res) => {
-  
   try {
     const { security_key, subscription_id } = req.body;
 
@@ -1241,7 +1358,7 @@ router.post("/nmi", async (req, res) => {
     // Webhook is now verified to have been sent by you, continue processing
     console.log("Webhook is verified");
     const webhook = req.body; // Assuming JSON payload
-console.log("webhookBody------------",webhook);
+    console.log("webhookBody------------", webhook);
     if (webhook.event_type === "recurring.subscription.add") {
       //console.log("successfully update recurring subscription");
       // const gymOwner = await User.findOne({nmiSubscriptionId: parsedWebhook.event_body.subscription_id})
