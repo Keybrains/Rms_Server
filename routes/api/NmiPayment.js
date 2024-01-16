@@ -27,9 +27,9 @@ router.post("/purchase", async (req, res) => {
       amount: paymentDetails.amount,
       expiration_date: paymentDetails.expiration_date,
       cvv: paymentDetails.cvv,
-      // tenantId: paymentDetails.tenantId,
-      // propertyId: paymentDetails.propertyId,
-      // unitId: paymentDetails.unitId,
+      tenantId: paymentDetails.tenantId,
+      propertyId: paymentDetails.propertyId,
+      //paymentType,
     });
 
     const nmiConfig = {
@@ -40,6 +40,7 @@ router.post("/purchase", async (req, res) => {
       last_name: paymentDetails.last_name,
       email: paymentDetails.email_name,
       plan_id: planId,
+      payment: "creditcard",
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
     };
 
@@ -713,6 +714,11 @@ router.post("/refund", async (req, res) => {
         `Failed to process refund: ${nmiResponse.responsetext}`,
         400
       );
+      return sendResponse(
+        res,
+        `Failed to process refund: ${nmiResponse.responsetext}`,
+        400
+      );
     }
   } catch (error) {
     console.error("Error:", error);
@@ -720,6 +726,7 @@ router.post("/refund", async (req, res) => {
   }
 });
 
+//for cancel payments using transactionId
 router.post("/void", async (req, res) => {
   try {
     const { transactionId, paymentType } = req.body;
@@ -729,7 +736,7 @@ router.post("/void", async (req, res) => {
     }
 
     const nmiConfig = {
-      type: "update",
+      type: "void",
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       transactionid: transactionId,
       payment: paymentType,
@@ -759,18 +766,23 @@ router.post("/void", async (req, res) => {
 
 router.post("/update", async (req, res) => {
   try {
-    const { updateData, transactionId } = req.body;
+    const { transactionId, type, first_name, last_name, email, amount } =
+      req.body;
 
-    if (!updateData || !transactionId) {
-      return sendResponse(res, "Missing required parameters.", 400);
-    }
+    // if (!type || !transactionId || !first_name || !last_name || !email || !amount || !ccnumber) {
+    //   return sendResponse(res, "Missing required parameters.", 400);
+    // }
 
     const nmiConfig = {
       type: "update", // Update operation (replace with the actual operation)
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       transactionid: transactionId,
-      // Add other parameters specific to your update operation
-      ...updateData,
+      type: type,
+      first_name: first_name,
+      last_name: last_name,
+      email: email,
+      amount: amount,
+      //ccnumber:ccnumber,
     };
 
     const nmiResponse = await sendNmiRequestrefund(nmiConfig);
