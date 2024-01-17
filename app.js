@@ -33,6 +33,10 @@ var NmiPaymentRouter = require("./routes/api/NmiPayment")
 var webhookRoutes = require('./routes/api/webhook')
 var imagesRouter = require('./routes/api/Images')
 
+// =================  Super Admin  =======================================
+var PlansRouter = require('./routes/api/superadmin/Plans.js')
+
+
 var app = express();
 
 // view engine setup
@@ -71,6 +75,12 @@ app.use("/api/payment_charge",AddChargeAndPaymentRouter);
 app.use("/api/nmipayment",NmiPaymentRouter);
 app.use('/api/webhook', webhookRoutes)
 app.use('/api/images', imagesRouter)
+
+// ===============  Super Admin  ====================================
+app.use('/api/plans', PlansRouter)
+
+
+
 app.use(function (req, res, next) {
   next(createError(404));
 });
