@@ -45,10 +45,10 @@ const nmiPaymentSchema = new Schema({
   tenantId: {
     type: String,
   },
-  propertyId: {
+  property: {
     type: String,
   },
-  unitId: {
+  unit: {
     type: String,
   },
   response: {
