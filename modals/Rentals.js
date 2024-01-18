@@ -9,10 +9,10 @@ const entrySchema = new Schema({
   rental_adress: { type: String },
   isrenton: { type: Boolean, default: false },
   rental_city: { type: String },
+  rental_state: { type: String },
   rental_country: { type: String },
   rental_postcode: { type: String },
   prop_image:{ type: String, default: "" },
-  rental_state: { type: String },
 
   rentalOwner_operatingAccount: { type: String },
   rentalOwner_propertyReserve: { type: Number },

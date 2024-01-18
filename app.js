@@ -7,7 +7,7 @@ var logger = require("morgan");
 var cors = require("cors");
 
 var dbCollation = require("./db");
-var webhookRoutes = require('./routes/api/webhook')
+var webhookRoutes = require("./routes/api/webhook");
 var indexRouter = require("./routes/api/index");
 var usersRouter = require("./routes/api/users");
 // var RegisterRouter = require("./routes/api/Register");
@@ -28,17 +28,16 @@ var OneTimeChargeAcc = require("./routes/api/OneTimeAcc");
 var PaymentRouter = require("./routes/api/Payment");
 // var UploadFile = require ("./routes/UploadFile");
 var PropertyUnitRouter = require("./routes/api/PropertyUnit");
-var AddChargeAndPaymentRouter = require("./routes/api/AddChargeAndPayment")
-var NmiPaymentRouter = require("./routes/api/NmiPayment")
-var webhookRoutes = require('./routes/api/webhook')
-var imagesRouter = require('./routes/api/Images')
+var AddChargeAndPaymentRouter = require("./routes/api/AddChargeAndPayment");
+var NmiPaymentRouter = require("./routes/api/NmiPayment");
+var webhookRoutes = require("./routes/api/webhook");
+var imagesRouter = require("./routes/api/Images");
 
 // =================  Super Admin  =======================================
-var PlansRouter = require('./routes/api/superadmin/Plans.js')
-var PropertyTypeRouter = require('./routes/api/superadmin/PropertyType.js')
+var PlansRouter = require("./routes/api/superadmin/Plans.js");
+var PropertyTypeRouter = require("./routes/api/superadmin/PropertyType.js");
 var AdminRegisterRouter = require("./routes/api/superadmin/Admin_Register.js");
-
-
+var StaffMemberRouter = require("./routes/api/superadmin/StaffMember.js");
 
 var app = express();
 
@@ -73,18 +72,17 @@ app.use("/api/recurringAcc", AddRicuringAcc);
 app.use("/api/onetimecharge", OneTimeChargeAcc);
 app.use("/api/payment", PaymentRouter);
 // catch 404 and forward to error handler
-app.use("/api/propertyunit",PropertyUnitRouter);
-app.use("/api/payment_charge",AddChargeAndPaymentRouter);
-app.use("/api/nmipayment",NmiPaymentRouter);
-app.use('/api/webhook', webhookRoutes)
-app.use('/api/images', imagesRouter)
+app.use("/api/propertyunit", PropertyUnitRouter);
+app.use("/api/payment_charge", AddChargeAndPaymentRouter);
+app.use("/api/nmipayment", NmiPaymentRouter);
+app.use("/api/webhook", webhookRoutes);
+app.use("/api/images", imagesRouter);
 
 // ===============  Super Admin  ====================================
-app.use('/api/plans', PlansRouter)
-app.use('/api/propertytype', PropertyTypeRouter)
-app.use('/api/admin', AdminRegisterRouter)
-
-
+app.use("/api/plans", PlansRouter);
+app.use("/api/propertytype", PropertyTypeRouter);
+app.use("/api/admin", AdminRegisterRouter);
+app.use("/api/staffmember", StaffMemberRouter);
 
 app.use(function (req, res, next) {
   next(createError(404));

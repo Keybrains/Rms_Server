@@ -1,36 +1,33 @@
 var express = require("express");
 var router = express.Router();
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
-var PropertyType = require("../../../modals/superadmin/PropertyType");
+var StaffMember = require("../../../modals/superadmin/StaffMember");
 const moment = require("moment");
+const { hashPassword, hashCompare } = require("../../../authentication");
 
-// ==================== Admin =====================================================
-
-
-//Post new property type for admin
-router.post("/property_type", async (req, res) => {
+//Post new staff member for admin
+router.post("/staff_member", async (req, res) => {
   try {
-    let findPropertyNameName = await PropertyType.findOne({
-      property_type: req.body.property_type,
-      propertysub_type: req.body.propertysub_type,
+    let findStaffMember = await StaffMember.findOne({
+      staffmember_email: req.body.staffmember_email,
       admin_id: req.body.admin_id,
     });
-    if (!findPropertyNameName) {
+    if (!findStaffMember) {
       const timestamp = Date.now();
       const uniqueId = `${timestamp}`;
-      req.body["property_id"] = uniqueId;
+      req.body["staffmember_id"] = uniqueId;
       req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
       req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-      var data = await PropertyType.create(req.body);
+      var data = await StaffMember.create(req.body);
       res.json({
         statusCode: 200,
         data: data,
-        message: "Add PropertyType Successfully",
+        message: "Add StaffMember Successfully",
       });
     } else {
       res.json({
         statusCode: 201,
-        message: `${req.body.propertysub_type} Name Already Added`,
+        message: `${req.body.staffmember_email} E-mail Already Added`,
       });
     }
   } catch (error) {
@@ -41,12 +38,12 @@ router.post("/property_type", async (req, res) => {
   }
 });
 
-//get all property type for admin
-router.get("/property_type/:admin_id", async (req, res) => {
+//get all staff members for admin
+router.get("/staff_member/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
 
-    var data = await PropertyType.aggregate([
+    var data = await StaffMember.aggregate([
       {
         $match: { admin_id: admin_id }, // Filter by user_id
       },
@@ -79,26 +76,26 @@ router.get("/property_type/:admin_id", async (req, res) => {
   }
 });
 
-//delete property type for admin
-router.delete("/property_type/:property_id", async (req, res) => {
+//delete staff member for admin
+router.delete("/staff_member/:staffmember_id", async (req, res) => {
   try {
-    const property_id = req.params.property_id;
+    const staffmember_id = req.params.staffmember_id;
 
-    let result = await PropertyType.deleteOne({
-      property_id: property_id,
+    let result = await StaffMember.deleteOne({
+      staffmember_id: staffmember_id,
     });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({
         statusCode: 404,
-        message: "property_id not found",
+        message: "staffmember_id not found",
       });
     }
 
     res.json({
       statusCode: 200,
       data: result,
-      message: "Property-Type Deleted Successfully",
+      message: "Staff Member Deleted Successfully",
     });
   } catch (err) {
     res.status(500).json({
@@ -108,12 +105,18 @@ router.delete("/property_type/:property_id", async (req, res) => {
   }
 });
 
-//update property type for admin
-router.put("/property_type/:property_id", async (req, res) => {
+//update staff member for admin
+router.put("/staff_member/:staffmember_id", async (req, res) => {
   try {
-    const { property_id } = req.params;
-    const { property_type, propertysub_type, admin_id, is_multiunit } =
-      req.body;
+    const { staffmember_id } = req.params;
+    const {
+      admin_id,
+      staffmember_email,
+      staffmember_name,
+      staffmember_designation,
+      staffmember_phoneNumber,
+      staffmember_password,
+    } = req.body;
 
     if (!admin_id) {
       res.status(401).json({
@@ -122,13 +125,13 @@ router.put("/property_type/:property_id", async (req, res) => {
       });
       return;
     }
-
-    // Check if the property_type and propertysub_type already exist for the specified admin_id
-    const existingProperty = await PropertyType.findOne({
+    const existingProperty = await StaffMember.findOne({
       admin_id,
-      property_type,
-      propertysub_type,
-      is_multiunit,
+      staffmember_email,
+      staffmember_name,
+      staffmember_designation,
+      staffmember_phoneNumber,
+      staffmember_password,
     });
 
     if (existingProperty) {
@@ -136,14 +139,13 @@ router.put("/property_type/:property_id", async (req, res) => {
         statusCode: 400,
         message: "Update Atleast one field.",
       });
-      return; // Stop further execution
+      return;
     }
 
     req.body.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-    // Update the property if it exists
-    const result = await PropertyType.findOneAndUpdate(
-      { property_id, admin_id },
+    const result = await StaffMember.findOneAndUpdate(
+      { staffmember_id, admin_id },
       { $set: req.body },
       { new: true }
     );
@@ -152,12 +154,12 @@ router.put("/property_type/:property_id", async (req, res) => {
       res.json({
         statusCode: 200,
         data: result,
-        message: "PropertyType Updated Successfully",
+        message: "Staff Member Updated Successfully",
       });
     } else {
       res.status(404).json({
         statusCode: 404,
-        message: "PropertyType not found",
+        message: "Staff Member not found",
       });
     }
   } catch (err) {
@@ -168,24 +170,23 @@ router.put("/property_type/:property_id", async (req, res) => {
   }
 });
 
-
-//get perticuler property type for admin
-router.get("/property/type/:property_id", async (req, res) => {
+//get perticuler staff member for admin
+router.get("/staff/member/:staffmember_id", async (req, res) => {
   try {
-    const property_id = req.params.property_id;
-    const data = await PropertyType.find({ property_id });
+    const staffmember_id = req.params.staffmember_id;
+    const data = await StaffMember.find({ staffmember_id });
 
     if (data.length === 0) {
       return res.json({
         statusCode: 404,
-        message: "No record found for the specified property_id",
+        message: "No record found for the specified staffmember_id",
       });
     }
 
     res.json({
       data: data,
       statusCode: 200,
-      message: "Read PropertyType",
+      message: "Read StaffMember",
     });
   } catch (error) {
     res.json({

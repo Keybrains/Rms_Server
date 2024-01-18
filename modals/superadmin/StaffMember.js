@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const staffmemberSchema = new Schema({
   admin_id: { type: String },
-  staffmemberId: { type: String },
+  staffmember_id: { type: String },
   staffmember_name: { type: String },
   staffmember_designation: { type: String },
   staffmember_phoneNumber: { type: Number },

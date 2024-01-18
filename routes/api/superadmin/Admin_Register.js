@@ -11,7 +11,7 @@ var JWT = require("jsonwebtoken");
 var JWTD = require("jwt-decode");
 var moment = require("moment");
 
-// Registers
+//Admin Registers
 router.post("/register", async (req, res) => {
   try {
     const user = await AdminRegister.findOne({ email: req.body.email });
@@ -49,6 +49,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+//Admin Login
 router.post("/login", async (req, res) => {
   try {
     const user = await AdminRegister.findOne({ email: req.body.email });
