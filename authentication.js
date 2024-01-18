@@ -17,12 +17,24 @@ var hashCompare = async (pwd, hash) => {
   return result;
 };
 
-var createToken = async ({ _id, userName, email }) => {
+var createToken = async ({
+  _id,
+  admin_id,
+  email,
+  first_name,
+  last_name,
+  compony_name,
+  phone_number,
+}) => {
   let token = await JWT.sign(
     {
       id: _id,
-      userName: userName,
+      admin_id: admin_id,
+      first_name: first_name,
+      last_name: last_name,
       email: email,
+      compony_name: compony_name,
+      phone_number: phone_number,
     },
     SECRET_KEY,
     {
@@ -31,7 +43,6 @@ var createToken = async ({ _id, userName, email }) => {
   );
   return token;
 };
-
 
 // var verifyToken = async (req, res, next) => {
 //   let decodeData = JWTD(req.headers.token);
@@ -44,7 +55,6 @@ var createToken = async ({ _id, userName, email }) => {
 //     });
 //   }
 // };
-
 
 const verifyToken = (req, res, next) => {
   try {
@@ -86,9 +96,6 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-
-
-
 // const verifyToken = (req, res, next) => {
 //   try {
 //     const token = req.headers.authorization.split(" ")[1]; // Assuming the token is provided as "Bearer <token>"
@@ -99,9 +106,6 @@ const verifyToken = (req, res, next) => {
 //         message: "Token not provided.",
 //       });
 //     }
-
-
-   
 
 //     // // Verify token integrity and expiration
 //     // JWT.verify(token, SECRET_KEY, (err, decoded) => {

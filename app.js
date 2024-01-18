@@ -10,7 +10,7 @@ var dbCollation = require("./db");
 var webhookRoutes = require('./routes/api/webhook')
 var indexRouter = require("./routes/api/index");
 var usersRouter = require("./routes/api/users");
-var RegisterRouter = require("./routes/api/Register");
+// var RegisterRouter = require("./routes/api/Register");
 var RentalsRouter = require("./routes/api/Rentals");
 var NewPropartyRouter = require("./routes/api/NewPropaty");
 var TenantsRouter = require("./routes/api/Tenants");
@@ -35,6 +35,9 @@ var imagesRouter = require('./routes/api/Images')
 
 // =================  Super Admin  =======================================
 var PlansRouter = require('./routes/api/superadmin/Plans.js')
+var PropertyTypeRouter = require('./routes/api/superadmin/PropertyType.js')
+var AdminRegisterRouter = require("./routes/api/superadmin/Admin_Register.js");
+
 
 
 var app = express();
@@ -52,7 +55,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api", indexRouter);
 app.use("/api/users", usersRouter);
-app.use("/api/register", RegisterRouter);
+// app.use("/api/register", RegisterRouter);
 app.use("/api/rentals", RentalsRouter);
 app.use("/api/newproparty", NewPropartyRouter);
 app.use("/api/tenant", TenantsRouter);
@@ -78,6 +81,8 @@ app.use('/api/images', imagesRouter)
 
 // ===============  Super Admin  ====================================
 app.use('/api/plans', PlansRouter)
+app.use('/api/propertytype', PropertyTypeRouter)
+app.use('/api/admin', AdminRegisterRouter)
 
 
 
