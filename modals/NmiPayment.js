@@ -39,6 +39,9 @@ const nmiPaymentSchema = new Schema({
   cvv: {
     type: Number,
   },
+  status: {
+    type: String,
+  },
   date: {
     type: String,
   },
