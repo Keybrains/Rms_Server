@@ -49,7 +49,7 @@ router.post("/purchase", async (req, res) => {
     if (nmiResponse.response_code === "100") {
       // Payment was successful
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
-     // const nmiPayments = new NmiPayment.push(paymentData);
+      // const nmiPayments = new NmiPayment.push(paymentData);
 
       await nmiPayment.save();
 
@@ -57,7 +57,7 @@ router.post("/purchase", async (req, res) => {
         { _id: nmiPayment._id },
         { $set: { response: nmiResponse.response, ...otherFields } },
         { new: true }
-       );
+      );
       return res.status(200).json({
         statusCode: 100,
         message: successMessage,
@@ -330,8 +330,8 @@ router.post("/sale", async (req, res) => {
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
       email_name: paymentDetails.email_name,
-      //paymentType: paymentDetails.paymentType,
-      type: paymentDetails.type,
+      paymentType: paymentDetails.paymentType,
+      type2: paymentDetails.type2,
       memo: paymentDetails.memo,
       account: paymentDetails.account,
       date: paymentDetails.date,
@@ -361,12 +361,6 @@ router.post("/sale", async (req, res) => {
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
 
       await nmiPayment.save();
-
-      // await NmiPayment.findOneAndUpdate(
-      //   { _id: nmiPayment._id },
-      //   { $set: { response: nmiResponse.response} },
-      //   { new: true }
-      // );
 
       return res.status(200).json({
         statusCode: 100,
@@ -526,13 +520,13 @@ router.post("/sale", async (req, res) => {
         statusCode: 264,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
       });
-    // } else if (nmiResponse.response_code === "300") {
-    //   // Duplicate transaction
-    //   console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
-    //   return res.status(300).json({
-    //     statusCode: 300,
-    //     message: `Failed to process payment: ${nmiResponse.responsetext}`,
-    //   });
+      // } else if (nmiResponse.response_code === "300") {
+      //   // Duplicate transaction
+      //   console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      //   return res.status(300).json({
+      //     statusCode: 300,
+      //     message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      //   });
     } else if (nmiResponse.response_code === "400") {
       // Duplicate transaction
       console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
@@ -656,11 +650,11 @@ router.get("/nmipayments", async (req, res) => {
   try {
     // Retrieve all NmiPayment records from the database
     const nmipayments = await NmiPayment.find();
-
+    data = nmipayments.reverse();
     // Return the retrieved data as JSON
     res.status(200).json({
       statusCode: 200,
-      data: nmipayments,
+      data: data,
     });
   } catch (error) {
     // Handle errors
@@ -692,62 +686,93 @@ router.get("/nmipayments/:id", async (req, res) => {
   }
 });
 
-router.put('/updatepayment/:id', async (req, res) => {
+router.put("/updatepayment/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
 
-    const updatedNmiPayment = await NmiPayment.findByIdAndUpdate(id, updateData, { new: true });
+    const updatedNmiPayment = await NmiPayment.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
 
     if (updatedNmiPayment) {
       res.status(200).json({
         statusCode: 200,
-        message: 'NmiPayment updated successfully',
+        message: "NmiPayment updated successfully",
         data: updatedNmiPayment,
       });
     } else {
       res.status(404).json({
         statusCode: 404,
-        message: 'NmiPayment not found',
+        message: "NmiPayment not found",
       });
     }
   } catch (error) {
-    console.error('Error updating NmiPayment:', error);
+    console.error("Error updating NmiPayment:", error);
     res.status(500).send(error);
   }
 });
 
 router.post("/refund", async (req, res) => {
   try {
-    const { transactionId, amount, paymentType } = req.body;
+    const { refundDetails } = req.body;
 
-    if (!transactionId || !amount || !paymentType) {
-      return sendResponse(res, "Missing required parameters.", 400);
-    }
+    // if (!refundDetails.transactionId || !amount || !paymentType) {
+    //   return sendResponse(res, "Missing required parameters.", 400);
+    // }
 
     const nmiConfig = {
       type: "refund",
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
-      transactionid: transactionId,
-      amount: amount,
-      payment: paymentType,
+      transactionid: refundDetails.transactionId,
+      amount: refundDetails.amount,
+      payment: "creditcard",
     };
+    console.log(refundDetails);
 
-    const nmiResponse = await sendNmiRequestrefund(nmiConfig);
+    const nmiResponse = await sendNmiRequest(nmiConfig, refundDetails);
+
+    // Save the payment details to MongoDB
+    const nmiPayment = await NmiPayment.create({
+      first_name: refundDetails.first_name,
+      last_name: refundDetails.last_name,
+      email_name: refundDetails.email_name,
+      paymentType: refundDetails.paymentType,
+      type2: 'Refund',
+      memo: refundDetails.memo,
+      account: refundDetails.account,
+      date: refundDetails.date,
+      card_number: refundDetails.card_number,
+      amount: refundDetails.amount,
+      expiration_date: refundDetails.expiration_date,
+      cvv: refundDetails.cvv,
+      // tenantId: paymentDetails.tenantId,
+      property: refundDetails.property,
+      unit: refundDetails.unit,
+      response: nmiResponse.response,
+      responsetext: nmiResponse.responsetext,
+      authcode: nmiResponse.authcode,
+      transactionid: nmiResponse.transactionid,
+      avsresponse: nmiResponse.avsresponse,
+      cvvresponse: nmiResponse.cvvresponse,
+      type: nmiResponse.type,
+      response_code: nmiResponse.response_code,
+      cc_type: nmiResponse.cc_type,
+      cc_exp: nmiResponse.cc_exp,
+      cc_number: nmiResponse.cc_number,
+    });
+
 
     if (nmiResponse.response_code === "100") {
       // Refund successful
       const successMessage = `Refund processed successfully! Transaction ID: ${nmiResponse.transactionid}`;
-      console.log(successMessage);
+      await nmiPayment.save();
       return sendResponse(res, successMessage, 200);
     } else {
       // Refund failed
       console.log(`Failed to process refund: ${nmiResponse.responsetext}`);
-      return sendResponse(
-        res,
-        `Failed to process refund: ${nmiResponse.responsetext}`,
-        400
-      );
       return sendResponse(
         res,
         `Failed to process refund: ${nmiResponse.responsetext}`,
@@ -800,11 +825,19 @@ router.post("/void", async (req, res) => {
 
 router.post("/update", async (req, res) => {
   try {
-    const { transactionId, type, first_name, last_name, email, amount , ccnumber, ccexp} =
-      req.body;
+    const {
+      transactionId,
+      type,
+      first_name,
+      last_name,
+      email,
+      amount,
+      ccnumber,
+      ccexp,
+    } = req.body;
 
     const nmiConfig = {
-      type: "update", 
+      type: "update",
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       transactionid: transactionId,
       type: type,
