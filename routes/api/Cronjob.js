@@ -12,7 +12,7 @@ var {
 var JWT = require("jsonwebtoken");
 var JWTD = require("jwt-decode");
 //var moment = require("moment");
-const moment = require('moment-timezone');
+const moment = require("moment-timezone");
 const cron = require("node-cron");
 const PaymentCharges = require("../../modals/AddPaymentAndCharge");
 var NmiPayment = require("../../modals/NmiPayment");
@@ -20,27 +20,91 @@ var Cronjobs = require("../../modals/cronjobs");
 const axios = require("axios");
 
 async function logToDatabase(status, cronjob_type, date, reason = null) {
-    try {
-      const usaDate = moment(date).tz('America/New_York').format();
-      const log = new CronjobLog({
-        status,
-        cronjob_type,
-        reason,
-        date : usaDate 
+  try {
+    const usaDate = moment(date).tz("America/New_York").format();
+    const log = new CronjobLog({
+      status,
+      cronjob_type,
+      reason,
+      date: usaDate,
+    });
+    await log.save();
+  } catch (error) {
+    console.error("Error logging to database:", error);
+  }
+}
+
+//shedule payment for nmi transaction
+cron.schedule("02 18 * * *", async () => {
+  const cronjobs = await Cronjobs.find();
+  const isCronjobRunning = cronjobs[0].isCronjobRunning;
+  try {
+    if (isCronjobRunning === false) {
+      await Cronjobs.updateOne(
+        { _id: cronjobs[0]._id },
+        { isCronjobRunning: true }
+      );
+      console.log("Cron hitt...!!!");
+      const currentDate = new Date().toISOString().split("T")[0];
+      const fetchedchargespayaments = await NmiPayment.find({
+        status: "Pending",
+        paymentType: "Credit Card",
+        date: currentDate,
       });
-      await log.save();
-    } catch (error) {
-      console.error("Error logging to database:", error);
+      if (fetchedchargespayaments && fetchedchargespayaments.length > 0) {
+        for (const charge of fetchedchargespayaments) {
+          if (
+            charge.status === "Pending" &&
+            charge.paymentType === "Credit Card"
+          ) {
+            const chargeDate = new Date(charge.date)
+              .toISOString()
+              .split("T")[0];
+
+            if (chargeDate === currentDate) {
+              let id = charge._id;
+
+              const nmiApiUrl = `https://propertymanager.cloudpress.host/api/nmipayment/update_sale/${id}`;
+
+              try {
+                const response = await axios.post(nmiApiUrl, {
+                  paymentDetails: charge,
+                });
+
+                console.log("NMI API Response:", response.data);
+              } catch (error) {
+                console.error("Error sending data to NMI API:", error.message);
+              }
+            } else {
+              console.log("Charge object:", charge);
+            }
+          }
+        }
+      }
+      await Cronjobs.updateOne(
+        { _id: cronjobs[0]._id },
+        { isCronjobRunning: false }
+      );
+      console.log("cronjob updated to false");
     }
-}  
+    await logToDatabase("Success", `Rent Late Fee`);
+  } catch (error) {
+    await logToDatabase("Failure", `Rent Late Fee`, error.message);
+    console.error("Error:", error);
+    await Cronjobs.updateOne(
+      { _id: cronjobs[0]._id },
+      { isCronjobRunning: false }
+    );
+  }
+});
 
 //cron job for the late fee for unpaid rent charge
 cron.schedule("25 16 * * *", async () => {
-    const cronjobs = await Cronjobs.find();
-    const isCronjobRunning = cronjobs[0].isCronjobRunning;
+  const cronjobs = await Cronjobs.find();
+  const isCronjobRunning = cronjobs[0].isCronjobRunning;
   try {
     //const current = new Date();
-   
+
     if (isCronjobRunning === false) {
       await Cronjobs.updateOne(
         { _id: cronjobs[0]._id },
@@ -158,23 +222,22 @@ cron.schedule("25 16 * * *", async () => {
       );
       console.log("cronjob updated to false");
     }
-    await logToDatabase('Success',`Rent Late Fee` );
+    await logToDatabase("Success", `Rent Late Fee`);
   } catch (error) {
-    await logToDatabase('Failure',`Rent Late Fee`, error.message);
+    await logToDatabase("Failure", `Rent Late Fee`, error.message);
     console.error("Error:", error);
     await Cronjobs.updateOne(
-        { _id: cronjobs[0]._id },
-        { isCronjobRunning: false }
-      );
+      { _id: cronjobs[0]._id },
+      { isCronjobRunning: false }
+    );
   }
 });
 
 //rent cron job
 cron.schedule("40 17 * * *", async () => {
-    const cronjobs = await Cronjobs.find();
-    const isCronjobRunning = cronjobs[0].isCronjobRunning;
+  const cronjobs = await Cronjobs.find();
+  const isCronjobRunning = cronjobs[0].isCronjobRunning;
   try {
- 
     if (isCronjobRunning === false) {
       await Cronjobs.updateOne(
         { _id: cronjobs[0]._id },
@@ -217,13 +280,11 @@ cron.schedule("40 17 * * *", async () => {
             rentCycle === "Monthly"
             //paymentMethod === "Manually"
           ) {
-          
             // Update the nextDue_date to current date + 1 month
             const nextDueDatePlusOneMonth = new Date(currentDate);
             nextDueDatePlusOneMonth.setMonth(
               nextDueDatePlusOneMonth.getMonth() + 1
             );
-            
 
             entry.nextDue_date = nextDueDatePlusOneMonth
               .toISOString()
@@ -266,10 +327,10 @@ cron.schedule("40 17 * * *", async () => {
               });
 
               try {
-                await existingEntry.save(); 
-                await logToDatabase('Success',`Rent Monthly` );
+                await existingEntry.save();
+                await logToDatabase("Success", `Rent Monthly`);
               } catch (error) {
-                await logToDatabase('Failure',`Rent Monthly` );
+                await logToDatabase("Failure", `Rent Monthly`);
                 console.error(
                   "Error appending data to an existing entry:",
                   error
@@ -312,14 +373,13 @@ cron.schedule("40 17 * * *", async () => {
                 const paymentCharge = new PaymentCharges(postData);
                 await paymentCharge.save(); // Save the new entry
                 console.log("Data saved to payment-charges collection.");
-                await logToDatabase('Success',`Rent Monthly` );
-
+                await logToDatabase("Success", `Rent Monthly`);
               } catch (error) {
                 console.error(
                   "Error saving data to payment-charges collection:",
                   error
                 );
-                await logToDatabase('Failure',`Rent Monthly` );
+                await logToDatabase("Failure", `Rent Monthly`);
               }
             }
           }
@@ -383,7 +443,7 @@ cron.schedule("40 17 * * *", async () => {
 
               try {
                 await existingEntry.save();
-                await logToDatabase('Success',`Rent Weekly`);
+                await logToDatabase("Success", `Rent Weekly`);
                 console.log(
                   "Data appended to an existing entry in payment-charges collection."
                 );
@@ -429,7 +489,7 @@ cron.schedule("40 17 * * *", async () => {
                 const paymentCharge = new PaymentCharges(postData);
                 await paymentCharge.save(); // Save the new entry
                 console.log("Data saved to payment-charges collection.");
-                await logToDatabase('Success',`Rent Weekly`);
+                await logToDatabase("Success", `Rent Weekly`);
               } catch (error) {
                 console.error(
                   "Error saving data to payment-charges collection:",
@@ -495,8 +555,8 @@ cron.schedule("40 17 * * *", async () => {
               });
 
               try {
-                await existingEntry.save(); 
-                await logToDatabase('Success',`Rent Daily`);
+                await existingEntry.save();
+                await logToDatabase("Success", `Rent Daily`);
                 console.log(
                   "Data appended to an existing entry in payment-charges collection."
                 );
@@ -542,7 +602,7 @@ cron.schedule("40 17 * * *", async () => {
                 const paymentCharge = new PaymentCharges(postData);
                 await paymentCharge.save(); // Save the new entry
                 console.log("Data saved to payment-charges collection.");
-                await logToDatabase('Success',`Rent Daily`);
+                await logToDatabase("Success", `Rent Daily`);
               } catch (error) {
                 console.error(
                   "Error saving data to payment-charges collection:",
@@ -614,7 +674,7 @@ cron.schedule("40 17 * * *", async () => {
                 console.log(
                   "Data appended to an existing entry in payment-charges collection."
                 );
-                await logToDatabase('Success',`Rent Every two months`);
+                await logToDatabase("Success", `Rent Every two months`);
               } catch (error) {
                 console.error(
                   "Error appending data to an existing entry:",
@@ -657,7 +717,7 @@ cron.schedule("40 17 * * *", async () => {
                 const paymentCharge = new PaymentCharges(postData);
                 await paymentCharge.save(); // Save the new entry
                 console.log("Data saved to payment-charges collection.");
-                await logToDatabase('Success',`Rent Every two months`);
+                await logToDatabase("Success", `Rent Every two months`);
               } catch (error) {
                 console.error(
                   "Error saving data to payment-charges collection:",
@@ -726,7 +786,7 @@ cron.schedule("40 17 * * *", async () => {
 
               try {
                 await existingEntry.save(); // Save the updated entry
-                await logToDatabase('Success',`Rent Every two months`);
+                await logToDatabase("Success", `Rent Every two months`);
                 console.log(
                   "Data appended to an existing entry in payment-charges collection."
                 );
@@ -771,7 +831,7 @@ cron.schedule("40 17 * * *", async () => {
               try {
                 const paymentCharge = new PaymentCharges(postData);
                 await paymentCharge.save(); // Save the new entry
-                await logToDatabase('Success',`Rent Every two months`);
+                await logToDatabase("Success", `Rent Every two months`);
                 console.log("Data saved to payment-charges collection.");
               } catch (error) {
                 console.error(
@@ -842,7 +902,7 @@ cron.schedule("40 17 * * *", async () => {
 
               try {
                 await existingEntry.save(); // Save the updated entry
-                await logToDatabase('Success',`Rent Quarterly`);
+                await logToDatabase("Success", `Rent Quarterly`);
                 console.log(
                   "Data appended to an existing entry in payment-charges collection."
                 );
@@ -887,7 +947,7 @@ cron.schedule("40 17 * * *", async () => {
               try {
                 const paymentCharge = new PaymentCharges(postData);
                 await paymentCharge.save(); // Save the new entry
-                await logToDatabase('Success',`Rent Quarterly`);
+                await logToDatabase("Success", `Rent Quarterly`);
                 console.log("Data saved to payment-charges collection.");
               } catch (error) {
                 console.error(
@@ -903,7 +963,7 @@ cron.schedule("40 17 * * *", async () => {
           if (
             startDate &&
             endDate &&
-            nextDueDate && 
+            nextDueDate &&
             currentDate >= startDate &&
             currentDate <= endDate &&
             currentDate === nextDueDate &&
@@ -958,12 +1018,12 @@ cron.schedule("40 17 * * *", async () => {
 
               try {
                 await existingEntry.save(); // Save the updated entry
-                await logToDatabase('Success',`Rent Yearly`);
+                await logToDatabase("Success", `Rent Yearly`);
                 console.log(
                   "Data appended to an existing entry in payment-charges collection."
                 );
               } catch (error) {
-                await logToDatabase('Success',`Rent Yearly`);
+                await logToDatabase("Success", `Rent Yearly`);
                 console.error(
                   "Error appending data to an existing entry:",
                   error
@@ -1004,7 +1064,7 @@ cron.schedule("40 17 * * *", async () => {
               try {
                 const paymentCharge = new PaymentCharges(postData);
                 await paymentCharge.save(); // Save the new entry
-                await logToDatabase('Success',`Rent Yearly`);
+                await logToDatabase("Success", `Rent Yearly`);
                 console.log("Data saved to payment-charges collection.");
               } catch (error) {
                 console.error(
@@ -1024,7 +1084,7 @@ cron.schedule("40 17 * * *", async () => {
     }
   } catch (error) {
     console.error("Error:", error);
-    await logToDatabase('Failure',`Rent`, error.message);
+    await logToDatabase("Failure", `Rent`, error.message);
   }
 });
 
