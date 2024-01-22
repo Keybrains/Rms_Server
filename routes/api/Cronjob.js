@@ -35,7 +35,7 @@ async function logToDatabase(status, cronjob_type, date, reason = null) {
 }
 
 //shedule payment for nmi transaction
-cron.schedule("02 18 * * *", async () => {
+cron.schedule("32 19 * * *", async () => {
   const cronjobs = await Cronjobs.find();
   const isCronjobRunning = cronjobs[0].isCronjobRunning;
   try {
@@ -64,16 +64,16 @@ cron.schedule("02 18 * * *", async () => {
             if (chargeDate === currentDate) {
               let id = charge._id;
 
-              const nmiApiUrl = `https://propertymanager.cloudpress.host/api/nmipayment/update_sale/${id}`;
+              const nmiApiUrl = `hhttps://propertymanager.cloudpress.host/api/nmipayment/update_sale/${id}`;
 
               try {
                 const response = await axios.post(nmiApiUrl, {
-                  paymentDetails: charge,
+                  paymentDetails: charge
                 });
 
                 console.log("NMI API Response:", response.data);
               } catch (error) {
-                console.error("Error sending data to NMI API:", error.message);
+                console.error("Error sending data to NMI API:", error);
               }
             } else {
               console.log("Charge object:", charge);

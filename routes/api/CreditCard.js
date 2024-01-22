@@ -20,7 +20,7 @@ const decrypt = (text) => {
 
 // POST api to add credit card data
 router.post("/addCreditCard", async (req, res) => {
-  const { tenant_id, card_number, exp_date } = req.body;
+  const { tenant_id, card_number, exp_date, card_type } = req.body;
 
   const cardNumber = encrypt(card_number.toString());
 
@@ -33,6 +33,7 @@ router.post("/addCreditCard", async (req, res) => {
       existingCard.card_detail.push({
         card_number: cardNumber,
         exp_date,
+        card_type,
       });
 
       // Save the updated document
@@ -45,7 +46,7 @@ router.post("/addCreditCard", async (req, res) => {
       // Tenant doesn't exist, create a new entry
       const newCreditCard = new CreditCard({
         tenant_id,
-        card_detail: [{ card_number: cardNumber, exp_date }],
+        card_detail: [{ card_number: cardNumber, exp_date, card_type}],
       });
 
       // Save the new document
@@ -74,6 +75,7 @@ router.get("/getCreditCard/:tenant_id", async (req, res) => {
       const decryptedCardData = creditCardData.card_detail.map((card) => ({
         card_number: decrypt(card.card_number),
         exp_date: card.exp_date,
+        card_type: card.card_type
       }));
 
       res.status(200).json(decryptedCardData);

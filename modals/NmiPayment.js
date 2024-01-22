@@ -34,7 +34,7 @@ const nmiPaymentSchema = new Schema({
     required: true,
   },
   expiration_date: {
-    type: Number,
+    type: String,
   },
   cvv: {
     type: Number,
