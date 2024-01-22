@@ -368,11 +368,18 @@ router.post("/sale", async (req, res) => {
       cc_type: nmiResponse.cc_type,
       cc_exp: nmiResponse.cc_exp,
       cc_number: nmiResponse.cc_number,
+     
     });
-
+    if(nmiResponse.response_code==="100"){
+      
+      }
+      else{
+        nmiPayment.status = "Failure";
+      }
     // Check the response from NMI
     if (nmiResponse.response_code === "100") {
       // Payment was successful
+      nmiPayment.status = "Success"
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
 
       await nmiPayment.save();
@@ -665,13 +672,18 @@ router.post("/update_sale/:id", async (req, res) => {
     existingRecord.cc_exp = nmiResponse.cc_exp;
     existingRecord.cc_number = nmiResponse.cc_number;
 
-    existingRecord.status = "Success";
+    if(nmiResponse.response_code==="100"){
+      console.log("object")
+    }
+    else{
+      existingRecord.status = "Failure";
+    }
 
     await existingRecord.save();
 
     if (nmiResponse.response_code === "100") {
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
-
+      existingRecord.status = "Success";
       return res.status(200).json({
         statusCode: 100,
         message: successMessage,
@@ -1039,7 +1051,6 @@ router.post("/refund", async (req, res) => {
       amount: refundDetails.amount,
       payment: "creditcard",
     };
-    console.log(refundDetails);
 
     const nmiResponse = await sendNmiRequest(nmiConfig, refundDetails);
 
