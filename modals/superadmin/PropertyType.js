@@ -6,7 +6,7 @@ const propertyTypeSchema = new Schema({
   property_id: { type: String },
   property_type: { type: String },
   propertysub_type: { type: String },
-  is_multiunit: { type:Boolean,default: false },
+  is_multiunit: { type: Boolean, default: false },
   createdAt: { type: String },
   updatedAt: { type: String },
 });

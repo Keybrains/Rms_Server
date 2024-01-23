@@ -5,6 +5,146 @@ var StaffMember = require("../../../modals/superadmin/StaffMember");
 const moment = require("moment");
 const { hashPassword, hashCompare } = require("../../../authentication");
 
+// ============== Super Admin ==================================
+
+router.get("/staffmember", async (req, res) => {
+  try {
+    var pageSize = parseInt(req.query.pageSize) || 10;
+    var pageNumber = parseInt(req.query.pageNumber) || 0;
+
+    var data = await StaffMember.aggregate([
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $skip: pageSize * pageNumber,
+      },
+      {
+        $limit: pageSize,
+      },
+    ]);
+
+    var count = await StaffMember.countDocuments();
+
+    // Fetch client and property information for each item in data
+    for (let i = 0; i < data.length; i++) {
+      const adminData = data[i].admin_id;
+
+      // Fetch client information
+      const admin_data = await AdminRegister.findOne({
+        admin_id: adminData,
+      });
+
+      // Attach client and property information to the data item
+      data[i].admin_data = admin_data;
+    }
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      count: count,
+      message: "Read All Staff-Members",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.post("/search", async (req, res) => {
+  try {
+    const searchValue = req.body.search;
+
+    const data = await StaffMember.find({
+      $or: [
+        { staffmember_name: { $regex: new RegExp(searchValue, "i") } },
+        { staffmember_designation: { $regex: new RegExp(searchValue, "i") } },
+        { staffmember_email: { $regex: new RegExp(searchValue, "i") } },
+        {
+          staffmember_phoneNumber: !isNaN(searchValue)
+            ? Number(searchValue)
+            : null,
+        },
+      ].filter((condition) => condition),
+    });
+
+    // Fetch admin data for each staff member asynchronously
+    const promises = data.map(async (staffMember) => {
+      const adminData = staffMember.admin_id;
+      const admin_data = await AdminRegister.findOne({
+        admin_id: adminData,
+      });
+      return { ...staffMember._doc, admin_data }; // Attach abcd to staffMember data
+    });
+
+    // Wait for all promises to resolve
+    const updatedData = await Promise.all(promises);
+
+    const dataCount = updatedData.length;
+
+    res.json({
+      statusCode: 200,
+      data: updatedData,
+      count: dataCount,
+      message: "Search successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.post("/getByAdmin", async (req, res) => {
+  try {
+    const { first_name, last_name } = req.body;
+
+    // Fetch admin data based on the provided first_name and last_name
+    const adminData = await AdminRegister.findOne({
+      first_name,
+      last_name,
+    });
+
+    if (!adminData) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Admin not found",
+      });
+    }
+
+    // Fetch staff data associated with the admin
+    const staffData = await StaffMember.find({
+      admin_id: adminData.admin_id,
+    });
+
+    const dataCount = staffData.length;
+
+    // Create an array with combined admin and staff data
+    const combinedData = staffData.map((staffMember) => ({
+      ...staffMember._doc,
+      admin_data: { ...adminData._doc },
+    }));
+
+    res.json({
+      statusCode: 200,
+      data: combinedData,
+      count: dataCount,
+      message: "Search successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
+// ==========================  User  ==================================================================
+
 //Post new staff member for admin
 router.post("/staff_member", async (req, res) => {
   try {

@@ -82,4 +82,39 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
+
+router.get("/admin", async (req, res) => {
+  try {
+    var pageSize = parseInt(req.query.pageSize) || 10; // Default to 10 if not provided
+    var pageNumber = parseInt(req.query.pageNumber) || 0; // Default to 0 if not provided
+
+    var data = await AdminRegister.aggregate([
+      {
+        $skip: pageSize * pageNumber,
+      },
+      {
+        $limit: pageSize,
+      },
+    ]);
+
+    var count = await AdminRegister.countDocuments();
+
+    // Optionally reverse the data array
+    data.reverse();
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      count: count,
+      message: "Read All Admins",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;
