@@ -5,8 +5,6 @@ var Unit = require("../../../modals/superadmin/Unit");
 var Rentals = require("../../../modals/superadmin/Rentals");
 var PropertyType = require("../../../modals/superadmin/PropertyType");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
-var JWT = require("jsonwebtoken");
-var JWTD = require("jwt-decode");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 
@@ -78,12 +76,10 @@ router.post("/rentals", async (req, res) => {
   let rentalOwner, rental, units;
 
   try {
-    // Extract data from the request body
     const rentalOwnerData = req.body.rentalOwner;
     const rentalData = req.body.rental;
     const unitDataArray = req.body.units;
 
-    // Create or find rental owner
     const existingOwner = await RentalOwner.findOne({
       admin_id: rentalOwnerData.admin_id,
       rentalOwner_phoneNumber: rentalOwnerData.rentalOwner_phoneNumber,
@@ -109,8 +105,11 @@ router.post("/rentals", async (req, res) => {
 
     if (existingRental) {
       rental = existingRental;
+      return res.status(201).json({
+        statusCode: 201,
+        message: `${rentalData.rental_adress} Property Already Existing`,
+      });
     } else {
-      // Create rental
       const rentalTimestamp = Date.now();
       rentalData.rental_id = `${rentalTimestamp}`;
       rentalData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
@@ -120,7 +119,6 @@ router.post("/rentals", async (req, res) => {
       rental = await Rentals.create(rentalData);
     }
 
-    // Create units
     units = [];
 
     for (const unitData of unitDataArray) {
@@ -135,18 +133,15 @@ router.post("/rentals", async (req, res) => {
       units.push(unit);
     }
 
-    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
 
-    // Send a successful response
     res.json({
       statusCode: 200,
       data: { rentalOwner, rental, units },
       message: "Add Rental Successfully",
     });
   } catch (error) {
-    // If an error occurs, abort the transaction
     try {
       await session.abortTransaction();
     } catch (abortError) {
@@ -155,149 +150,12 @@ router.post("/rentals", async (req, res) => {
       session.endSession();
     }
 
-    // Send an error response
     res.status(500).json({
       statusCode: 500,
       message: error.message,
     });
   }
 });
-
-// router.post("/rentals", async (req, res) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-
-//   var unit, rental, rentalOwner;
-//   try {
-//     // Extract data from the request body
-//     const rentalOwnerData = req.body.rentalOwner;
-//     const rentalData = req.body.rental;
-//     const unitData = req.body.unit;
-
-//     // Validate uniqueness based on admin_id and rentalOwner_phoneNumber
-//     const existingOwner = await RentalOwner.findOne({
-//       admin_id: rentalOwnerData.admin_id,
-//       rentalOwner_phoneNumber: rentalOwnerData.rentalOwner_phoneNumber,
-//     });
-
-//     if (existingOwner) {
-//       // Existing owner found
-//       // Validate uniqueness based on admin_id, rental_adress, rental_city, and rental_state
-//       const existingRental = await Rentals.findOne({
-//         admin_id: rentalData.admin_id,
-//         rental_adress: rentalData.rental_adress,
-//         rental_city: rentalData.rental_city,
-//         rental_state: rentalData.rental_state,
-//       });
-
-//       if (existingRental) {
-//         // Existing rental found
-//         // Validate uniqueness based on rental_unit_adress, admin_id, and rental_id
-//         const existingUnit = await Unit.findOne({
-//           rental_unit: unitData.rental_unit,
-//           admin_id: unitData.admin_id,
-//           rental_id: existingRental.rental_id,
-//         });
-
-//         throw new Error(
-//           "Data cannot be stored. Existing owner and rental found."
-//         );
-//       } else {
-//         // No existing rental or unit found
-//         // Create Rental and Unit models
-//         const rental_timestamp = Date.now();
-//         const rental_id = `${rental_timestamp}`;
-//         rentalData["rental_id"] = rental_id;
-
-//         rentalData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-//         rentalData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-//         // ===================== Rental  ===========================
-//         rental = await Rentals.create(rentalData);
-
-//         // Set rental_id in Unit models
-//         unitData.rental_id = rentalData.rental_id;
-
-//         // Add unique unit_id
-//         const unit_timestamp = Date.now();
-//         const unit_id = `${unit_timestamp}`;
-//         unitData["unit_id"] = unit_id;
-
-//         unitData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-//         unitData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-//         // ===================== Unit  ======================
-//         unit = await Unit.create(unitData);
-//       }
-//     } else {
-//       // No existing owner found
-//       // Create all models when no existing models are found
-//       const rentalowner_timestamp = Date.now();
-//       const rentalowner_id = `${rentalowner_timestamp}`;
-//       rentalOwnerData["rentalowner_id"] = rentalowner_id;
-
-//       rentalOwnerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-//       rentalOwnerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-//       // ===================== Create RentalOwner  ======================
-//       rentalOwner = await RentalOwner.create(rentalOwnerData);
-
-//       // Set rentalowner_id in Rental models
-//       rentalData.rentalowner_id = rentalOwner.rentalowner_id;
-
-//       // Add unique rental_id
-//       const rental_timestamp = Date.now();
-//       const rental_id = `${rental_timestamp}`;
-//       rentalData["rental_id"] = rental_id;
-
-//       rentalData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-//       rentalData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-//       // ===================== Rental  ===========================
-//       rental = await Rentals.create(rentalData);
-
-//       // Set rental_id in Unit models
-//       unitData.rental_id = rentalData.rental_id;
-
-//       // Add unique unit_id
-//       const unit_timestamp = Date.now();
-//       const unit_id = `${unit_timestamp}`;
-//       unitData["unit_id"] = unit_id;
-
-//       unitData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-//       unitData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-//       // ===================== Unit  ======================
-//       unit = await Unit.create(unitData);
-//     }
-
-//     // Commit the transaction
-//     await session.commitTransaction();
-//     session.endSession();
-
-//     // Send a successful response
-//     res.json({
-//       statusCode: 200,
-//       data: { rentalOwner, rental, unit },
-//       message: "Add Rental Successfully",
-//     });
-//   } catch (error) {
-//     // If an error occurs, abort the transaction
-//     try {
-//       await session.abortTransaction();
-//     } catch (abortError) {
-//       console.error("Error aborting transaction:", abortError);
-//     } finally {
-//       session.endSession();
-//     }
-
-//     // Send an error response
-//     res.status(500).json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
 
 router.get("/rental-owners/:admin_id", async (req, res) => {
   const adminId = req.params.admin_id;
@@ -403,6 +261,124 @@ router.get("/rental_summary/:rental_id", async (req, res) => {
     });
   } catch (error) {
     res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/rentals/:rental_id", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  let rental, rentalOwner;
+
+  const {
+    admin_id,
+    rentalowner_id,
+    rentalOwner_firstName,
+    rentalOwner_lastName,
+    rentalOwner_companyName,
+    rentalOwner_primaryEmail,
+    rentalOwner_phoneNumber,
+    rentalOwner_homeNumber,
+    rentalOwner_businessNumber,
+  } = req.body.rentalOwner;
+
+  const {
+    rental_id,
+    property_id,
+    rental_adress,
+    rental_city,
+    rental_state,
+    rental_country,
+    rental_postcode,
+    staffmember_id,
+  } = req.body.rental;
+
+  try {
+    req.body.rentalOwner.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    req.body.rental.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const existingOwner = await RentalOwner.findOne({
+      admin_id,
+      rentalowner_id,
+      rentalOwner_firstName,
+      rentalOwner_lastName,
+      rentalOwner_companyName,
+      rentalOwner_primaryEmail,
+      rentalOwner_phoneNumber,
+      rentalOwner_homeNumber,
+      rentalOwner_businessNumber,
+    });
+
+    const existingRental = await Rentals.findOne({
+      admin_id,
+      rentalowner_id,
+      rental_id,
+      property_id,
+      rental_adress,
+      rental_city,
+      rental_state,
+      rental_country,
+      rental_postcode,
+      staffmember_id,
+    });
+
+    if (existingRental && existingOwner) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Change Atleast One Field`,
+      });
+    } else if (existingOwner) {
+      rental = await Rentals.findOneAndUpdate(
+        { rental_id, admin_id },
+        { $set: req.body.rental },
+        { new: true }
+      );
+      res.json({
+        statusCode: 200,
+        data: { rental },
+        message: "Rental Updated Successfully",
+      });
+    } else if (existingRental) {
+      rentalOwner = await RentalOwner.findOneAndUpdate(
+        { rentalowner_id, admin_id },
+        { $set: req.body.rentalOwner },
+        { new: true }
+      );
+      res.json({
+        statusCode: 200,
+        data: { rentalOwner },
+        message: "Rental Owner Updated Successfully",
+      });
+    } else {
+      rental = await Rentals.findOneAndUpdate(
+        { rental_id, admin_id },
+        { $set: req.body.rental },
+        { new: true }
+      );
+      rentalOwner = await RentalOwner.findOneAndUpdate(
+        { rentalowner_id, admin_id },
+        { $set: req.body.rentalOwner },
+        { new: true }
+      );
+      res.json({
+        statusCode: 200,
+        data: { rentalOwner, rental },
+        message: "Rental and Rental Owner Updated Successfully",
+      });
+    }
+  } catch (error) {
+    try {
+      await session.abortTransaction();
+    } catch (abortError) {
+      console.error("Error aborting transaction:", abortError);
+    } finally {
+      session.endSession();
+    }
+
+    res.status(500).json({
       statusCode: 500,
       message: error.message,
     });

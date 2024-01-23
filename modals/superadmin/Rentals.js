@@ -14,7 +14,7 @@ const rentalsSchema = new Schema({
   rental_country: { type: String },
   rental_postcode: { type: String },
   staffmember_id: { type: String },
-  createAt: { type: String },
+  createdAt: { type: String },
   updatedAt: { type: String },
 });
 
