@@ -576,7 +576,6 @@ router.get("/existing/applicant", async (req, res) => {
   }
 });
 
-// for application ==============================================================================
 const transporter = nodemailer.createTransport({
   host: "smtp.socketlabs.com",
   port: 587,

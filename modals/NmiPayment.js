@@ -17,6 +17,12 @@ const nmiPaymentSchema = new Schema({
   card_number: {
     type: Number,
   },
+  customer_vault_id: {
+    type: Number,
+  },
+  check_number: {
+    type: String,
+  },
   account: {
     type: String,
   },
@@ -67,7 +73,7 @@ const nmiPaymentSchema = new Schema({
     type: String,
   },
   avsresponse: {
-    type: Number,
+    type: String,
   },
   cvvresponse: {
     type: String,
