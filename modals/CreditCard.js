@@ -4,7 +4,9 @@ const Schema = mongoose.Schema;
 const carddetailSchema = new Schema({
   card_number: { type: String },
   exp_date: { type: String },
-  card_type: { type: String }
+  card_type: { type: String },
+  response_code: { type: String },
+  customer_vault_id: { type: Number },
 });
 
 const creditCardSchema = new Schema({

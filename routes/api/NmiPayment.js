@@ -10,8 +10,68 @@ const auth = require("../../authentication");
 var axios = require("axios");
 var crypto = require("crypto");
 var querystring = require("querystring");
-//#endregion
-// ===========================================================================================================================
+const { DOMParser } = require('xmldom');
+
+const convertToJson = (data) => {
+  try {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(data, "application/xml");
+
+    const jsonResult = xmlToJson(xmlDoc);
+    return jsonResult;
+  } catch (error) {
+    console.error("Error converting XML to JSON:", error);
+    return { error: "Error converting XML to JSON" };
+  }
+};
+
+const xmlToJson = (xml) => {
+  let result = {};
+
+  if (xml.nodeType === 1) {
+    if (xml.attributes.length > 0) {
+      result["@attributes"] = {};
+      for (let j = 0; j < xml.attributes.length; j++) {
+        const attribute = xml.attributes.item(j);
+        result["@attributes"][attribute.nodeName] = attribute.nodeValue;
+      }
+    }
+  } else if (xml.nodeType === 3 && xml.nodeValue.trim() !== "") {
+    result = xml.nodeValue.trim();
+  }
+
+  if (xml.hasChildNodes()) {
+    for (let i = 0; i < xml.childNodes.length; i++) {
+      const item = xml.childNodes.item(i);
+      const nodeName = item.nodeName;
+
+      if (nodeName === "#text") {
+        const textValue = item.nodeValue.trim();
+        if (textValue !== "") {
+          return textValue;
+        }
+      } else {
+        if (typeof result[nodeName] === "undefined") {
+          result[nodeName] = xmlToJson(item);
+        } else {
+          if (typeof result[nodeName].push === "undefined") {
+            const old = result[nodeName];
+            result[nodeName] = [];
+            if (old !== "") {
+              result[nodeName].push(old);
+            }
+          }
+          const childResult = xmlToJson(item);
+          if (childResult !== "") {
+            result[nodeName].push(childResult);
+          }
+        }
+      }
+    }
+  }
+
+  return result;
+};
 
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "yash");
@@ -330,6 +390,8 @@ router.post("/sale", async (req, res) => {
     const nmiConfig = {
       type: "sale",
       //payment: paymentDetails.paymentType,
+      customer_vault_id : paymentDetails.customer_vault_id,
+      address1 : paymentDetails.property,
       amount: paymentDetails.amount,
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
@@ -354,7 +416,8 @@ router.post("/sale", async (req, res) => {
       amount: paymentDetails.amount,
       expiration_date: paymentDetails.expiration_date,
       cvv: paymentDetails.cvv,
-      // tenantId: paymentDetails.tenantId,
+      tenantId: paymentDetails.tenantId,
+      customer_vault_id : paymentDetails.customer_vault_id,
       property: paymentDetails.property,
       unit: paymentDetails.unit,
       response: nmiResponse.response,
@@ -367,8 +430,7 @@ router.post("/sale", async (req, res) => {
       response_code: nmiResponse.response_code,
       cc_type: nmiResponse.cc_type,
       cc_exp: nmiResponse.cc_exp,
-      cc_number: nmiResponse.cc_number,
-     
+      cc_number: nmiResponse.cc_number,    
     });
     if(nmiResponse.response_code==="100"){
       
@@ -637,10 +699,12 @@ router.post("/update_sale/:id", async (req, res) => {
   try {
     // Extract necessary data from the request
     const { paymentDetails, planId } = req.body;
+    console.log("manu-----------------",paymentDetails)
 
     const nmiConfig = {
       type: "sale",
       //payment: paymentDetails.paymentType,
+      customer_vault_id : paymentDetails.customer_vault_id,
       amount: paymentDetails.amount,
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
@@ -673,7 +737,7 @@ router.post("/update_sale/:id", async (req, res) => {
     existingRecord.cc_number = nmiResponse.cc_number;
 
     if(nmiResponse.response_code==="100"){
-      console.log("object")
+      existingRecord.status = "Success";
     }
     else{
       existingRecord.status = "Failure";
@@ -683,7 +747,7 @@ router.post("/update_sale/:id", async (req, res) => {
 
     if (nmiResponse.response_code === "100") {
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
-      existingRecord.status = "Success";
+      
       return res.status(200).json({
         statusCode: 100,
         message: successMessage,
@@ -936,7 +1000,7 @@ router.post("/update_sale/:id", async (req, res) => {
 router.post("/postnmipayments", async (req, res) => {
   try {
     const { paymentDetails } = req.body;
-
+   
     const data = await NmiPayment.create({
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
@@ -949,9 +1013,12 @@ router.post("/postnmipayments", async (req, res) => {
       amount: paymentDetails.amount,
       property: paymentDetails.property,
       unit: paymentDetails.unit,
+      tenantId: paymentDetails.tenantId,
       status: paymentDetails.status,
+      check_number : paymentDetails.check_number,
       card_number: paymentDetails.card_number,
       expiration_date: paymentDetails.expiration_date,
+      customer_vault_id: paymentDetails.customer_vault_id,
       cvv: paymentDetails.cvv,
     });
     res.json({
@@ -977,6 +1044,30 @@ router.get("/nmipayments", async (req, res) => {
       statusCode: 200,
       data: data,
     });
+  } catch (error) {
+    // Handle errors
+    console.error("Error:", error);
+    res.status(500).send(error);
+  }
+});
+
+router.get("/nmipayments/tenant/:tenantId", async (req, res) => {
+  const id = req.params.tenantId;
+  try {
+    const nmipayment = await NmiPayment.find({"tenantId":id});
+    data = nmipayment.reverse();
+
+    if (nmipayment) {
+      res.status(200).json({
+        statusCode: 200,
+        data: data,
+      });
+    } else {
+      res.status(404).json({
+        statusCode: 404,
+        message: `NmiPayment with ID ${id} not found`,
+      });
+    }
   } catch (error) {
     // Handle errors
     console.error("Error:", error);
@@ -1039,7 +1130,7 @@ router.put("/updatepayment/:id", async (req, res) => {
 router.post("/refund", async (req, res) => {
   try {
     const { refundDetails } = req.body;
-
+    console.log("-------------",refundDetails)
     // if (!refundDetails.transactionId || !amount || !paymentType) {
     //   return sendResponse(res, "Missing required parameters.", 400);
     // }
@@ -1063,6 +1154,7 @@ router.post("/refund", async (req, res) => {
       type2: "Refund",
       status: "Success",
       memo: refundDetails.memo,
+      tenantId: refundDetails.tenantId,
       account: refundDetails.account,
       date: refundDetails.date,
       card_number: refundDetails.card_number,
@@ -1215,8 +1307,8 @@ async function sendNmiRequestrefund(config) {
 // Helper function to send a request to the NMI API
 const sendNmiRequest = async (config, paymentDetails) => {
   // Include the card number and expiration date in the request
-  config.ccnumber = paymentDetails.card_number;
-  config.ccexp = paymentDetails.expiration_date;
+  // config.ccnumber = paymentDetails.card_number;
+  // config.ccexp = paymentDetails.expiration_date;
 
   const postData = querystring.stringify(config);
 
@@ -1322,12 +1414,11 @@ router.post("/add-plan", async (req, res) => {
   } catch (error) {
     sendResponse(res, "Something went wrong!", 500);
   }
-});
+}); 
 
 //custom create subscription NMI API
 router.post("/custom-add-subscription", async (req, res) => {
   try {
-    console.log("................started...............");
     const {
       security_key,
       recurring,
@@ -1563,7 +1654,8 @@ router.post("/create-customer-vault", async (req, res) => {
         const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
           // Handle successful customer creation
-          sendResponse(res, "Customer vault created successfully.");
+          sendResponse(res, parsedResponse);
+          console.log("object==========",parsedResponse) 
         } else {
           // Handle customer creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
@@ -1573,6 +1665,115 @@ router.post("/create-customer-vault", async (req, res) => {
         sendResponse(res, error, 500);
       });
   } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+//get customer vault NMI API
+router.post("/get-customer-vault", async (req, res) => {
+  try {
+    const { customer_vault_id } = req.body;
+    let postData = {
+      "security_key": "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      customer_vault_id,
+      report_type: "customer_vault"
+    };
+
+    var config = {
+      method: "post",
+      url: "https://hms.transactiongateway.com/api/query.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: querystring.stringify(postData),
+    };
+
+    console.log("API request: ", config);
+
+    axios(config)
+      .then(async (response) => {
+        // Convert XML to JSON here
+        const jsonResult = convertToJson(response.data);
+
+        // Now jsonResult contains the JSON representation of the XML response
+        console.warn(jsonResult.nm_response.customer_vault);
+        const custom = jsonResult.nm_response.customer_vault;
+
+        if (custom.response_code == 200) {
+          // Handle successful customer creation
+          sendResponse(res, custom);
+        } else {
+          // Handle customer creation failure
+          sendResponse(res, custom, 200);
+        }
+      })
+      .catch(function (error) {
+        sendResponse(res, error, 500);
+      });
+
+  } catch (error) {
+    console.log(error);
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+//get multiple customer vault NMI API
+router.post("/get-multiple-customer-vault", async (req, res) => {
+  try {
+    const { customer_vault_id } = req.body;
+
+    if (!customer_vault_id || !Array.isArray(customer_vault_id)) {
+      sendResponse(res, { status: 400, error: "Invalid or missing customer_vault_ids" }, 400);
+      return;
+    }
+
+    const securityKey = "b6F87GPCBSYujtQFW26583EM8H34vM5r";
+    const promises = customer_vault_id.map((customer_vault_id) => {
+      const postData = {
+        security_key: securityKey,
+        customer_vault_id,
+        report_type: "customer_vault"
+      };
+
+      const config = {
+        method: "post",
+        url: "https://hms.transactiongateway.com/api/query.php",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: querystring.stringify(postData),
+      };
+
+      console.log("API request for customer_vault_id", customer_vault_id, ":", config);
+
+      return axios(config)
+        .then(async (response) => {
+          const jsonResult = convertToJson(response.data);
+          return jsonResult.nm_response.customer_vault;
+        })
+        .catch((error) => {
+          console.error("Error fetching customer_vault_id", customer_vault_id, ":", error);
+          return null;
+        });
+    });
+
+    Promise.all(promises)
+      .then((customerVaultRecords) => {
+        // Filter out null values (failed requests) and send the valid customer vault records
+        const validCustomerVaultRecords = customerVaultRecords.filter((record) => record !== null);
+
+        if (validCustomerVaultRecords.length > 0) {
+          sendResponse(res,  validCustomerVaultRecords);
+        } else {
+          sendResponse(res, { status: 404, error: "No valid customer vault records found" });
+        }
+      })
+      .catch((error) => {
+        console.error("Error processing customer vault records:", error);
+        sendResponse(res, { status: 500, error: "Internal server error" }, 500);
+      });
+  } catch (error) {
+    console.log(error);
     sendResponse(res, "Something went wrong!", 500);
   }
 });
@@ -1684,51 +1885,6 @@ router.post("/delete-customer-vault", async (req, res) => {
         sendResponse(res, error, 500);
       });
   } catch (error) {
-    sendResponse(res, "Something went wrong!", 500);
-  }
-});
-
-//get customer vault NMI API
-router.post("/get-customer-vault", async (req, res) => {
-  try {
-    const { security_key, customer_vault_id } = req.body;
-
-    const requestData = {
-      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r", // Replace with your actual NMI security key
-      customer_vault: "get_customer",
-      customer_vault_id,
-    };
-
-    const config = {
-      method: "post",
-      url: "https://secure.nmi.com/api/transact.php",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      data: querystring.stringify(requestData),
-    };
-
-    const response = await axios(config);
-    const parsedResponse = querystring.parse(response.data);
-
-    console.log("NMI API Response:", parsedResponse);
-
-    if (parsedResponse.response_code == 100) {
-      // Handle successful retrieval of customer data
-      const customerData = {
-        first_name: parsedResponse.first_name,
-        last_name: parsedResponse.last_name,
-        // ... other fields
-      };
-
-      sendResponse(res, customerData);
-    } else {
-      // Handle failure to retrieve customer data
-      console.error("NMI API Error:", parsedResponse);
-      sendResponse(res, parsedResponse.responsetext, 403);
-    }
-  } catch (error) {
-    console.error("Server Error:", error);
     sendResponse(res, "Something went wrong!", 500);
   }
 });
