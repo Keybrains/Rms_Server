@@ -35,7 +35,7 @@ async function logToDatabase(status, cronjob_type, date, reason = null) {
 }
 
 //shedule payment for nmi transaction
-cron.schedule("32 19 * * *", async () => {
+cron.schedule("18 17 * * *", async () => {
   const cronjobs = await Cronjobs.find();
   const isCronjobRunning = cronjobs[0].isCronjobRunning;
   try {
@@ -64,7 +64,7 @@ cron.schedule("32 19 * * *", async () => {
             if (chargeDate === currentDate) {
               let id = charge._id;
 
-              const nmiApiUrl = `hhttps://propertymanager.cloudpress.host/api/nmipayment/update_sale/${id}`;
+              const nmiApiUrl = `https://propertymanager.cloudpress.host/api/nmipayment/update_sale/${id}`;
 
               try {
                 const response = await axios.post(nmiApiUrl, {
