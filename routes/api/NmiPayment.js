@@ -1127,6 +1127,49 @@ router.put("/updatepayment/:id", async (req, res) => {
   }
 });
 
+router.post("/manual-refund", async (req, res) => {
+  try {
+    const { refundDetails } = req.body;
+    console.log("-------------",refundDetails)
+
+    // Save the payment details to MongoDB
+    const nmiPayment = await NmiPayment.create({
+      first_name: refundDetails.first_name,
+      last_name: refundDetails.last_name,
+      email_name: refundDetails.email_name,
+      paymentType: refundDetails.paymentType,
+      type2: "Refund",
+      status: "Success",
+      memo: refundDetails.memo,
+      tenantId: refundDetails.tenantId,
+      account: refundDetails.account,
+      date: refundDetails.date,
+      card_number: refundDetails.card_number,
+      amount: refundDetails.amount,
+      expiration_date: refundDetails.expiration_date,
+      cvv: refundDetails.cvv,
+      property: refundDetails.property,
+      unit: refundDetails.unit,
+    });
+
+    if (nmiPayment) {
+      await nmiPayment.save();
+      res.status(200).json({
+        statusCode: 200,
+        message: "refund added successfully",
+      });
+    } else {
+      res.status(404).json({
+        statusCode: 404,
+        message: "refund not found",
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send(error);
+  }
+});
+
 router.post("/refund", async (req, res) => {
   try {
     const { refundDetails } = req.body;
@@ -1618,6 +1661,7 @@ router.post("/create-customer-vault", async (req, res) => {
       country,
       phone,
       email,
+      fax,
     } = req.body;
 
     let customerData = {
@@ -1635,6 +1679,7 @@ router.post("/create-customer-vault", async (req, res) => {
       country,
       phone,
       email,
+      fax
     };
 
     customerData = querystring.stringify(customerData);
