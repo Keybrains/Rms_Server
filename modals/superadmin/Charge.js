@@ -6,6 +6,7 @@ const chargeSchema = new Schema({
 
   admin_id: { type: String },
   tenant_id: { type: String },
+  lease_id: { type: String },
   memo: { type: String },
   charge_type: { type: String },
   account: { type: String },

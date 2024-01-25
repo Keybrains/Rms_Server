@@ -26,4 +26,4 @@ const tenantSchema = new Schema({
   updatedAt: { type: String },
 });
 
-module.exports = mongoose.model("tenant", tenantSchema);
+module.exports = mongoose.model("tenants", tenantSchema);

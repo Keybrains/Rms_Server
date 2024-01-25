@@ -9,23 +9,9 @@ router.get("/rental_unit/:rental_id", async (req, res) => {
 
     var data = await Unit.aggregate([
       {
-        $match: { rental_id: rental_id }, // Filter by rental_id
+        $match: { rental_id: rental_id },
       },
     ]);
-
-    // Fetch client and property information for each item in data
-    // for (let i = 0; i < data.length; i++) {
-    //   const rentalOwner = data[i].rentalowner_id;
-    //   const propertyType = data[i].property_id;
-
-    //   // Fetch client information
-    //   const rental_owner_data = await RentalOwner.findOne({
-    //     rentalowner_id: rentalOwner,
-    //   });
-
-    //   // Attach client and property information to the data item
-    //   data[i].rental_owner_data = rental_owner_data;
-    // }
 
     res.json({
       statusCode: 200,

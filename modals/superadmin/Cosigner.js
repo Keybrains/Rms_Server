@@ -5,6 +5,7 @@ const cosignerSchema = new Schema({
   cosigner_id: { type: String },
 
   admin_id: { type: String },
+  tenant_id: { type: String },
   cosigner_firstName: { type: String },
   cosigner_lastName: { type: String },
   cosigner_phoneNumber: { type: Number },

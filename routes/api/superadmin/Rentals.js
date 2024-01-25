@@ -87,6 +87,10 @@ router.post("/rentals", async (req, res) => {
 
     if (existingOwner) {
       rentalOwner = existingOwner;
+      return res.status(201).json({
+        statusCode: 201,
+        message: `${rentalOwnerData.rentalOwner_phoneNumber} Phone Number Already Existing`,
+      });
     } else {
       const rentalOwnerTimestamp = Date.now();
       rentalOwnerData.rentalowner_id = `${rentalOwnerTimestamp}`;
