@@ -1127,12 +1127,21 @@ router.put("/updatepayment/:id", async (req, res) => {
   }
 });
 
-router.post("/manual-refund", async (req, res) => {
+router.post("/manual-refund/:id", async (req, res) => {
   try {
     const { refundDetails } = req.body;
-    console.log("-------------",refundDetails)
+    const existingPayment = await NmiPayment.findById(req.params.id);
 
-    // Save the payment details to MongoDB
+    if (!existingPayment) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Original payment not found",
+      });
+    }
+
+    const existingAmount = existingPayment.amount;
+
+    if (refundDetails.amount <= existingAmount) {
     const nmiPayment = await NmiPayment.create({
       first_name: refundDetails.first_name,
       last_name: refundDetails.last_name,
@@ -1144,10 +1153,8 @@ router.post("/manual-refund", async (req, res) => {
       tenantId: refundDetails.tenantId,
       account: refundDetails.account,
       date: refundDetails.date,
-      card_number: refundDetails.card_number,
+      check_number: refundDetails.check_number,
       amount: refundDetails.amount,
-      expiration_date: refundDetails.expiration_date,
-      cvv: refundDetails.cvv,
       property: refundDetails.property,
       unit: refundDetails.unit,
     });
@@ -1156,18 +1163,24 @@ router.post("/manual-refund", async (req, res) => {
       await nmiPayment.save();
       res.status(200).json({
         statusCode: 200,
-        message: "refund added successfully",
+        message: "Refund added successfully",
       });
     } else {
-      res.status(404).json({
-        statusCode: 404,
-        message: "refund not found",
+      res.status(500).json({
+        statusCode: 500,
+        message: "Internal server error while processing refund",
       });
     }
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).send(error);
+  } else {
+    res.status(400).json({
+      statusCode: 400,
+      message: "Insufficient balance for the refund",
+    });
   }
+} catch (error) {
+  console.error("Error:", error);
+  res.status(500).send(error);
+}
 });
 
 router.post("/refund", async (req, res) => {
