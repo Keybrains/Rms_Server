@@ -10,7 +10,6 @@ const accountSchema = new Schema({
   charge_type: { type: String },
   fund_type: { type: String },
   notes: { type: String },
-  date: { type: String },
 
   createdAt: { type: String },
   updatedAt: { type: String },
