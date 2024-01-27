@@ -186,6 +186,9 @@ router.get("/rentals/:admin_id", async (req, res) => {
 
     var data = await Rentals.aggregate([
       {
+        $sort: { createdAt: -1 },
+      },
+      {
         $match: { admin_id: admin_id }, // Filter by user_id
       },
     ]);
