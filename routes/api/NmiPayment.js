@@ -10,7 +10,19 @@ const auth = require("../../authentication");
 var axios = require("axios");
 var crypto = require("crypto");
 var querystring = require("querystring");
-const { DOMParser } = require('xmldom');
+const { DOMParser } = require("xmldom");
+const nodemailer = require("nodemailer");
+const { createTransport } = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.socketlabs.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "server39897",
+    pass: "c9J3Wwm5N4Bj",
+  },
+});
 
 const convertToJson = (data) => {
   try {
@@ -390,8 +402,8 @@ router.post("/sale", async (req, res) => {
     const nmiConfig = {
       type: "sale",
       //payment: paymentDetails.paymentType,
-      customer_vault_id : paymentDetails.customer_vault_id,
-      address1 : paymentDetails.property,
+      customer_vault_id: paymentDetails.customer_vault_id,
+      address1: paymentDetails.property,
       amount: paymentDetails.amount,
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
@@ -417,7 +429,7 @@ router.post("/sale", async (req, res) => {
       expiration_date: paymentDetails.expiration_date,
       cvv: paymentDetails.cvv,
       tenantId: paymentDetails.tenantId,
-      customer_vault_id : paymentDetails.customer_vault_id,
+      customer_vault_id: paymentDetails.customer_vault_id,
       property: paymentDetails.property,
       unit: paymentDetails.unit,
       response: nmiResponse.response,
@@ -430,18 +442,41 @@ router.post("/sale", async (req, res) => {
       response_code: nmiResponse.response_code,
       cc_type: nmiResponse.cc_type,
       cc_exp: nmiResponse.cc_exp,
-      cc_number: nmiResponse.cc_number,    
+      cc_number: nmiResponse.cc_number,
     });
-    if(nmiResponse.response_code==="100"){
-      
-      }
-      else{
-        nmiPayment.status = "Failure";
-      }
+    if (nmiResponse.response_code === "100") {
+    } else {
+      nmiPayment.status = "Failure";
+    }
     // Check the response from NMI
     if (nmiResponse.response_code === "100") {
       // Payment was successful
-      nmiPayment.status = "Success"
+      nmiPayment.status = "Success";
+      const info = await transporter.sendMail({
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: paymentDetails.email_name,
+        subject: "Payment Confirmation - 302 Properties",
+        html: `     
+          <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
+    
+          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+    
+          <strong>Transaction Details:</strong>
+          <ul>
+            <li><strong>Property:</strong> ${paymentDetails.property}</li>
+            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+          </ul>
+    
+          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+    
+          <p>Thank you for choosing 302 Properties.</p>
+    
+          <p>Best regards,<br>The 302 Properties Team</p>
+        `,
+      });
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
 
       await nmiPayment.save();
@@ -699,12 +734,12 @@ router.post("/update_sale/:id", async (req, res) => {
   try {
     // Extract necessary data from the request
     const { paymentDetails, planId } = req.body;
-    console.log("manu-----------------",paymentDetails)
+    console.log("manu-----------------", paymentDetails);
 
     const nmiConfig = {
       type: "sale",
       //payment: paymentDetails.paymentType,
-      customer_vault_id : paymentDetails.customer_vault_id,
+      customer_vault_id: paymentDetails.customer_vault_id,
       amount: paymentDetails.amount,
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
@@ -736,18 +771,40 @@ router.post("/update_sale/:id", async (req, res) => {
     existingRecord.cc_exp = nmiResponse.cc_exp;
     existingRecord.cc_number = nmiResponse.cc_number;
 
-    if(nmiResponse.response_code==="100"){
+    if (nmiResponse.response_code === "100") {
       existingRecord.status = "Success";
-    }
-    else{
+    } else {
       existingRecord.status = "Failure";
     }
-
     await existingRecord.save();
 
     if (nmiResponse.response_code === "100") {
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
-      
+      const info = await transporter.sendMail({
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: paymentDetails.email_name,
+        subject: "Payment Confirmation - 302 Properties",
+        html: `     
+          <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
+    
+          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+    
+          <strong>Transaction Details:</strong>
+          <ul>
+            <li><strong>Property:</strong> ${paymentDetails.property}</li>
+            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+          </ul>
+    
+          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+    
+          <p>Thank you for choosing 302 Properties.</p>
+    
+          <p>Best regards,<br>The 302 Properties Team</p>
+        `,
+      });
       return res.status(200).json({
         statusCode: 100,
         message: successMessage,
@@ -1000,7 +1057,7 @@ router.post("/update_sale/:id", async (req, res) => {
 router.post("/postnmipayments", async (req, res) => {
   try {
     const { paymentDetails } = req.body;
-   
+
     const data = await NmiPayment.create({
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
@@ -1015,7 +1072,7 @@ router.post("/postnmipayments", async (req, res) => {
       unit: paymentDetails.unit,
       tenantId: paymentDetails.tenantId,
       status: paymentDetails.status,
-      check_number : paymentDetails.check_number,
+      check_number: paymentDetails.check_number,
       card_number: paymentDetails.card_number,
       expiration_date: paymentDetails.expiration_date,
       customer_vault_id: paymentDetails.customer_vault_id,
@@ -1025,6 +1082,30 @@ router.post("/postnmipayments", async (req, res) => {
       statusCode: 200,
       data: data,
       message: "Add Payment Successfully",
+    });
+    const info = await transporter.sendMail({
+      from: '"302 Properties" <info@cloudpress.host>',
+      to: paymentDetails.email_name,
+      subject: "Payment Confirmation - 302 Properties",
+      html: `     
+        <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
+  
+        <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+  
+        <strong>Transaction Details:</strong>
+        <ul>
+          <li><strong>Property:</strong> ${paymentDetails.property}</li>
+          <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+          <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+          <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+        </ul>
+  
+        <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+  
+        <p>Thank you for choosing 302 Properties.</p>
+  
+        <p>Best regards,<br>The 302 Properties Team</p>
+      `,
     });
   } catch (error) {
     res.json({
@@ -1054,7 +1135,7 @@ router.get("/nmipayments", async (req, res) => {
 router.get("/nmipayments/tenant/:tenantId", async (req, res) => {
   const id = req.params.tenantId;
   try {
-    const nmipayment = await NmiPayment.find({"tenantId":id});
+    const nmipayment = await NmiPayment.find({ tenantId: id });
     data = nmipayment.reverse();
 
     if (nmipayment) {
@@ -1142,54 +1223,73 @@ router.post("/manual-refund/:id", async (req, res) => {
     const existingAmount = existingPayment.amount;
 
     if (refundDetails.amount <= existingAmount) {
-    const nmiPayment = await NmiPayment.create({
-      first_name: refundDetails.first_name,
-      last_name: refundDetails.last_name,
-      email_name: refundDetails.email_name,
-      paymentType: refundDetails.paymentType,
-      type2: "Refund",
-      status: "Success",
-      memo: refundDetails.memo,
-      tenantId: refundDetails.tenantId,
-      account: refundDetails.account,
-      date: refundDetails.date,
-      check_number: refundDetails.check_number,
-      amount: refundDetails.amount,
-      property: refundDetails.property,
-      unit: refundDetails.unit,
-    });
-
-    if (nmiPayment) {
-      await nmiPayment.save();
-      res.status(200).json({
-        statusCode: 200,
-        message: "Refund added successfully",
+      const nmiPayment = await NmiPayment.create({
+        first_name: refundDetails.first_name,
+        last_name: refundDetails.last_name,
+        email_name: refundDetails.email_name,
+        paymentType: refundDetails.paymentType,
+        type2: "Refund",
+        status: "Success",
+        memo: refundDetails.memo,
+        tenantId: refundDetails.tenantId,
+        account: refundDetails.account,
+        date: refundDetails.date,
+        check_number: refundDetails.check_number,
+        amount: refundDetails.amount,
+        property: refundDetails.property,
+        unit: refundDetails.unit,
       });
+
+      if (nmiPayment) {
+        await nmiPayment.save();
+        res.status(200).json({
+          statusCode: 200,
+          message: "Refund added successfully",
+        });
+        const info = await transporter.sendMail({
+          from: '"302 Properties" <info@cloudpress.host>',
+          to: refundDetails.email_name,
+          subject: "Refund Confirmation - 302 Properties",
+          html: `     
+        <p>Hello ${refundDetails.first_name} ${refundDetails.last_name},</p>
+  
+        <p>We are pleased to inform you that your refund has been processed successfully.</p>
+  
+        <strong>Transaction Details:</strong>
+        <ul>
+          <li><strong>Property:</strong> ${refundDetails.property}</li>
+          <li><strong>Refund For:</strong> ${refundDetails.account}</li>
+          <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
+          <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
+        </ul>
+  
+        <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+  
+        <p>Best regards,<br>
+        The 302 Properties Team</p>
+      `,
+        });
+      } else {
+        res.status(500).json({
+          statusCode: 500,
+          message: "Internal server error while processing refund",
+        });
+      }
     } else {
-      res.status(500).json({
-        statusCode: 500,
-        message: "Internal server error while processing refund",
+      res.status(400).json({
+        statusCode: 400,
+        message: "Insufficient balance for the refund",
       });
     }
-  } else {
-    res.status(400).json({
-      statusCode: 400,
-      message: "Insufficient balance for the refund",
-    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send(error);
   }
-} catch (error) {
-  console.error("Error:", error);
-  res.status(500).send(error);
-}
 });
 
 router.post("/refund", async (req, res) => {
   try {
     const { refundDetails } = req.body;
-    console.log("-------------",refundDetails)
-    // if (!refundDetails.transactionId || !amount || !paymentType) {
-    //   return sendResponse(res, "Missing required parameters.", 400);
-    // }
 
     const nmiConfig = {
       type: "refund",
@@ -1201,42 +1301,70 @@ router.post("/refund", async (req, res) => {
 
     const nmiResponse = await sendNmiRequest(nmiConfig, refundDetails);
 
-    // Save the payment details to MongoDB
-    const nmiPayment = await NmiPayment.create({
-      first_name: refundDetails.first_name,
-      last_name: refundDetails.last_name,
-      email_name: refundDetails.email_name,
-      paymentType: refundDetails.paymentType,
-      type2: "Refund",
-      status: "Success",
-      memo: refundDetails.memo,
-      tenantId: refundDetails.tenantId,
-      account: refundDetails.account,
-      date: refundDetails.date,
-      card_number: refundDetails.card_number,
-      amount: refundDetails.amount,
-      expiration_date: refundDetails.expiration_date,
-      cvv: refundDetails.cvv,
-      property: refundDetails.property,
-      unit: refundDetails.unit,
-      response: nmiResponse.response,
-      responsetext: nmiResponse.responsetext,
-      authcode: nmiResponse.authcode,
-      transactionid: nmiResponse.transactionid,
-      avsresponse: nmiResponse.avsresponse,
-      cvvresponse: nmiResponse.cvvresponse,
-      type: nmiResponse.type,
-      response_code: nmiResponse.response_code,
-      cc_type: nmiResponse.cc_type,
-      cc_exp: nmiResponse.cc_exp,
-      cc_number: nmiResponse.cc_number,
-    });
-
     if (nmiResponse.response_code === "100") {
       // Refund successful
+      // Save the payment details to MongoDB
+      const nmiPayment = await NmiPayment.create({
+        first_name: refundDetails.first_name,
+        last_name: refundDetails.last_name,
+        email_name: refundDetails.email_name,
+        paymentType: refundDetails.paymentType,
+        type2: "Refund",
+        status: "Success",
+        memo: refundDetails.memo,
+        tenantId: refundDetails.tenantId,
+        account: refundDetails.account,
+        date: refundDetails.date,
+        card_number: refundDetails.card_number,
+        amount: refundDetails.amount,
+        expiration_date: refundDetails.expiration_date,
+        cvv: refundDetails.cvv,
+        property: refundDetails.property,
+        unit: refundDetails.unit,
+        response: nmiResponse.response,
+        responsetext: nmiResponse.responsetext,
+        authcode: nmiResponse.authcode,
+        transactionid: nmiResponse.transactionid,
+        avsresponse: nmiResponse.avsresponse,
+        cvvresponse: nmiResponse.cvvresponse,
+        type: nmiResponse.type,
+        response_code: nmiResponse.response_code,
+        cc_type: nmiResponse.cc_type,
+        cc_exp: nmiResponse.cc_exp,
+        cc_number: nmiResponse.cc_number,
+      });
+
       const successMessage = `Refund processed successfully! Transaction ID: ${nmiResponse.transactionid}`;
       await nmiPayment.save();
+      const info = await transporter.sendMail({
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: refundDetails.email_name,
+        subject: "Refund Confirmation - 302 Properties",
+        html: `     
+        <p>Hello ${refundDetails.first_name} ${refundDetails.last_name},</p>
+  
+        <p>We are pleased to inform you that your refund has been processed successfully.</p>
+  
+        <strong>Transaction Details:</strong>
+        <ul>
+          <li><strong>Property:</strong> ${refundDetails.property}</li>
+          <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+          <li><strong>Refund For:</strong> ${refundDetails.account}</li>
+          <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
+          <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
+        </ul>
+  
+        <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+  
+        <p>Best regards,<br>
+        The 302 Properties Team</p>
+      `,
+      });
       return sendResponse(res, successMessage, 200);
+    } else if (nmiResponse.response_code === "300") {
+      // Refund amount exceeds the transaction balance
+      console.log(`Failed to process refund: ${nmiResponse.responsetext}`);
+      return sendResponse(res, nmiResponse.responsetext, 201);
     } else {
       // Refund failed
       console.log(`Failed to process refund: ${nmiResponse.responsetext}`);
@@ -1470,7 +1598,7 @@ router.post("/add-plan", async (req, res) => {
   } catch (error) {
     sendResponse(res, "Something went wrong!", 500);
   }
-}); 
+});
 
 //custom create subscription NMI API
 router.post("/custom-add-subscription", async (req, res) => {
@@ -1674,7 +1802,7 @@ router.post("/create-customer-vault", async (req, res) => {
       country,
       phone,
       email,
-      fax,
+      company,
     } = req.body;
 
     let customerData = {
@@ -1692,7 +1820,7 @@ router.post("/create-customer-vault", async (req, res) => {
       country,
       phone,
       email,
-      fax
+      company,
     };
 
     customerData = querystring.stringify(customerData);
@@ -1712,9 +1840,28 @@ router.post("/create-customer-vault", async (req, res) => {
         const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
           // Handle successful customer creation
-          sendResponse(res, parsedResponse);
-          console.log("object==========",parsedResponse) 
-        } else {
+          const info = await transporter.sendMail({
+            from: '"302 Properties" <info@cloudpress.host>',
+            to: req.body.email,
+            subject: "Cusromer Vault - 302 Properties",
+            html: `     
+            <p>Hello ${req.body.first_name} ${req.body.last_name},</p>
+            
+            <p>Thank you for sharing your card details! We are delighted to confirm that your customer vault has been successfully created.</p>
+        
+             
+                <li><strong>Customer Vault Id:</strong> ${parsedResponse.customer_vault_id}</li>
+             
+        
+                <p>If you have any questions or concerns regarding your vault, please feel free to contact our customer support.</p>
+                
+                <p>Thank you for choosing 302 Properties.</p>
+                
+                <p>Best regards,<br>The 302 Properties Team</p>
+                `,
+              });
+              sendResponse(res, parsedResponse);
+            } else {
           // Handle customer creation failure
           sendResponse(res, parsedResponse.responsetext, 403);
         }
@@ -1732,9 +1879,9 @@ router.post("/get-customer-vault", async (req, res) => {
   try {
     const { customer_vault_id } = req.body;
     let postData = {
-      "security_key": "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       customer_vault_id,
-      report_type: "customer_vault"
+      report_type: "customer_vault",
     };
 
     var config = {
@@ -1768,7 +1915,6 @@ router.post("/get-customer-vault", async (req, res) => {
       .catch(function (error) {
         sendResponse(res, error, 500);
       });
-
   } catch (error) {
     console.log(error);
     sendResponse(res, "Something went wrong!", 500);
@@ -1781,7 +1927,11 @@ router.post("/get-multiple-customer-vault", async (req, res) => {
     const { customer_vault_id } = req.body;
 
     if (!customer_vault_id || !Array.isArray(customer_vault_id)) {
-      sendResponse(res, { status: 400, error: "Invalid or missing customer_vault_ids" }, 400);
+      sendResponse(
+        res,
+        { status: 400, error: "Invalid or missing customer_vault_ids" },
+        400
+      );
       return;
     }
 
@@ -1790,7 +1940,7 @@ router.post("/get-multiple-customer-vault", async (req, res) => {
       const postData = {
         security_key: securityKey,
         customer_vault_id,
-        report_type: "customer_vault"
+        report_type: "customer_vault",
       };
 
       const config = {
@@ -1802,7 +1952,12 @@ router.post("/get-multiple-customer-vault", async (req, res) => {
         data: querystring.stringify(postData),
       };
 
-      console.log("API request for customer_vault_id", customer_vault_id, ":", config);
+      console.log(
+        "API request for customer_vault_id",
+        customer_vault_id,
+        ":",
+        config
+      );
 
       return axios(config)
         .then(async (response) => {
@@ -1810,7 +1965,12 @@ router.post("/get-multiple-customer-vault", async (req, res) => {
           return jsonResult.nm_response.customer_vault;
         })
         .catch((error) => {
-          console.error("Error fetching customer_vault_id", customer_vault_id, ":", error);
+          console.error(
+            "Error fetching customer_vault_id",
+            customer_vault_id,
+            ":",
+            error
+          );
           return null;
         });
     });
@@ -1818,12 +1978,17 @@ router.post("/get-multiple-customer-vault", async (req, res) => {
     Promise.all(promises)
       .then((customerVaultRecords) => {
         // Filter out null values (failed requests) and send the valid customer vault records
-        const validCustomerVaultRecords = customerVaultRecords.filter((record) => record !== null);
+        const validCustomerVaultRecords = customerVaultRecords.filter(
+          (record) => record !== null
+        );
 
         if (validCustomerVaultRecords.length > 0) {
-          sendResponse(res,  validCustomerVaultRecords);
+          sendResponse(res, validCustomerVaultRecords);
         } else {
-          sendResponse(res, { status: 404, error: "No valid customer vault records found" });
+          sendResponse(res, {
+            status: 404,
+            error: "No valid customer vault records found",
+          });
         }
       })
       .catch((error) => {
@@ -1844,8 +2009,8 @@ router.post("/update-customer-vault", async (req, res) => {
       customer_vault_id,
       first_name,
       last_name,
-      ccnumber,
-      ccexp,
+      // ccnumber,
+      // ccexp,
       address1,
       address2,
       city,
@@ -1862,8 +2027,8 @@ router.post("/update-customer-vault", async (req, res) => {
       customer_vault_id,
       first_name,
       last_name,
-      ccnumber,
-      ccexp,
+      // ccnumber,
+      // ccexp,
       address1,
       address2,
       city,
@@ -1908,7 +2073,7 @@ router.post("/update-customer-vault", async (req, res) => {
 //delete customer vault NMI API
 router.post("/delete-customer-vault", async (req, res) => {
   try {
-    const { security_key, customer_vault_id } = req.body;
+    const {  customer_vault_id } = req.body;
 
     let customerData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
