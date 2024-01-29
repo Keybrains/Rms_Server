@@ -128,6 +128,73 @@ router.post("/leases", async (req, res) => {
   }
 });
 
+// Check Lease (same Rental Assign or not from start_date and end_date )
+router.post("/check_lease", async (req, res) => {
+  try {
+    // Extract start_date and end_date from the request body
+    const { tenant_id, rental_id, unit_id, start_date, end_date } = req.body;
+
+    // Find existing lease in the database
+    let findPlanName = await Lease.findOne({
+      tenant_id: tenant_id,
+      rental_id: rental_id,
+      unit_id: unit_id,
+    });
+
+    if (findPlanName) {
+      // Check for date overlap with existing lease
+      const existingStartDate = moment(findPlanName.start_date);
+      const existingEndDate = moment(findPlanName.end_date);
+      const newStartDate = moment(start_date);
+      const newEndDate = moment(end_date);
+
+      if (
+        (newStartDate.isSameOrAfter(existingStartDate) &&
+          newStartDate.isBefore(existingEndDate)) ||
+        (newEndDate.isAfter(existingStartDate) &&
+          newEndDate.isSameOrBefore(existingEndDate))
+      ) {
+        // Date range overlaps with existing lease
+        return res.json({
+          statusCode: 201,
+          message:
+            "Please select another date range. Overlapping with existing lease.",
+        });
+      }
+
+      // Check if the provided date range is entirely before or after the existing lease
+      if (
+        newEndDate.isBefore(existingStartDate) ||
+        newStartDate.isAfter(existingEndDate)
+      ) {
+        // Date range is entirely before or after existing lease
+        return res.json({
+          statusCode: 200,
+          message: "Date range is available.",
+        });
+      } else {
+        // Date range overlaps with existing lease
+        return res.json({
+          statusCode: 400,
+          message:
+            "Please select another date range. Overlapping with existing lease.",
+        });
+      }
+    }
+
+    // If no existing lease, send success response
+    res.json({
+      statusCode: 200,
+      message: "Date range is available.",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.get("/leases/:admin_id", async (req, res) => {
   const admin_id = req.params.admin_id;
   try {

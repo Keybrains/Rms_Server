@@ -11,6 +11,7 @@ const registerSchema = new Schema({
   password: { type: String },
   createdAt: { type: String },
   updatedAt: { type: String },
+  subscription: { type: Object },
 });
 
 module.exports = mongoose.model("admin-register", registerSchema);
