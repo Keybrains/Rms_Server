@@ -131,21 +131,23 @@ router.post("/leases", async (req, res) => {
 router.get("/leases/:admin_id", async (req, res) => {
   const admin_id = req.params.admin_id;
   try {
-    const leases = await Lease.findOne({ admin_id: admin_id });
+    const leases = await Lease.find({ admin_id: admin_id });
 
     const data = [];
 
-    for (const lease in leases) {
-      const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
-      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
-      const unit = await Unit.findOne({ unit_id: lease.unit_id });
-      data.push({
-        tenant,
-        rental,
-        unit,
-        lease,
-      });
-    }
+    await Promise.all(
+      leases.map(async (lease) => {
+        const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+        const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+        const unit = await Unit.findOne({ unit_id: lease.unit_id });
+        data.push({
+          tenant,
+          rental,
+          unit,
+          lease,
+        });
+      })
+    );
 
     res.json({
       statusCode: 200,
