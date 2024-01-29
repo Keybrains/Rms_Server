@@ -4,6 +4,8 @@ var Lease = require("../../../modals/superadmin/Leasing");
 var Tenant = require("../../../modals/superadmin/Tenant");
 var Cosigner = require("../../../modals/superadmin/Cosigner");
 var Charge = require("../../../modals/superadmin/Charge");
+var Unit = require("../../../modals/superadmin/Unit");
+var Rentals = require("../../../modals/superadmin/Rentals");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 
@@ -123,6 +125,35 @@ router.post("/leases", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+router.get("/leases/:admin_id", async (req, res) => {
+  const admin_id = req.params.admin_id;
+  try {
+    const leases = await Lease.findOne({ admin_id: admin_id });
+
+    const data = [];
+
+    for (const lease in leases) {
+      const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+      const unit = await Unit.findOne({ unit_id: lease.unit_id });
+      data.push({
+        tenant,
+        rental,
+        unit,
+        lease,
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: data,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

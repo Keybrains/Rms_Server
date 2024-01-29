@@ -4,10 +4,9 @@ var Tenant = require("../../../modals/superadmin/Tenant");
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Unit = require("../../../modals/superadmin/Unit");
+var moment = require("moment");
 
-
-
-router.get('/tenant', async (req, res) => {
+router.get("/tenant", async (req, res) => {
   try {
     var pageSize = parseInt(req.query.pageSize) || 10;
     var pageNumber = parseInt(req.query.pageNumber) || 0;
@@ -34,21 +33,25 @@ router.get('/tenant', async (req, res) => {
       const leases = await Lease.find({ tenant_id: tenant.tenant_id });
 
       // Fetch unit data from Unit collection based on unit_id from leases
-      const unitData = await Promise.all(leases.map(async (lease) => {
-        const unit = await Unit.findOne({ unit_id: lease.unit_id });
-        return unit;
-      }));
+      const unitData = await Promise.all(
+        leases.map(async (lease) => {
+          const unit = await Unit.findOne({ unit_id: lease.unit_id });
+          return unit;
+        })
+      );
 
       // Attach client, property, and unit information to the data item
       data[i].unit_data = unitData.length > 1 ? unitData : unitData[0];
-      data[i].admin_data = await AdminRegister.findOne({ admin_id: tenant.admin_id });
+      data[i].admin_data = await AdminRegister.findOne({
+        admin_id: tenant.admin_id,
+      });
     }
 
     res.json({
       statusCode: 200,
       data: data,
       count: count,
-      message: 'Read All Tenant',
+      message: "Read All Tenant",
     });
   } catch (error) {
     res.json({
@@ -57,7 +60,6 @@ router.get('/tenant', async (req, res) => {
     });
   }
 });
-
 
 // ============== User ==================================
 
@@ -75,8 +77,93 @@ router.get("/tenants/:admin_id", async (req, res) => {
     res.json({
       statusCode: 200,
       data: tenants,
-      message: "Rental and Rental Owner Updated Successfully",
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/get_tenant/:tenant_id", async (req, res) => {
+  const tenant_id = req.params.tenant_id;
+  try {
+    const tenants = await Tenant.findOne({ tenant_id: tenant_id });
+
+    if (tenants.length === 0) {
+      return res.status(201).json({ message: "No tenants found." });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: tenants,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.post("/tenants", async (req, res) => {
+  const tenantData = req.body;
+  try {
+    const existingTenants = await Tenant.findOne({
+      admin_id: tenantData.admin_id,
+      tenant_phoneNumber: tenantData.tenant_phoneNumber,
+    });
+    if (existingTenants) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `${tenantData.tenant_phoneNumber} Phone Number Already Existing`,
+      });
+    } else {
+      const tenantTimestamp = Date.now();
+      tenantData.tenant_id = `${tenantTimestamp}`;
+      tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+      tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+      const tenant = await Tenant.create(tenantData);
+      res.json({
+        statusCode: 200,
+        data: tenant,
+        message: "Add Lease Successfully",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.delete("/tenant/:tenant_id", async (req, res) => {
+  const tenant_id = req.params.tenant_id;
+  try {
+    const existingTenant = await Lease.findOne({
+      tenant_id: tenant_id,
+    });
+
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Cannot delete tenant. The tenant is already assigned to a lease.`,
+      });
+    } else {
+      const deletedTenant = await Tenant.deleteOne({
+        tenant_id: tenant_id,
+      });
+
+      console.log(deletedTenant.deletedCount, tenant_id);
+      if (deletedTenant.deletedCount === 1) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: `Tenant deleted successfully.`,
+        });
+      } else {
+        return res.status(201).json({
+          statusCode: 201,
+          message: `Tenant not found. No action taken.`,
+        });
+      }
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
