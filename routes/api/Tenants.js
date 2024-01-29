@@ -19,34 +19,34 @@ const axios = require("axios");
 const crypto = require("crypto");
 
 // Helper function to send a request to the NMI API
-const sendNmiRequest = async (config, paymentDetails) => {
-  // Include the card number and expiration date in the request
-  config.ccnumber = paymentDetails.card_number;
-  config.ccexp = paymentDetails.expiration_date; // Assuming expiration_date is in the format MMYY
+// const sendNmiRequest = async (config, paymentDetails) => {
+//   // Include the card number and expiration date in the request
+//   config.ccnumber = paymentDetails.card_number;
+//   config.ccexp = paymentDetails.expiration_date; // Assuming expiration_date is in the format MMYY
 
-  const postData = querystring.stringify(config);
+//   const postData = querystring.stringify(config);
 
-  const nmiConfig = {
-    method: "post",
-    url: "https://secure.nmi.com/api/transact.php",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    data: postData,
-  };
+//   const nmiConfig = {
+//     method: "post",
+//     url: "https://secure.nmi.com/api/transact.php",
+//     headers: {
+//       "Content-Type": "application/x-www-form-urlencoded",
+//     },
+//     data: postData,
+//   };
 
-  try {
-    const response = await axios(nmiConfig);
-    const parsedResponse = querystring.parse(response.data);
+//   try {
+//     const response = await axios(nmiConfig);
+//     const parsedResponse = querystring.parse(response.data);
 
-    console.log("NMI API Response:", parsedResponse);
+//     console.log("NMI API Response:", parsedResponse);
 
-    return parsedResponse;
-  } catch (error) {
-    console.error("NMI API Error:", error);
-    throw error;
-  }
-};
+//     return parsedResponse;
+//   } catch (error) {
+//     console.error("NMI API Error:", error);
+//     throw error;
+//   }
+// };
 
 const nodemailer = require("nodemailer");
 const { createTransport } = require("nodemailer");
@@ -326,7 +326,7 @@ router.post("/tenant", async (req, res) => {
 
     if (entries[0].tenant_residentStatus) {
       const info = await transporter.sendMail({
-        from: '"302 Properties" <mailto:info@cloudpress.host>',
+        from: '"302 Properties" <info@cloudpress.host>',
         to: tenant_email,
         subject: "Welcome to your new resident center with 302 Properties",
         text: `
