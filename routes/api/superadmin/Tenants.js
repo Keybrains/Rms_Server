@@ -5,9 +5,7 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Unit = require("../../../modals/superadmin/Unit");
 
-
-
-router.get('/tenant', async (req, res) => {
+router.get("/tenant", async (req, res) => {
   try {
     var pageSize = parseInt(req.query.pageSize) || 10;
     var pageNumber = parseInt(req.query.pageNumber) || 0;
@@ -34,21 +32,25 @@ router.get('/tenant', async (req, res) => {
       const leases = await Lease.find({ tenant_id: tenant.tenant_id });
 
       // Fetch unit data from Unit collection based on unit_id from leases
-      const unitData = await Promise.all(leases.map(async (lease) => {
-        const unit = await Unit.findOne({ unit_id: lease.unit_id });
-        return unit;
-      }));
+      const unitData = await Promise.all(
+        leases.map(async (lease) => {
+          const unit = await Unit.findOne({ unit_id: lease.unit_id });
+          return unit;
+        })
+      );
 
       // Attach client, property, and unit information to the data item
       data[i].unit_data = unitData.length > 1 ? unitData : unitData[0];
-      data[i].admin_data = await AdminRegister.findOne({ admin_id: tenant.admin_id });
+      data[i].admin_data = await AdminRegister.findOne({
+        admin_id: tenant.admin_id,
+      });
     }
 
     res.json({
       statusCode: 200,
       data: data,
       count: count,
-      message: 'Read All Tenant',
+      message: "Read All Tenant",
     });
   } catch (error) {
     res.json({
@@ -57,7 +59,6 @@ router.get('/tenant', async (req, res) => {
     });
   }
 });
-
 
 // ============== User ==================================
 

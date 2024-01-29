@@ -103,33 +103,33 @@ router.delete("/plans", async (req, res) => {
 });
 
 router.post("/search", async (req, res) => {
-    try {
-        const searchValue = req.body.search;
+  try {
+    const searchValue = req.body.search;
 
-        const data = await Plans.find({
-            $or: [
-                { plan_name: { $regex: new RegExp(searchValue, "i") } },
-                { plan_price: !isNaN(searchValue) ? Number(searchValue) : null },
-                { plan_duration_monts: !isNaN(searchValue) ? Number(searchValue) : null },
-            ].filter(condition => condition),
-        });
+    const data = await Plans.find({
+      $or: [
+        { plan_name: { $regex: new RegExp(searchValue, "i") } },
+        { plan_price: !isNaN(searchValue) ? Number(searchValue) : null },
+        // {
+        //   plan_duration_monts: !isNaN(searchValue) ? Number(searchValue) : null,
+        // },
+      ].filter((condition) => condition),
+    });
 
-        const dataCount = data.length;
+    const dataCount = data.length;
 
-        res.json({
-            statusCode: 200,
-            data: data,
-            count: dataCount,
-            message: "Read All Advertise-Banner",
-        });
-    } catch (error) {
-        res.json({
-            statusCode: 500,
-            message: error.message,
-        });
-    }
+    res.json({
+      statusCode: 200,
+      data: data,
+      count: dataCount,
+      message: "Read All Advertise-Banner",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
 });
 
-
-  
 module.exports = router;
