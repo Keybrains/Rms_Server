@@ -3,7 +3,7 @@ var express = require("express");
 
 var router = express.Router();
 var Payment = require("../../modals/Payment");
-var Tenants = require("../../modals/Tenants");
+// var Tenants = require("../../modals/Tenants");
 var Charges = require("../../modals/Charges");
 var AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
 

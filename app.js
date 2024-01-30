@@ -16,9 +16,8 @@ var NewPropartyRouter = require("./routes/api/NewPropaty");
 // var TenantsRouter = require("./routes/api/Tenants");
 var AddStaffMember = require("./routes/api/AddStaffMember");
 var RentalOwners = require("./routes/api/RentalOwners");
-var ApplicantRouter = require("./routes/api/Applicants");
 var AgentRouter = require("./routes/api/Addagent");
-var VendorRouter = require("./routes/api/Vendor");
+// var VendorRouter = require("./routes/api/Vendor");
 var WorkorderRouter = require("./routes/api/Workorder");
 var AccountRouter = require("./routes/api/AddAccount");
 var LedgerRouter = require("./routes/api/Ledger");
@@ -45,6 +44,8 @@ var LeaseRouter = require("./routes/api/superadmin/Lease.js");
 var AccountsRouter = require("./routes/api/superadmin/Account.js");
 var TenantsRouter = require("./routes/api/superadmin/Tenants.js");
 var Plans_PurchasedRouter = require("./routes/api/superadmin/Plans_Purchased.js");
+var VendorAdmindRouter = require("./routes/api/superadmin/Vendor.js");
+var ApplicantAdmindRouter = require("./routes/api/superadmin/Applicant.js");
 
 var app = express();
 
@@ -67,10 +68,9 @@ app.use("/api/newproparty", NewPropartyRouter);
 // app.use("/api/tenant", TenantsRouter);
 app.use("/api/addstaffmember", AddStaffMember);
 app.use("/api/rentalowner", RentalOwners);
-app.use("/api/applicant", ApplicantRouter);
 app.use("/api/addagent", AgentRouter);
 app.use("/api/addaccount", AccountRouter);
-app.use("/api/vendor", VendorRouter);
+// app.use("/api/vendor", VendorRouter);
 app.use("/api/workorder", WorkorderRouter);
 app.use("/api/ledger", LedgerRouter);
 app.use("/api/notification", NotificationRouter);
@@ -97,6 +97,8 @@ app.use("/api/leases", LeaseRouter);
 app.use("/api/accounts", AccountsRouter);
 app.use("/api/tenants", TenantsRouter);
 app.use("/api/purchase", Plans_PurchasedRouter);
+app.use("/api/vendor", VendorAdmindRouter);
+app.use("/api/applicant", ApplicantAdmindRouter);
 
 app.use(function (req, res, next) {
   next(createError(404));

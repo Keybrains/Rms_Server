@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var PropertyUnit = require("../../modals/PropertyUnit");
-var Tenants = require("../../modals/Tenants")
+// var Tenants = require("../../modals/Tenants")
 
 router.post("/propertyunit", async (req, res) => {
   try {
@@ -212,75 +212,75 @@ router.put("/propertyunit/:id", async (req, res) => {
 
 
 // Teneant Name Get
-router.get("/propertyunits/:propertyId", async (req, res) => {
-  try {
-    const propertyId = req.params.propertyId;
+// router.get("/propertyunits/:propertyId", async (req, res) => {
+//   try {
+//     const propertyId = req.params.propertyId;
 
-    if (!propertyId) {
-      res.json({
-        statusCode: 400,
-        message: "Data not found",
-      });
-    }
+//     if (!propertyId) {
+//       res.json({
+//         statusCode: 400,
+//         message: "Data not found",
+//       });
+//     }
 
-    // Find PropertyUnit data
-    const propertyUnitData = await PropertyUnit.find({ propertyId });
+//     // Find PropertyUnit data
+//     const propertyUnitData = await PropertyUnit.find({ propertyId });
 
-    // Initialize an array to store the final response data
-    const responseData = [];
+//     // Initialize an array to store the final response data
+//     const responseData = [];
 
-    // Iterate through each property unit
-    for (const propertyUnit of propertyUnitData) {
-      // Find Tenant data for the current property unit
-      const tenantData = await Tenants.findOne({
-        "entries.rental_adress": propertyUnit.rental_adress,
-        "entries.rental_units": propertyUnit.rental_units,
-      });
-      console.log(tenantData, "tenantData");
-      // Extract relevant information from Tenant data
-      const tenantInfo =
-        tenantData && tenantData.tenant_firstName && tenantData.tenant_lastName
-          ? {
-            tenant_firstName: tenantData.tenant_firstName,
-            tenant_lastName: tenantData.tenant_lastName,
-            start_date: tenantData.entries[0].start_date,
-            end_date: tenantData.entries[0].end_date,
-            lease_type: tenantData.entries[0].lease_type,
-            amount: tenantData.entries[0].amount,
-            unitCreatedAt: tenantData.entries[0].createdAt,
-          }
-          : {
-            tenant_firstName: null,
-            tenant_lastName: null,
-            start_date: null,
-            end_date: null,
-            lease_type: null,
-            amount: null,
-            unitCreatedAt: null,
-          };
+//     // Iterate through each property unit
+//     for (const propertyUnit of propertyUnitData) {
+//       // Find Tenant data for the current property unit
+//       const tenantData = await Tenants.findOne({
+//         "entries.rental_adress": propertyUnit.rental_adress,
+//         "entries.rental_units": propertyUnit.rental_units,
+//       });
+//       console.log(tenantData, "tenantData");
+//       // Extract relevant information from Tenant data
+//       const tenantInfo =
+//         tenantData && tenantData.tenant_firstName && tenantData.tenant_lastName
+//           ? {
+//             tenant_firstName: tenantData.tenant_firstName,
+//             tenant_lastName: tenantData.tenant_lastName,
+//             start_date: tenantData.entries[0].start_date,
+//             end_date: tenantData.entries[0].end_date,
+//             lease_type: tenantData.entries[0].lease_type,
+//             amount: tenantData.entries[0].amount,
+//             unitCreatedAt: tenantData.entries[0].createdAt,
+//           }
+//           : {
+//             tenant_firstName: null,
+//             tenant_lastName: null,
+//             start_date: null,
+//             end_date: null,
+//             lease_type: null,
+//             amount: null,
+//             unitCreatedAt: null,
+//           };
 
-      // Add tenant information to PropertyUnit response only for the matched unit
-      const unitDataWithTenantInfo = {
-        ...propertyUnit.toObject(),
-        ...(tenantInfo ? tenantInfo : {}), // Add tenant info only if it's available
-      };
+//       // Add tenant information to PropertyUnit response only for the matched unit
+//       const unitDataWithTenantInfo = {
+//         ...propertyUnit.toObject(),
+//         ...(tenantInfo ? tenantInfo : {}), // Add tenant info only if it's available
+//       };
 
-      // Push the combined data to the response array
-      responseData.push(unitDataWithTenantInfo);
-    }
+//       // Push the combined data to the response array
+//       responseData.push(unitDataWithTenantInfo);
+//     }
 
-    res.json({
-      data: responseData,
-      statusCode: 200,
-      message: "Read All PropertyUnit",
-    });
-  } catch (error) {
-    res.json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
+//     res.json({
+//       data: responseData,
+//       statusCode: 200,
+//       message: "Read All PropertyUnit",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 
 // Delete Property-Unit
 router.delete("/propertyunit/:id", async (req, res) => {

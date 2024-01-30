@@ -3,7 +3,7 @@ var router = express.Router();
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
 const moment = require("moment");
-const { hashPassword, hashCompare } = require("../../../authentication");
+const { createVenorToken } = require("../../../authentication");
 
 // ============== Super Admin ==================================
 
@@ -143,6 +143,55 @@ router.post("/getByAdmin", async (req, res) => {
 });
 
 // ==========================  User  ==================================================================
+
+// StaffMember Login
+router.post("/login", async (req, res) => {
+  try {
+    const staff_member = await StaffMember.findOne({
+      staffmember_email: req.body.email,
+    });
+
+
+    if (!staff_member) {
+      return res.status(404).json({
+        success: false,
+        message: "staff_member does not exist",
+      });
+    }
+
+    const compare = (req.body.password, staff_member.staffmember_password);
+
+    if (!compare) {
+      return res.status(422).json({
+        success: false,
+        message: "Wrong password",
+      });
+    }
+
+    const tokens = await createVenorToken({
+      _id: staff_member._id,
+      staff_member_id: staff_member.staffmember_id,
+      admin_id: staff_member.admin_id,
+      staffmember_name: staff_member.staffmember_name,
+      staffmember_designation: staff_member.staffmember_designation,
+      staffmember_phoneNumber: staff_member.staffmember_phoneNumber,
+      staffmember_email: staff_member.staffmember_email,
+      createdAt: staff_member.createdAt,
+      updatedAt: staff_member.updatedAt,
+    });
+
+    res.json({
+      statusCode: 200,
+      vendorToken: tokens,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: error,
+    });
+  }
+});
 
 //Post new staff member for admin
 router.post("/staff_member", async (req, res) => {

@@ -43,6 +43,108 @@ var createToken = async ({
   );
   return token;
 };
+const createTenantToken = async ({
+  _id,
+  tenant_id,
+  admin_id,
+  tenant_firstName,
+  tenant_lastName,
+  tenant_phoneNumber,
+  tenant_alternativeNumber,
+  tenant_email,
+  tenant_alternativeEmail,
+  tenant_birthDate,
+  taxPayer_id,
+  comments,
+  emergency_contact,
+  createdAt,
+  updatedAt,
+}) => {
+  let token = await JWT.sign(
+    {
+      id: _id,
+      tenant_id: tenant_id,
+      admin_id: admin_id,
+      tenant_firstName: tenant_firstName,
+      tenant_lastName: tenant_lastName,
+      tenant_phoneNumber: tenant_phoneNumber,
+      tenant_alternativeNumber: tenant_alternativeNumber,
+      tenant_email: tenant_email,
+      tenant_alternativeEmail: tenant_alternativeEmail,
+      tenant_birthDate: tenant_birthDate,
+      taxPayer_id: taxPayer_id,
+      comments: comments,
+      emergency_contact: emergency_contact,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    },
+    SECRET_KEY,
+    {
+      expiresIn: "12h",
+    }
+  );
+  return token;
+};
+const createVenorToken = async ({
+  _id,
+  admin_id,
+  vendor_id,
+  vendor_name,
+  vendor_phoneNumber,
+  vendor_email,
+  createdAt,
+  updatedAt,
+}) => {
+  let token = await JWT.sign(
+    {
+      id: _id,
+      admin_id: admin_id,
+      vendor_id: vendor_id,
+      vendor_name: vendor_name,
+      vendor_phoneNumber: vendor_phoneNumber,
+      vendor_email: vendor_email,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    },
+    SECRET_KEY,
+    {
+      expiresIn: "12h",
+    }
+  );
+  return token;
+};
+const createStaffMemberToken = async ({
+  _id,
+  admin_id,
+  staffmember_id,
+  staffmember_name,
+  staffmember_designation,
+  staffmember_phoneNumber,
+  staffmember_email,
+  createdAt,
+  updatedAt,
+}) => {
+  let token = await JWT.sign(
+    {
+      id: _id,
+      admin_id: admin_id,
+      staffmember_id: staffmember_id,
+      staffmember_name: staffmember_name,
+      staffmember_designation: staffmember_designation,
+      staffmember_phoneNumber: staffmember_phoneNumber,
+      staffmember_email: staffmember_email,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    },
+    SECRET_KEY,
+    {
+      expiresIn: "12h",
+    }
+  );
+  return token;
+};
+
+
 
 const verifyToken = (req, res, next) => {
   try {
@@ -89,4 +191,7 @@ module.exports = {
   hashPassword,
   hashCompare,
   createToken,
+  createTenantToken,
+  createVenorToken,
+  createStaffMemberToken
 };

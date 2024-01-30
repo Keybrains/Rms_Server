@@ -1,9 +1,9 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get("/", function (req, res, next) {
+  res.render("index", { title: "Express" });
 });
 
 module.exports = router;
@@ -40,15 +40,13 @@ module.exports = router;
 // // Handle file upload
 // router.post('/uploadfile', upload.single('file'), function (req, res, next) {
 //   // The 'file' in `upload.single('file')` should match the name attribute of your file input in the form.
-  
+
 //   if (req.file) {
 //     console.log(`File ${req.file.originalname} uploaded successfully`);
 //     res.send('File uploaded successfully'); // Send a simple success message
 //   } else {
 //     res.status(400).send('File upload failed');
 //   }
-// });     
-
-
+// });
 
 // module.exports = router;

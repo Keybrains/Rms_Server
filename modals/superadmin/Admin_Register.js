@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const registerSchema = new Schema({
   admin_id: { type: String },
   first_name: { type: String },
-  last_name: { type: String, unique: true },
+  last_name: { type: String },
   email: { type: String },
   company_name: { type: String },
   phone_number: { type: Number },

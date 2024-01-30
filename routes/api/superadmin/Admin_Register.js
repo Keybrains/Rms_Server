@@ -51,11 +51,24 @@ var moment = require("moment");
 
 router.post("/register", async (req, res) => {
   try {
-    const user = await AdminRegister.findOne({ email: req.body.email });
+    const user = await AdminRegister.findOne({
+      email: req.body.email,
+      isAdmin_delete: false,
+    });
     if (user) {
       return res
         .status(401)
         .send({ statusCode: 401, message: "Email already in use" });
+    }
+
+    const checkCompanyName = await AdminRegister.findOne({
+      company_name: req.body.company_name,
+    });
+
+    if (checkCompanyName) {
+      return res
+        .status(402)
+        .send({ statusCode: 402, message: "CompanyName already in use" });
     }
 
     let hashConvert = await hashPassword(req.body.password, req.body.cPassword);
@@ -109,7 +122,10 @@ router.post("/register", async (req, res) => {
 //Admin Login
 router.post("/login", async (req, res) => {
   try {
-    const user = await AdminRegister.findOne({ email: req.body.email });
+    const user = await AdminRegister.findOne({
+      email: req.body.email,
+      isAdmin_delete: false,
+    });
 
     if (!user) {
       return res.json({ statusCode: 403, message: "User doesn't exist" });
@@ -208,6 +224,12 @@ router.get("/admin", async (req, res) => {
 
     var data = await AdminRegister.aggregate([
       {
+        $match: { isAdmin_delete: false },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
         $skip: pageSize * pageNumber,
       },
       {
@@ -215,10 +237,7 @@ router.get("/admin", async (req, res) => {
       },
     ]);
 
-    var count = await AdminRegister.countDocuments();
-
-    // Optionally reverse the data array
-    data.reverse();
+    var count = data.length;
 
     res.json({
       statusCode: 200,
@@ -293,4 +312,27 @@ router.get("/company/:company_name", async (req, res) => {
   }
 });
 
+router.delete("/admin", async (req, res) => {
+  try {
+    // Assuming req.body contains an array of admin IDs to update
+    const adminIdsToUpdate = req.body;
+
+    // Update the isAdmin_delete field for the specified admin IDs
+    const result = await Admin.updateMany(
+      { _id: { $in: adminIdsToUpdate } },
+      { $set: { isAdmin_delete: true } }
+    );
+
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Admins Deleted Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
 module.exports = router;

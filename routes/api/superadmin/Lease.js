@@ -6,6 +6,7 @@ var Cosigner = require("../../../modals/superadmin/Cosigner");
 var Charge = require("../../../modals/superadmin/Charge");
 var Unit = require("../../../modals/superadmin/Unit");
 var Rentals = require("../../../modals/superadmin/Rentals");
+var emailService = require("./emailService");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 
@@ -247,6 +248,65 @@ router.delete("/leases/:lease_id", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.post("/lease_mail", async (req, res) => {
+  try {
+    const data = {
+      email: req.body.email,
+    };
+    // Customize email content
+    const subject =
+      "Welcome to your new Resident Center with Keybrainstech.managebuilding.com!";
+    // const company_name = data.company_name;
+    const buttonText = "Activate account";
+    const buttonLink = `https://http://192.168.1.13:8444/api/api#/client/request/`;
+    const accountInformation = `
+    <div style="border: 1px solid #ccc; padding: 10px; margin-top: 20px;">
+      <p><strong>Account information</strong></p>
+      <p>Website: http://*********.managebuilding.com/Resident/</p>
+      <p>Username: *********@gmail.com</p>
+    </div>
+  `;
+
+    // const text = `<p><h3>company_name<h3></p><hr />Hello ${req.body.first_name} ${req.body.last_name},<p>We're inviting you to log in to our Job cloud.<p/><p>Job cloud is a self-serve online experience where you can access your account details. Log in any time to view things like recent quotes or invoices.</p>`;
+    const text = `
+      <p><h3>Keybrainstech</h3></p>
+      <hr />
+      <p>Hello Shivam Shukla</p>
+      <p>You're invited to join our Resident Center! After signing in, you can enjoy many benefits including the ability to:.</p>
+      <p>Pay rent online and set up autopay</p>
+      <p>Pay Submit maintenance requests and general inquiries</p>
+      <p>Record information about your renters insurance policy</p>
+      <p><a href="${buttonLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">${buttonText}</a></p>
+      <div ></div>
+      ${accountInformation}
+
+    `;
+
+    // const email = req.body.email;
+
+    // const client = await Clients.findOne({ email: req.body.email });
+
+    // Send welcome email using the email service
+    await emailService.sendWelcomeEmail(data.email, subject, text);
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Tenant Mail Send Successfully",
+    });
+  } catch (error) {
+    console.error("Error:", error);
+
+    // Extract relevant error details
+    const errorMessage = error.message || "Internal Server Error";
+
+    return res.status(500).json({
+      statusCode: 500,
+      message: errorMessage,
+      errorDetails: error, // Include the entire error object for more information
+    });
   }
 });
 

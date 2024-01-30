@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-var Tenants = require("../../modals/Tenants");
+// var Tenants = require("../../modals/Tenants");
 var Addagent = require("../../modals/Addagent");
 var {
   verifyToken,
@@ -52,52 +52,52 @@ router.post("/addagent", async (req, res) => {
 
 
 // delete Agent 
-router.delete("/delete_agent", async (req, res) => {
-    try {
+// router.delete("/delete_agent", async (req, res) => {
+//     try {
 
-      const propIdsToDelete = req.body;
+//       const propIdsToDelete = req.body;
   
-      // Get the names of the staff members to be deleted
-      const propertyToDelete = await Addagent.find({
-        _id: { $in: propIdsToDelete },
-      }).select("agent_name");
+//       // Get the names of the staff members to be deleted
+//       const propertyToDelete = await Addagent.find({
+//         _id: { $in: propIdsToDelete },
+//       }).select("agent_name");
   
-      const propNamesToDelete = propertyToDelete.map(
-        (staff) => staff.agent_name
-      );
+//       const propNamesToDelete = propertyToDelete.map(
+//         (staff) => staff.agent_name
+//       );
   
-      const assignedProperty = await Tenants.find({
-        "entries.leasing_agent": { $in: propNamesToDelete },
-      }); 
+//       const assignedProperty = await Tenants.find({
+//         "entries.leasing_agent": { $in: propNamesToDelete },
+//       }); 
   
-      if (assignedProperty.length > 0) {
-        return res.status(201).json({
-          statusCode: 201,
-          message:
-            "Agent are already assigned. Deletion not allowed.",
-        });
-      }
+//       if (assignedProperty.length > 0) {
+//         return res.status(201).json({
+//           statusCode: 201,
+//           message:
+//             "Agent are already assigned. Deletion not allowed.",
+//         });
+//       }
 
-      const result = await Addagent.deleteMany({
-        _id: { $in: propIdsToDelete },
-      });
+//       const result = await Addagent.deleteMany({
+//         _id: { $in: propIdsToDelete },
+//       });
 
-      // let result = await Addagent.deleteMany({
-      //   _id: { $in: req.body },
-      // });
+//       // let result = await Addagent.deleteMany({
+//       //   _id: { $in: req.body },
+//       // });
 
-      res.json({
-        statusCode: 200,
-        data: result,
-        message: "Agent Deleted Successfully",
-      });
-    } catch (err) {
-      res.json({
-        statusCode: 500,
-        message: err.message,
-      });
-    }
-  });
+//       res.json({
+//         statusCode: 200,
+//         data: result,
+//         message: "Agent Deleted Successfully",
+//       });
+//     } catch (err) {
+//       res.json({
+//         statusCode: 500,
+//         message: err.message,
+//       });
+//     }
+//   });
 
     //edit Agent
 router.put("/agent/:id", async (req, res) => {
