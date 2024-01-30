@@ -1,0 +1,107 @@
+{
+    "statusCode": 200,
+    "data": [
+        {
+            "tenant": {
+                "_id": "65b0a6611d3f9bcb45c61884",
+                "tenant_id": "1706075745904",
+                "admin_id": "1705469527218",
+                "tenant_firstName": "Alice",
+                "tenant_lastName": "Smith",
+                "tenant_phoneNumber": 1234567890,
+                "tenant_email": "alice.smith@example.com",
+                "createdAt": "2024-01-24 11:25:45",
+                "updatedAt": "2024-01-24 11:25:45",
+                "__v": 0
+            },
+            "leases": [
+                {
+                    "lease": {
+                        "_id": "65b0a6621d3f9bcb45c61886",
+                        "lease_id": "1706075746011",
+                        "admin_id": "1705469527218",
+                        "tenant_id": "1706075745904",
+                        "rental_id": "1705985060117",
+                        "unit_id": "1705985060148",
+                        "lease_type": "Residential",
+                        "start_date": "2024-02-01",
+                        "end_date": "2025-01-31",
+                        "uploaded_file": "lease_agreement.pdf",
+                        "createdAt": "2024-01-24 11:25:46",
+                        "updatedAt": "2024-01-24 11:25:46",
+                        "__v": 0
+                    },
+                    "unit": {
+                        "_id": "65af44249092ac66a1fc2edc",
+                        "unit_id": "1705985060148",
+                        "rental_unit": "12",
+                        "admin_id": "1705469527218",
+                        "rental_id": "1705985060117",
+                        "createdAt": "2024-01-23 10:14:20",
+                        "updatedAt": "2024-01-23 10:14:20"
+                    },
+                    "rental": {
+                        "_id": "65af44249092ac66a1fc2eda",
+                        "rental_id": "1705985060117",
+                        "admin_id": "1705469527218",
+                        "rentalowner_id": "1705664767496",
+                        "property_id": "1705723373860",
+                        "rental_adress": "100, police",
+                        "staffmember_id": "1705641327800",
+                        "updatedAt": "2024-01-23 10:14:20",
+                        "__v": 0
+                    }
+                },
+                {
+                    "lease": {
+                        "_id": "65b25c2406bf555775317e5a",
+                        "lease_id": "1806075746012",
+                        "admin_id": "1705469527218",
+                        "tenant_id": "1706075745904",
+                        "rental_id": "1705985060117",
+                        "unit_id": "1706160344812",
+                        "lease_type": "Residential",
+                        "start_date": "2024-02-01",
+                        "end_date": "2025-01-31",
+                        "uploaded_file": "lease_agreement.pdf",
+                        "createdAt": "2024-01-24 12:25:46",
+                        "updatedAt": "2024-01-24 12:25:46",
+                        "__v": 0
+                    },
+                    "unit": {
+                        "_id": "65b1f0d8c7270cf05a5d376c",
+                        "unit_id": "1706160344812",
+                        "rental_unit": "",
+                        "admin_id": "1705469527218",
+                        "rental_id": "1706160344769",
+                        "rental_unit_adress": "",
+                        "rental_sqft": "3000",
+                        "rental_bath": "1 Bath",
+                        "rental_bed": "2 Bed",
+                        "rental_images": [],
+                        "createdAt": "2024-01-25 10:55:44",
+                        "updatedAt": "2024-01-25 10:55:44",
+                        "__v": 0
+                    },
+                    "rental": {
+                        "_id": "65af44249092ac66a1fc2eda",
+                        "rental_id": "1705985060117",
+                        "admin_id": "1705469527218",
+                        "rentalowner_id": "1705664767496",
+                        "property_id": "1705723373860",
+                        "rental_adress": "100, police",
+                        "is_rent_on": false,
+                        "rental_city": "bavan",
+                        "rental_state": "US",
+                        "rental_country": "US",
+                        "rental_postcode": "124512",
+                        "staffmember_id": "1705641327800",
+                        "updatedAt": "2024-01-23 10:14:20",
+                        "__v": 0
+                    }
+                }
+            ]
+        }
+    ],
+    "message": "Tenant summaries with details retrieved successfully"
+}

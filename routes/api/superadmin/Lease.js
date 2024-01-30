@@ -198,26 +198,52 @@ router.post("/check_lease", async (req, res) => {
 router.get("/leases/:admin_id", async (req, res) => {
   const admin_id = req.params.admin_id;
   try {
-    const leases = await Lease.findOne({ admin_id: admin_id });
+    const leases = await Lease.find({ admin_id: admin_id });
 
     const data = [];
 
-    for (const lease in leases) {
-      const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
-      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
-      const unit = await Unit.findOne({ unit_id: lease.unit_id });
-      data.push({
-        tenant,
-        rental,
-        unit,
-        lease,
-      });
-    }
+    await Promise.all(
+      leases.map(async (lease) => {
+        const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+        const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+        const unit = await Unit.findOne({ unit_id: lease.unit_id });
+        data.push({
+          tenant,
+          rental,
+          unit,
+          lease,
+        });
+      })
+    );
 
     res.json({
       statusCode: 200,
       data: data,
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.delete("/leases/:lease_id", async (req, res) => {
+  const lease_id = req.params.lease_id;
+  try {
+    const deletedTenant = await Lease.deleteOne({
+      lease_id: lease_id,
+    });
+
+    if (deletedTenant.deletedCount === 1) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Lease deleted successfully.`,
+      });
+    } else {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Lease not found. No action taken.`,
+      });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
