@@ -226,4 +226,28 @@ router.get("/leases/:admin_id", async (req, res) => {
   }
 });
 
+router.delete("/leases/:lease_id", async (req, res) => {
+  const lease_id = req.params.lease_id;
+  try {
+    const deletedTenant = await Lease.deleteOne({
+      lease_id: lease_id,
+    });
+
+    if (deletedTenant.deletedCount === 1) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Lease deleted successfully.`,
+      });
+    } else {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Lease not found. No action taken.`,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 module.exports = router;

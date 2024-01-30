@@ -392,4 +392,39 @@ router.put("/rentals/:rental_id", async (req, res) => {
   }
 });
 
+router.delete("/rental-owners/:rentalowner_id", async (req, res) => {
+  const rentalowner_id = req.params.rentalowner_id;
+  try {
+    const existingTenant = await Rentals.findOne({
+      rentalowner_id: rentalowner_id,
+    });
+
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Cannot delete rental owner. The rental owner is already assigned to a property.`,
+      });
+    } else {
+      const deletedTenant = await RentalOwner.deleteOne({
+        rentalowner_id: rentalowner_id,
+      });
+
+      if (deletedTenant.deletedCount === 1) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: `Rental owner deleted successfully.`,
+        });
+      } else {
+        return res.status(201).json({
+          statusCode: 201,
+          message: `Rental owner not found. No action taken.`,
+        });
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 module.exports = router;
