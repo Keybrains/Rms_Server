@@ -3,9 +3,9 @@ var router = express.Router();
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var PropertyType = require("../../../modals/superadmin/PropertyType");
 const moment = require("moment");
+const Rentals = require("../../../modals/superadmin/Rentals");
 
 // ==================== Admin =====================================================
-
 
 //Post new property type for admin
 router.post("/property_type", async (req, res) => {
@@ -81,25 +81,34 @@ router.get("/property_type/:admin_id", async (req, res) => {
 
 //delete property type for admin
 router.delete("/property_type/:property_id", async (req, res) => {
+  const property_id = req.params.property_id;
   try {
-    const property_id = req.params.property_id;
-
-    let result = await PropertyType.deleteOne({
+    const existingTenant = await Rentals.findOne({
       property_id: property_id,
     });
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Cannot delete Property-Type. The Property-Type is already assigned to a lease.`,
+      });
+    } else {
+      const result = await PropertyType.deleteOne({
+        property_id: property_id,
+      });
 
-    if (result.deletedCount === 0) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "property_id not found",
+      if (result.deletedCount === 0) {
+        return res.status(404).json({
+          statusCode: 404,
+          message: "Property-Type not found",
+        });
+      }
+
+      res.json({
+        statusCode: 200,
+        data: result,
+        message: "Property-Type Deleted Successfully",
       });
     }
-
-    res.json({
-      statusCode: 200,
-      data: result,
-      message: "Property-Type Deleted Successfully",
-    });
   } catch (err) {
     res.status(500).json({
       statusCode: 500,
@@ -167,7 +176,6 @@ router.put("/property_type/:property_id", async (req, res) => {
     });
   }
 });
-
 
 //get perticuler property type for admin
 router.get("/property/type/:property_id", async (req, res) => {

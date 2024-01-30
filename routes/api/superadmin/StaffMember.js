@@ -4,6 +4,7 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
 const moment = require("moment");
 const { hashPassword, hashCompare } = require("../../../authentication");
+const Rentals = require("../../../modals/superadmin/Rentals");
 
 // ============== Super Admin ==================================
 
@@ -217,25 +218,35 @@ router.get("/staff_member/:admin_id", async (req, res) => {
 
 //delete staff member for admin
 router.delete("/staff_member/:staffmember_id", async (req, res) => {
+  const staffmember_id = req.params.staffmember_id;
   try {
-    const staffmember_id = req.params.staffmember_id;
-
-    let result = await StaffMember.deleteOne({
+    const existingTenant = await Rentals.findOne({
       staffmember_id: staffmember_id,
     });
 
-    if (result.deletedCount === 0) {
-      return res.status(404).json({
-        statusCode: 404,
-        message: "staffmember_id not found",
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Cannot delete Staff Member. The Staff Member is already assigned to a lease.`,
+      });
+    } else {
+      let result = await StaffMember.deleteOne({
+        staffmember_id: staffmember_id,
+      });
+
+      if (result.deletedCount === 0) {
+        return res.status(404).json({
+          statusCode: 404,
+          message: "Staff Member not found",
+        });
+      }
+
+      res.json({
+        statusCode: 200,
+        data: result,
+        message: "Staff Member Deleted Successfully",
       });
     }
-
-    res.json({
-      statusCode: 200,
-      data: result,
-      message: "Staff Member Deleted Successfully",
-    });
   } catch (err) {
     res.status(500).json({
       statusCode: 500,

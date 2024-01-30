@@ -80,24 +80,32 @@ router.post("/rentals", async (req, res) => {
     const rentalData = req.body.rental;
     const unitDataArray = req.body.units;
 
-    const existingOwner = await RentalOwner.findOne({
+    const existingRentalOwner = await Tenant.findOne({
       admin_id: rentalOwnerData.admin_id,
-      rentalOwner_phoneNumber: rentalOwnerData.rentalOwner_phoneNumber,
+      rentalowner_id: rentalOwnerData.rentalowner_id,
     });
-
-    if (existingOwner) {
-      rentalOwner = existingOwner;
-      return res.status(201).json({
-        statusCode: 201,
-        message: `${rentalOwnerData.rentalOwner_phoneNumber} Phone Number Already Existing`,
+    if (!existingRentalOwner) {
+      const existingOwner = await RentalOwner.findOne({
+        admin_id: rentalOwnerData.admin_id,
+        rentalOwner_phoneNumber: rentalOwnerData.rentalOwner_phoneNumber,
       });
-    } else {
-      const rentalOwnerTimestamp = Date.now();
-      rentalOwnerData.rentalowner_id = `${rentalOwnerTimestamp}`;
-      rentalOwnerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-      rentalOwnerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      rentalOwner = await RentalOwner.create(rentalOwnerData);
+      if (existingOwner) {
+        rentalOwner = existingOwner;
+        return res.status(201).json({
+          statusCode: 201,
+          message: `${rentalOwnerData.rentalOwner_phoneNumber} Phone Number Already Existing`,
+        });
+      } else {
+        const rentalOwnerTimestamp = Date.now();
+        rentalOwnerData.rentalowner_id = `${rentalOwnerTimestamp}`;
+        rentalOwnerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+        rentalOwnerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+        rentalOwner = await RentalOwner.create(rentalOwnerData);
+      }
+    } else {
+      rentalOwner = existingRentalOwner;
     }
 
     const existingRental = await Rentals.findOne({
@@ -290,6 +298,10 @@ router.put("/rentals/:rental_id", async (req, res) => {
     rentalOwner_phoneNumber,
     rentalOwner_homeNumber,
     rentalOwner_businessNumber,
+    city,
+    state,
+    country,
+    postal_code,
   } = req.body.rentalOwner;
 
   const {
@@ -317,6 +329,10 @@ router.put("/rentals/:rental_id", async (req, res) => {
       rentalOwner_phoneNumber,
       rentalOwner_homeNumber,
       rentalOwner_businessNumber,
+      city,
+      state,
+      country,
+      postal_code,
     });
 
     const existingRental = await Rentals.findOne({
