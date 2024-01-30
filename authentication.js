@@ -23,7 +23,7 @@ var createToken = async ({
   email,
   first_name,
   last_name,
-  compony_name,
+  company_name,
   phone_number,
 }) => {
   let token = await JWT.sign(
@@ -33,7 +33,7 @@ var createToken = async ({
       first_name: first_name,
       last_name: last_name,
       email: email,
-      compony_name: compony_name,
+      company_name: company_name,
       phone_number: phone_number,
     },
     SECRET_KEY,
