@@ -151,24 +151,30 @@ router.post("/login", async (req, res) => {
       staffmember_email: req.body.email,
     });
 
-
     if (!staff_member) {
-      return res.status(404).json({
-        success: false,
-        message: "staff_member does not exist",
+      return res.status(201).json({
+        statusCode: 201,
+        message: "staff-Member does not exist",
       });
     }
 
-    const compare = (req.body.password, staff_member.staffmember_password);
+    // const compare = await bcrypt.compare(req.body.password, staff_member.staffmember_password);
 
-    if (!compare) {
-      return res.status(422).json({
-        success: false,
-        message: "Wrong password",
+    // if (!compare) {
+    //   return res.status(200).json({
+    //     statusCode: 202,
+    //     message: "Invalid Saff-Member password",
+    //   });
+    // }
+
+    if (req.body.password !== staff_member.staffmember_password) {
+      return res.json({
+        statusCode: 202,
+        message: "Invalid Saff-Member password",
       });
     }
 
-    const tokens = await createVenorToken({
+    const token = await createVenorToken({
       _id: staff_member._id,
       staff_member_id: staff_member.staffmember_id,
       admin_id: staff_member.admin_id,
@@ -182,12 +188,12 @@ router.post("/login", async (req, res) => {
 
     res.json({
       statusCode: 200,
-      vendorToken: tokens,
+      staff_memberToken: token,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      success: false,
+      statusCode: 500,
       message: error,
     });
   }

@@ -4,7 +4,7 @@ var Applicant = require("../../../modals/superadmin/Applicant");
 var Leasing = require("../../../modals/superadmin/Leasing");
 var Unit = require("../../../modals/superadmin/Unit");
 var moment = require("moment");
-const Rentals = require("../../../modals/Rentals");
+const Rentals = require("../../../modals/superadmin/Rentals");
 
 router.post("/applicant", async (req, res) => {
   try {

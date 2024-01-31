@@ -128,13 +128,17 @@ router.post("/login", async (req, res) => {
     });
 
     if (!user) {
-      return res.json({ statusCode: 403, message: "User doesn't exist" });
+      return res
+        .status(201)
+        .json({ statusCode: 201, message: "User doesn't exist" });
     }
 
     const isMatch = await hashCompare(req.body.password, user.password);
 
     if (!isMatch) {
-      return res.json({ statusCode: 402, message: "Enter Valid Password" });
+      return res
+        .status(200)
+        .json({ statusCode: 202, message: "Invalid Admin Password" });
     }
 
     const currentDate = moment().startOf("day");

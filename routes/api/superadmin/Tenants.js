@@ -183,16 +183,25 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const compare = (req.body.password, tenant.tenant_password);
+    // const compare = await bcrypt.compare(req.body.password, tenant.tenant_password);
 
-    if (!compare) {
-      return res.status(202).json({
+    // if (!compare) {
+    //   return res.status(200).json({
+    //     statusCode: 202,
+    //     message: "Invalid Tenant password",
+    //   });
+    // }
+
+    if (req.body.password !== tenant.tenant_password) {
+      return res.json({
         statusCode: 202,
-        message: "Wrong password",
+        message: "Invalid Tenant password",
       });
     }
 
-    const tokens = await createTenantToken({
+    
+
+    const token = await createTenantToken({
       _id: tenant._id,
       tenant_id: tenant.tenant_id,
       admin_id: tenant.admin_id,
@@ -213,7 +222,7 @@ router.post("/login", async (req, res) => {
     res.json({
       statusCode: 200,
       // expiresAt: expiresIn,
-      tenantToken: tokens,
+      tenantToken: token,
     });
   } catch (error) {
     console.error(error);
