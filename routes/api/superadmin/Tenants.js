@@ -4,6 +4,7 @@ var Tenant = require("../../../modals/superadmin/Tenant");
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Unit = require("../../../modals/superadmin/Unit");
+const { createTenantToken } = require("../../../authentication");
 var moment = require("moment");
 
 router.get("/tenant", async (req, res) => {
@@ -25,7 +26,6 @@ router.get("/tenant", async (req, res) => {
 
     var count = await Tenant.countDocuments();
 
-    // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
       const tenant = data[i];
 
@@ -40,7 +40,6 @@ router.get("/tenant", async (req, res) => {
         })
       );
 
-      // Attach client, property, and unit information to the data item
       data[i].unit_data = unitData.length > 1 ? unitData : unitData[0];
       data[i].admin_data = await AdminRegister.findOne({
         admin_id: tenant.admin_id,
@@ -167,6 +166,70 @@ router.delete("/tenant/:tenant_id", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+//Tenant Login
+router.post("/login", async (req, res) => {
+  try {
+    const tenant = await Tenant.findOne({
+      tenant_email: req.body.email,
+    });
+
+    if (!tenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: "Tenant does not exist",
+      });
+    }
+
+    // const compare = await bcrypt.compare(req.body.password, tenant.tenant_password);
+
+    // if (!compare) {
+    //   return res.status(200).json({
+    //     statusCode: 202,
+    //     message: "Invalid Tenant password",
+    //   });
+    // }
+
+    if (req.body.password !== tenant.tenant_password) {
+      return res.json({
+        statusCode: 202,
+        message: "Invalid Tenant password",
+      });
+    }
+
+    
+
+    const token = await createTenantToken({
+      _id: tenant._id,
+      tenant_id: tenant.tenant_id,
+      admin_id: tenant.admin_id,
+      tenant_firstName: tenant.tenant_firstName,
+      tenant_lastName: tenant.tenant_lastName,
+      tenant_phoneNumber: tenant.tenant_phoneNumber,
+      tenant_alternativeNumber: tenant.tenant_alternativeNumber,
+      tenant_email: tenant.tenant_email,
+      tenant_alternativeEmail: tenant.tenant_alternativeEmail,
+      tenant_birthDate: tenant.tenant_birthDate,
+      taxPayer_id: tenant.taxPayer_id,
+      comments: tenant.comments,
+      emergency_contact: tenant.emergency_contact,
+      createdAt: tenant.createdAt,
+      updatedAt: tenant.updatedAt,
+    });
+
+    res.json({
+      statusCode: 200,
+      // expiresAt: expiresIn,
+      tenantToken: token,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: error,
+    });
   }
 });
 
