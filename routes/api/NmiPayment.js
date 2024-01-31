@@ -1083,6 +1083,7 @@ router.post("/postnmipayments", async (req, res) => {
       data: data,
       message: "Add Payment Successfully",
     });
+    if (paymentDetails.paymentType !== "Credit Card") {
     const info = await transporter.sendMail({
       from: '"302 Properties" <info@cloudpress.host>',
       to: paymentDetails.email_name,
@@ -1107,6 +1108,7 @@ router.post("/postnmipayments", async (req, res) => {
         <p>Best regards,<br>The 302 Properties Team</p>
       `,
     });
+    }
   } catch (error) {
     res.json({
       statusCode: 500,
