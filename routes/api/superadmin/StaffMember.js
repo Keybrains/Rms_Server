@@ -3,7 +3,7 @@ var router = express.Router();
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
 const moment = require("moment");
-const { createVenorToken } = require("../../../authentication");
+const { createStaffMemberToken } = require("../../../authentication");
 
 // ============== Super Admin ==================================
 
@@ -174,7 +174,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const token = await createVenorToken({
+    const token = await createStaffMemberToken({
       _id: staff_member._id,
       staff_member_id: staff_member.staffmember_id,
       admin_id: staff_member.admin_id,

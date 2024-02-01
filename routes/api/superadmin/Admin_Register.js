@@ -170,7 +170,7 @@ router.post("/login", async (req, res) => {
     } else if (user.trial.status === "inactive") {
       if (user.subscription.status === "inactive") {
         response = {
-          statusCode: 201,
+          statusCode: 203,
           message:
             "Your plan purchase has expired. Please purchase a new plan.",
         };
@@ -202,7 +202,7 @@ router.post("/login", async (req, res) => {
           };
         } else {
           response = {
-            statusCode: 201,
+            statusCode: 203,
             message:
               "Your subscription has expired. Please purchase a new plan.",
           };

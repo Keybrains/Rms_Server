@@ -54,6 +54,24 @@ router.post("/leases", async (req, res) => {
         leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
         lease = await Lease.create(leaseData);
+        console.log(lease, "===================");
+
+        const getRentalsData = await Rentals.findOne({
+          rental_id: lease.rental_id,
+        });
+
+        if (!getRentalsData) {
+          // Handle case when Rentals data is not found
+          return res.status(200).json({
+            statusCode: 202,
+            message: "Rentals data not found for the provided rental_id",
+          });
+        }
+
+        await Rentals.updateOne(
+          { rental_id: lease.rental_id },
+          { $set: { is_rent_on: true } }
+        );
 
         const cosignerTimestamp = Date.now();
         cosignerData.cosigner_id = `${cosignerTimestamp}`;
@@ -83,6 +101,24 @@ router.post("/leases", async (req, res) => {
       leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
       lease = await Lease.create(leaseData);
+      console.log(lease, "-------------");
+
+      const getRentalsData = await Rentals.findOne({
+        rental_id: lease.rental_id,
+      });
+
+      if (!getRentalsData) {
+        // Handle case when Rentals data is not found
+        return res.status(200).json({
+          statusCode: 202,
+          message: "Rentals data not found for the provided rental_id",
+        });
+      }
+
+      await Rentals.updateOne(
+        { rental_id: lease.rental_id },
+        { $set: { is_rent_on: true } }
+      );
 
       const cosignerTimestamp = Date.now();
       cosignerData.cosigner_id = `${cosignerTimestamp}`;
@@ -307,6 +343,31 @@ router.post("/lease_mail", async (req, res) => {
       message: errorMessage,
       errorDetails: error, // Include the entire error object for more information
     });
+  }
+});
+
+router.get("/get_lease/:lease_id", async (req, res) => {
+  const lease_id = req.params.lease_id;
+  try {
+    const leases = await Lease.findOne({ lease_id: lease_id });
+    const tenant = await Tenant.findOne({ tenant_id: leases.tenant_id });
+    const rental = await Rentals.findOne({ rental_id: leases.rental_id });
+    const unit = await Unit.findOne({ unit_id: leases.unit_id });
+    const charge = await Charge.find({ lease_id: leases.lease_id });
+
+    res.json({
+      statusCode: 200,
+      data: {
+        tenant,
+        rental,
+        unit,
+        leases,
+        charge
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
