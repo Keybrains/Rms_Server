@@ -54,7 +54,6 @@ router.post("/leases", async (req, res) => {
         leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
         lease = await Lease.create(leaseData);
-        console.log(lease, "===================");
 
         const getRentalsData = await Rentals.findOne({
           rental_id: lease.rental_id,
@@ -73,13 +72,15 @@ router.post("/leases", async (req, res) => {
           { $set: { is_rent_on: true } }
         );
 
-        const cosignerTimestamp = Date.now();
-        cosignerData.cosigner_id = `${cosignerTimestamp}`;
-        cosignerData.tenant_id = tenant.tenant_id;
-        cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-        cosigner = await Cosigner.create(cosignerData);
+        if (cosignerData.cosigner_phoneNumber) {
+          const cosignerTimestamp = Date.now();
+          cosignerData.cosigner_id = `${cosignerTimestamp}`;
+          cosignerData.tenant_id = tenant.tenant_id;
+          cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+          cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+  
+          cosigner = await Cosigner.create(cosignerData);
+        }
         for (const chargesData of chargeData) {
           const chargeTimestamp = Date.now();
           chargesData.charge_id = `${chargeTimestamp}`;
@@ -101,7 +102,6 @@ router.post("/leases", async (req, res) => {
       leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
       lease = await Lease.create(leaseData);
-      console.log(lease, "-------------");
 
       const getRentalsData = await Rentals.findOne({
         rental_id: lease.rental_id,
@@ -120,13 +120,15 @@ router.post("/leases", async (req, res) => {
         { $set: { is_rent_on: true } }
       );
 
-      const cosignerTimestamp = Date.now();
-      cosignerData.cosigner_id = `${cosignerTimestamp}`;
-      cosignerData.tenant_id = tenant.tenant_id;
-      cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-      cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+      if (cosignerData.cosigner_phoneNumber) {
+        const cosignerTimestamp = Date.now();
+        cosignerData.cosigner_id = `${cosignerTimestamp}`;
+        cosignerData.tenant_id = tenant.tenant_id;
+        cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+        cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      cosigner = await Cosigner.create(cosignerData);
+        cosigner = await Cosigner.create(cosignerData);
+      }
 
       for (const chargesData of chargeData) {
         const chargeTimestamp = Date.now();
