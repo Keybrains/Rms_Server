@@ -403,6 +403,7 @@ router.post("/sale", async (req, res) => {
       type: "sale",
       //payment: paymentDetails.paymentType,
       customer_vault_id: paymentDetails.customer_vault_id,
+      billing_id: paymentDetails.billing_id,
       address1: paymentDetails.property,
       amount: paymentDetails.amount,
       first_name: paymentDetails.first_name,
@@ -424,12 +425,13 @@ router.post("/sale", async (req, res) => {
       memo: paymentDetails.memo,
       account: paymentDetails.account,
       date: paymentDetails.date,
-      card_number: paymentDetails.card_number,
+      //card_number: paymentDetails.card_number,
       amount: paymentDetails.amount,
-      expiration_date: paymentDetails.expiration_date,
-      cvv: paymentDetails.cvv,
+      //expiration_date: paymentDetails.expiration_date,
+      //cvv: paymentDetails.cvv,
       tenantId: paymentDetails.tenantId,
       customer_vault_id: paymentDetails.customer_vault_id,
+      billing_id: paymentDetails.billing_id,
       property: paymentDetails.property,
       unit: paymentDetails.unit,
       response: nmiResponse.response,
@@ -740,6 +742,7 @@ router.post("/update_sale/:id", async (req, res) => {
       type: "sale",
       //payment: paymentDetails.paymentType,
       customer_vault_id: paymentDetails.customer_vault_id,
+      billing_id: paymentDetails.billing_id,
       amount: paymentDetails.amount,
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
@@ -1076,6 +1079,7 @@ router.post("/postnmipayments", async (req, res) => {
       card_number: paymentDetails.card_number,
       expiration_date: paymentDetails.expiration_date,
       customer_vault_id: paymentDetails.customer_vault_id,
+      billing_id: paymentDetails.billing_id,
       cvv: paymentDetails.cvv,
     });
     res.json({
@@ -1321,6 +1325,8 @@ router.post("/refund", async (req, res) => {
         amount: refundDetails.amount,
         expiration_date: refundDetails.expiration_date,
         cvv: refundDetails.cvv,
+        customer_vault_id: refundDetails.customer_vault_id,
+        billing_id: refundDetails.billing_id,
         property: refundDetails.property,
         unit: refundDetails.unit,
         response: nmiResponse.response,
@@ -1805,11 +1811,13 @@ router.post("/create-customer-vault", async (req, res) => {
       phone,
       email,
       company,
+      billing_id
     } = req.body;
 
     let customerData = {
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
       customer_vault: "add_customer",
+      billing_id,
       first_name,
       last_name,
       ccnumber,
@@ -2131,6 +2139,7 @@ router.post("/create-customer-billing", async (req, res) => {
       country,
       phone,
       email,
+      company,
       customer_vault_id,
       billing_id,
     } = req.body;
@@ -2152,6 +2161,7 @@ router.post("/create-customer-billing", async (req, res) => {
       country,
       phone,
       email,
+      company,
     };
 
     customerData = querystring.stringify(customerData);
@@ -2169,6 +2179,7 @@ router.post("/create-customer-billing", async (req, res) => {
     axios(config)
       .then(async (response) => {
         const parsedResponse = querystring.parse(response.data);
+        console.log("pppppppppppppp",parsedResponse)
         if (parsedResponse.response_code == 100) {
           // Handle successful customer creation
           sendResponse(res, "Customer vault billing created successfully.");
@@ -2182,6 +2193,63 @@ router.post("/create-customer-billing", async (req, res) => {
       });
   } catch (error) {
     sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+//get multiple billing records from customer vault NMI API
+router.post("/get-billing-customer-vault", async (req, res) => {
+  try {
+    const { customer_vault_id } = req.body;
+
+    if (!customer_vault_id) {
+      sendResponse(
+        res,
+        { status: 400, error: "Invalid or missing customer_vault_id" },
+        400
+      );
+      return;
+    }
+
+    const securityKey = "b6F87GPCBSYujtQFW26583EM8H34vM5r";
+
+    const postData = {
+      security_key: securityKey,
+      customer_vault_id,
+      report_type: "customer_vault",
+      ver : 2
+    };
+
+    const config = {
+      method: "post",
+      url: "https://hms.transactiongateway.com/api/query.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: querystring.stringify(postData),
+    };
+
+    console.log(
+      "API request for customer_vault_id",
+      customer_vault_id,
+      ":",
+      config
+    );
+
+    const response = await axios(config);
+
+    const jsonResult = convertToJson(response.data);
+
+    if (jsonResult.nm_response.customer_vault) {
+      sendResponse(res, jsonResult.nm_response.customer_vault);
+    } else {
+      sendResponse(res, {
+        status: 404,
+        error: "No valid customer vault record found",
+      });
+    }
+  } catch (error) {
+    console.error("Error processing customer vault record:", error);
+    sendResponse(res, { status: 500, error: "Internal server error" }, 500);
   }
 });
 
