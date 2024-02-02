@@ -13,6 +13,7 @@ const rentalsSchema = new Schema({
   rental_state: { type: String },
   rental_country: { type: String },
   rental_postcode: { type: String },
+  rental_image: { type: String },
   staffmember_id: { type: String },
   createdAt: { type: String },
   updatedAt: { type: String },

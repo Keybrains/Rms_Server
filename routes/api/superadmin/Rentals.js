@@ -5,6 +5,8 @@ var Unit = require("../../../modals/superadmin/Unit");
 var Rentals = require("../../../modals/superadmin/Rentals");
 var PropertyType = require("../../../modals/superadmin/PropertyType");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
+var Leasing = require("../../../modals/superadmin/Leasing");
+const Tenants = require("../../../modals/superadmin/Tenant");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 
@@ -80,8 +82,7 @@ router.post("/rentals", async (req, res) => {
     const rentalData = req.body.rental;
     const unitDataArray = req.body.units;
 
-    const existingRentalOwner = await Tenant.findOne({
-      admin_id: rentalOwnerData.admin_id,
+    const existingRentalOwner = await RentalOwner.findOne({
       rentalowner_id: rentalOwnerData.rentalowner_id,
     });
     if (!existingRentalOwner) {
@@ -246,6 +247,7 @@ router.get("/rental_summary/:rental_id", async (req, res) => {
 
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
+      const rental_id = data[i].rental_id;
       const rentalOwner = data[i].rentalowner_id;
       const propertyType = data[i].property_id;
       const staffmember = data[i].staffmember_id;
@@ -262,6 +264,29 @@ router.get("/rental_summary/:rental_id", async (req, res) => {
       const staffmember_data = await StaffMember.findOne({
         staffmember_id: staffmember,
       });
+      const lease_data = await Leasing.find({
+        rental_id: rental_id,
+      });
+
+      var extractedLeaseData = [];
+      for (let j = 0; j < lease_data.length; j++) {
+        const tenant_data = await Tenants.findOne({
+          tenant_id: lease_data[j].tenant_id,
+        });
+
+        extractedLeaseData.push({
+          tenant_data,
+          lease_data: lease_data[j],
+        });
+      }
+      data[i].lease_tenant_data = extractedLeaseData;
+
+      // const extractedLeaseData = lease_data.map((item) => ({
+      //   tenant_id: item.tenant_id,
+      //   rental_id: item.rental_id,
+      //   start_date: item.start_date,
+      //   end_date: item.end_date,
+      // }));
 
       // Attach client and property information to the data item
       data[i].rental_owner_data = rental_owner_data;

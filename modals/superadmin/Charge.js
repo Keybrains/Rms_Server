@@ -11,8 +11,11 @@ const chargeSchema = new Schema({
   charge_type: { type: String },
   account: { type: String },
   amount: { type: Number },
+  date: { type: String },
+  rent_cycle: { type: String },
   is_paid: { type: Boolean, default: false },
   is_lateFee: { type: Boolean, default: false },
+  is_repeatable: { type: Boolean },
   uploaded_file: { type: String },
 
   createdAt: { type: String },

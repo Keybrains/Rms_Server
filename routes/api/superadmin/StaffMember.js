@@ -176,7 +176,7 @@ router.post("/login", async (req, res) => {
 
     const token = await createStaffMemberToken({
       _id: staff_member._id,
-      staff_member_id: staff_member.staffmember_id,
+      staffmember_id: staff_member.staffmember_id,
       admin_id: staff_member.admin_id,
       staffmember_name: staff_member.staffmember_name,
       staffmember_designation: staff_member.staffmember_designation,
@@ -397,6 +397,32 @@ router.get("/staff/member/:staffmember_id", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+
+
+// ======================================== For Staff-Member Profile==========================================================================
+
+router.get("/staffmember_profile/:staffmember_id", async (req, res) => {
+  const staffmember_id = req.params.staffmember_id;
+  console.log(staffmember_id, "staffmember_id")
+  try {
+    const stamember_data = await StaffMember.findOne({ staffmember_id: staffmember_id });
+
+    if (staffmember_id.length === 0) {
+      return res
+        .status(201)
+        .json({ message: "No StaffMember found for the given staffmember_id" });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: stamember_data,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

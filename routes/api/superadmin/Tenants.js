@@ -6,6 +6,9 @@ var Lease = require("../../../modals/superadmin/Leasing");
 var Rentals = require("../../../modals/superadmin/Rentals");
 var Unit = require("../../../modals/superadmin/Unit");
 var Rentals = require("../../../modals/superadmin/Rentals");
+var RentalOwner = require("../../../modals/superadmin/RentalOwner");
+var StaffMember = require("../../../modals/superadmin/StaffMember");
+var PropertyType = require("../../../modals/superadmin/PropertyType");
 const { createTenantToken } = require("../../../authentication");
 var moment = require("moment");
 
@@ -302,6 +305,106 @@ router.get("/tenant_profile/:tenant_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/tenant_property/:tenant_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+
+    const tenantData = await Tenant.findOne({ tenant_id: tenant_id });
+
+    if (!tenantData) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Tenant not found",
+      });
+    }
+
+    const data = [];
+    const leaseData = await Lease.find({ tenant_id: tenant_id });
+
+    for (let i = 0; i < leaseData.length; i++) {
+      const rental_id = leaseData[i].rental_id;
+
+      const rentalData = await Rentals.findOne({ rental_id: rental_id });
+
+      data.push({
+        lease_id: leaseData[i].lease_id,
+        start_date: leaseData[i].start_date,
+        end_date: leaseData[i].end_date,
+        rental_id: rentalData.rental_id,
+        rental_adress: rentalData.rental_adress,
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/tenant_summary/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
+
+    var data = await Lease.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    //   // Fetch client and property information for each item in data
+    for (let i = 0; i < data.length; i++) {
+      const rental_id = data[i].rental_id;
+      const unit_id = data[i].unit_id;
+
+      // Fetch property information
+      // const lease_data = await Leasing.findOne({ tenant_id: tenant_id });
+      const rental_data = await Rentals.findOne({
+        rental_id: rental_id,
+      });
+      const staffmember_data = await StaffMember.findOne({
+        staffmember_id: rental_data.staffmember_id,
+      });
+      const rentalowner_data = await RentalOwner.findOne({
+        rentalowner_id: rental_data.rentalowner_id,
+      });
+      const unit_data = await Unit.findOne({
+        unit_id: unit_id,
+      });
+      const property_type_data = await PropertyType.findOne({
+        property_id: rental_data.property_id,
+      });
+
+      // Attach client and property information to the data item
+      data[i].rental_data = rental_data;
+      data[i].staffmember_data = staffmember_data;
+      data[i].rentalowner_data = rentalowner_data;
+      data[i].unit_data = unit_data;
+      data[i].property_type_data = property_type_data;
+    }
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
       statusCode: 500,
       message: error.message,
     });

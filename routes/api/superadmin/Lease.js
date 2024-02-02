@@ -55,13 +55,30 @@ router.post("/leases", async (req, res) => {
 
         lease = await Lease.create(leaseData);
 
+        const getRentalsData = await Rentals.findOne({
+          rental_id: lease.rental_id,
+        });
+
+        if (!getRentalsData) {
+          // Handle case when Rentals data is not found
+          return res.status(200).json({
+            statusCode: 202,
+            message: "Rentals data not found for the provided rental_id",
+          });
+        }
+
+        await Rentals.updateOne(
+          { rental_id: lease.rental_id },
+          { $set: { is_rent_on: true } }
+        );
+
         if (cosignerData.cosigner_phoneNumber) {
           const cosignerTimestamp = Date.now();
           cosignerData.cosigner_id = `${cosignerTimestamp}`;
           cosignerData.tenant_id = tenant.tenant_id;
           cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
           cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
+  
           cosigner = await Cosigner.create(cosignerData);
         }
         for (const chargesData of chargeData) {
@@ -85,6 +102,23 @@ router.post("/leases", async (req, res) => {
       leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
       lease = await Lease.create(leaseData);
+
+      const getRentalsData = await Rentals.findOne({
+        rental_id: lease.rental_id,
+      });
+
+      if (!getRentalsData) {
+        // Handle case when Rentals data is not found
+        return res.status(200).json({
+          statusCode: 202,
+          message: "Rentals data not found for the provided rental_id",
+        });
+      }
+
+      await Rentals.updateOne(
+        { rental_id: lease.rental_id },
+        { $set: { is_rent_on: true } }
+      );
 
       if (cosignerData.cosigner_phoneNumber) {
         const cosignerTimestamp = Date.now();
