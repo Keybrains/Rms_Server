@@ -3,11 +3,13 @@ const Schema = mongoose.Schema;
 
 const carddetailSchema = new Schema({
   response_code: { type: String },
-  customer_vault_id: { type: Number },
+  billing_id: { type: Number },
+
 });
 
 const creditCardSchema = new Schema({
   tenant_id: { type: String },
+  customer_vault_id: { type: Number },
   card_detail: [carddetailSchema],
 });
 

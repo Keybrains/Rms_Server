@@ -20,6 +20,9 @@ const nmiPaymentSchema = new Schema({
   customer_vault_id: {
     type: Number,
   },
+  billing_id: {
+    type: Number,
+  },
   check_number: {
     type: String,
   },
