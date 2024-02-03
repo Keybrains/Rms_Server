@@ -56,8 +56,6 @@ router.post("/newproparty", async (req, res) => {
 //   }
 // });
 
-
-
 //find proparty type
 router.get("/find_propartytype", async (req, res) => {
   try {
@@ -74,7 +72,6 @@ router.get("/find_propartytype", async (req, res) => {
     });
   }
 });
-
 
   // get proparty
 router.get("/newproparty", async (req, res) => {
