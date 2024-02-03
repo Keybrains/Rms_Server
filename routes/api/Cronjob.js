@@ -3,6 +3,7 @@ var router = express.Router();
 var Tenants = require("../../modals/Tenants");
 var CronjobLog = require("../../modals/CronjobLog");
 var Rentals = require("../../modals/Rentals");
+var LateFee = require("../../modals/Latefee");
 var {
   verifyToken,
   hashPassword,
@@ -99,12 +100,19 @@ cron.schedule("34 09 * * *", async () => {
 });
 
 //cron job for the late fee for unpaid rent charge
-cron.schedule("25 16 * * *", async () => {
+cron.schedule("10 19 * * *", async () => {
   const cronjobs = await Cronjobs.find();
+  const lateFee = await LateFee.findOne({ admin: "302property" });
   const isCronjobRunning = cronjobs[0].isCronjobRunning;
+
+  if (!lateFee) {
+    console.error("LateFee data not found.");
+    return;
+  }
+
+  const lateFeeDuration = lateFee.duration;
   try {
     //const current = new Date();
-
     if (isCronjobRunning === false) {
       await Cronjobs.updateOne(
         { _id: cronjobs[0]._id },
@@ -136,7 +144,7 @@ cron.schedule("25 16 * * *", async () => {
                     console.log("chargeDate", chargeDate);
                     console.log("differenceInTime", differenceInTime);
                     console.log("differenceInDays", differenceInDays);
-                    if (differenceInDays > 5) {
+                    if (differenceInDays > lateFeeDuration) {
                       console.log("The late fee will be charged.");
                       const unitToUpdate = fetchedchargespayaments.find(
                         (payment) => {
@@ -191,7 +199,7 @@ cron.schedule("25 16 * * *", async () => {
                           tenant_id: charge.tenant_id,
                           memo: "Late fee for Rent",
                           date: currentDate,
-                          rent_cycle: "Monthly", // Change this accordingly
+                          rent_cycle: "Monthly", 
                         });
                         console.log("Late fee added to the payment details.");
                         // Update the specific charge's islatefee to true in the fetched data
