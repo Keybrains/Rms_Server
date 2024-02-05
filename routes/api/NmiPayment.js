@@ -406,6 +406,7 @@ router.post("/sale", async (req, res) => {
       billing_id: paymentDetails.billing_id,
       address1: paymentDetails.property,
       amount: paymentDetails.amount,
+      surcharge: paymentDetails.surcharge,
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
       email: paymentDetails.email_name,
@@ -427,6 +428,7 @@ router.post("/sale", async (req, res) => {
       date: paymentDetails.date,
       //card_number: paymentDetails.card_number,
       amount: paymentDetails.amount,
+      surcharge: paymentDetails.surcharge,
       //expiration_date: paymentDetails.expiration_date,
       //cvv: paymentDetails.cvv,
       tenantId: paymentDetails.tenantId,
@@ -446,6 +448,7 @@ router.post("/sale", async (req, res) => {
       cc_exp: nmiResponse.cc_exp,
       cc_number: nmiResponse.cc_number,
     });
+
     if (nmiResponse.response_code === "100") {
     } else {
       nmiPayment.status = "Failure";
@@ -744,6 +747,7 @@ router.post("/update_sale/:id", async (req, res) => {
       customer_vault_id: paymentDetails.customer_vault_id,
       billing_id: paymentDetails.billing_id,
       amount: paymentDetails.amount,
+      surcharge: paymentDetails.surcharge,
       first_name: paymentDetails.first_name,
       last_name: paymentDetails.last_name,
       email: paymentDetails.email_name,
@@ -1071,6 +1075,7 @@ router.post("/postnmipayments", async (req, res) => {
       date: paymentDetails.date,
       type2: paymentDetails.type2,
       amount: paymentDetails.amount,
+      surcharge: paymentDetails.surcharge,
       property: paymentDetails.property,
       unit: paymentDetails.unit,
       tenantId: paymentDetails.tenantId,
