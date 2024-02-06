@@ -10,23 +10,33 @@ const StaffMember = require("../../../modals/superadmin/StaffMember");
 
 router.post("/work-order", async (req, res) => {
   try {
+    var data = {};
+
+    const workOrder = req.body.workOrder;
+
     const timestamp = Date.now();
     const workId = `${timestamp}`;
-    req.body.workOrder["workOrder_id"] = workId;
-    req.body.workOrder["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    var workOrder = await WorkOrder.create(req.body.workOrder);
+    workOrder["workOrder_id"] = workId;
+    workOrder["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
 
-    const partId = `${timestamp}`;
-    req.body.parts["parts_id"] = partId;
-    req.body.parts["workOrder_id"] = workOrder.workOrder_id;
-    req.body.parts["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    req.body.parts["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    var parts = await Parts.create(req.body.parts);
+    var createdWorkOrder = await WorkOrder.create(workOrder);
+    data.workOrder = createdWorkOrder;
+    const parts = req.body.parts;
+    data.parts = [];
+    for (const part of parts) {
+      const partId = `${timestamp}`;
+      part["parts_id"] = partId;
+      part["workOrder_id"] = data.workOrder.workOrder_id;
+      part["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+      part["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+      var createdParts = await Parts.create(part);
+      data.parts.push(createdParts);
+    }
 
     res.json({
       statusCode: 200,
-      data: { workOrder, parts },
+      data: data,
       message: "Add Umit Successfully",
     });
   } catch (error) {

@@ -3,47 +3,51 @@ var router = express.Router();
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
 const moment = require("moment");
-const { createStaffMemberToken } = require("../../../authentication");
+const {
+  createStaffMemberToken,
+  hashPassword,
+  hashCompare,
+} = require("../../../authentication");
+const Rentals = require("../../../modals/superadmin/Rentals");
+const Unit = require("../../../modals/superadmin/Unit");
+const Leasing = require("../../../modals/superadmin/Leasing");
+const RentalOwner = require("../../../modals/superadmin/RentalOwner");
+const PropertyType = require("../../../modals/superadmin/PropertyType");
 
 // ============== Super Admin ==================================
 
-router.get("/staffmember", async (req, res) => {
+//get all Staff-Member for Super-Admin
+router.get("/staffmember/:admin_id", async (req, res) => {
   try {
-    var pageSize = parseInt(req.query.pageSize) || 10;
-    var pageNumber = parseInt(req.query.pageNumber) || 0;
+    const admin_id = req.params.admin_id;
 
     var data = await StaffMember.aggregate([
       {
-        $sort: { createdAt: -1 },
+        $match: { admin_id: admin_id }, // Filter by user_id
       },
       {
-        $skip: pageSize * pageNumber,
-      },
-      {
-        $limit: pageSize,
+        $sort: { createdAt: -1 }, // Filter by user_id
       },
     ]);
 
-    var count = await StaffMember.countDocuments();
-
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
-      const adminData = data[i].admin_id;
+      const admin_id = data[i].admin_id;
 
-      // Fetch client information
-      const admin_data = await AdminRegister.findOne({
-        admin_id: adminData,
-      });
+      // Fetch property information
+      const admin = await AdminRegister.findOne({ admin_id: admin_id });
 
       // Attach client and property information to the data item
-      data[i].admin_data = admin_data;
+      data[i].admin = admin;
     }
+
+    const count = data.length;
 
     res.json({
       statusCode: 200,
       data: data,
       count: count,
-      message: "Read All Staff-Members",
+      message: "Read All Request",
     });
   } catch (error) {
     res.json({
@@ -158,17 +162,13 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // const compare = await bcrypt.compare(req.body.password, staff_member.staffmember_password);
+    const compare = await hashCompare(
+      req.body.password,
+      staff_member.staffmember_password
+    );
 
-    // if (!compare) {
-    //   return res.status(200).json({
-    //     statusCode: 202,
-    //     message: "Invalid Saff-Member password",
-    //   });
-    // }
-
-    if (req.body.password !== staff_member.staffmember_password) {
-      return res.json({
+    if (!compare) {
+      return res.status(200).json({
         statusCode: 202,
         message: "Invalid Saff-Member password",
       });
@@ -212,6 +212,10 @@ router.post("/staff_member", async (req, res) => {
       req.body["staffmember_id"] = uniqueId;
       req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
       req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+
+      let hashConvert = await hashPassword(req.body.staffmember_password);
+      req.body.staffmember_password = hashConvert;
+
       var data = await StaffMember.create(req.body);
       res.json({
         statusCode: 200,
@@ -400,15 +404,15 @@ router.get("/staff/member/:staffmember_id", async (req, res) => {
   }
 });
 
-
-
 // ======================================== For Staff-Member Profile==========================================================================
 
 router.get("/staffmember_profile/:staffmember_id", async (req, res) => {
   const staffmember_id = req.params.staffmember_id;
-  console.log(staffmember_id, "staffmember_id")
+  console.log(staffmember_id, "staffmember_id");
   try {
-    const stamember_data = await StaffMember.findOne({ staffmember_id: staffmember_id });
+    const stamember_data = await StaffMember.findOne({
+      staffmember_id: staffmember_id,
+    });
 
     if (staffmember_id.length === 0) {
       return res
@@ -423,6 +427,109 @@ router.get("/staffmember_profile/:staffmember_id", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/staffmember_property/:staffmember_id", async (req, res) => {
+  try {
+    const staffmember_id = req.params.staffmember_id;
+    const data = [];
+
+    const rentalData = await Rentals.find({ staffmember_id });
+
+    for (let i = 0; i < rentalData.length; i++) {
+      const rental_id = rentalData[i].rental_id;
+
+      const unitData = await Unit.find({ rental_id });
+
+      for (let index = 0; index < unitData.length; index++) {
+        const unit_id = unitData[index].unit_id;
+        console.log(unit_id, "vunit_id");
+
+        const leaseData = await Leasing.find({ rental_id, unit_id });
+
+        // Check if leaseData is not empty and if index is within bounds
+        if (leaseData.length > 0 && leaseData[index]) {
+          data.push({
+            lease_id: leaseData[index].lease_id,
+            start_date: leaseData[index].start_date,
+            end_date: leaseData[index].end_date,
+            rental_id: rentalData[i].rental_id,
+            rental_adress: rentalData[i].rental_adress,
+            unit_id: unitData[index].unit_id,
+            rental_unit: unitData[index].rental_unit,
+          });
+        }
+      }
+    }
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/staffmember_summary/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
+
+    var data = await Leasing.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    //   // Fetch client and property information for each item in data
+    for (let i = 0; i < data.length; i++) {
+      const rental_id = data[i].rental_id;
+      const unit_id = data[i].unit_id;
+
+      // Fetch property information
+      // const lease_data = await Leasing.findOne({ tenant_id: tenant_id });
+      const rental_data = await Rentals.findOne({
+        rental_id: rental_id,
+      });
+      const staffmember_data = await StaffMember.findOne({
+        staffmember_id: rental_data.staffmember_id,
+      });
+      const rentalowner_data = await RentalOwner.findOne({
+        rentalowner_id: rental_data.rentalowner_id,
+      });
+      const unit_data = await Unit.findOne({
+        unit_id: unit_id,
+      });
+      const property_type_data = await PropertyType.findOne({
+        property_id: rental_data.property_id,
+      });
+
+      // Attach client and property information to the data item
+      data[i].rental_data = rental_data;
+      data[i].staffmember_data = staffmember_data;
+      data[i].rentalowner_data = rentalowner_data;
+      data[i].unit_data = unit_data;
+      data[i].property_type_data = property_type_data;
+    }
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
   }
 });
 

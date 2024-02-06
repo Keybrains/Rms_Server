@@ -6,7 +6,7 @@ const partsAndLaborSchema = new Schema({
 
   workOrder_id: { type: String },
   parts_quantity: { type: Number },
-  account: { type: Number },
+  account: { type: String },
   description: { type: String },
   parts_price: { type: Number },
   amount: { type: Number }, // parts_price * parts_quantity

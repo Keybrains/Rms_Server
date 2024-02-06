@@ -41,7 +41,7 @@ router.post("/property_type", async (req, res) => {
   }
 });
 
-//get all property type for admin
+//get all property type for Super-Admin
 router.get("/property_type/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
@@ -66,9 +66,12 @@ router.get("/property_type/:admin_id", async (req, res) => {
       data[i].admin = admin;
     }
 
+    const count = data.length
+
     res.json({
       statusCode: 200,
       data: data,
+      count:count,
       message: "Read All Request",
     });
   } catch (error) {
@@ -79,7 +82,7 @@ router.get("/property_type/:admin_id", async (req, res) => {
   }
 });
 
-//delete property type for admin
+//delete property type for Super-Admin
 router.delete("/property_type/:property_id", async (req, res) => {
   const property_id = req.params.property_id;
   try {

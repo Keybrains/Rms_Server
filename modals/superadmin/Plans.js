@@ -9,6 +9,16 @@ const planSchema = new Schema({
   features: {
     type: Array,
   },
+  billing_interval: {
+    type: String,
+  },
+  plan_days: {
+    type: Number,
+  },
+  is_free_trial: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: String,
   },

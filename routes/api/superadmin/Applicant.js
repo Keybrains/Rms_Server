@@ -147,6 +147,27 @@ router.get("/applicant_lease/:admin_id", async (req, res) => {
   }
 });
 
+router.put("/applicant/:id", async (req, res) => {
+  try {
+    req.body["updateAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    let result = await Applicant.findOneAndUpdate(
+      { applicant_id: req.params.id },
+      req.body
+    );
+
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "applicant Data Updated Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 router.get("/applicant_summary/:applicant_id", async (req, res) => {
   try {
     const applicant_id = req.params.applicant_id;
@@ -193,6 +214,214 @@ router.get("/applicant_summary/:applicant_id", async (req, res) => {
     });
   } catch (error) {
     res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/applicant/:id/status", async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const newStatus = req.body.status;
+    const statusUpdatedBy = req.body.statusUpdatedBy;
+
+    if (!applicantId || !newStatus) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Invalid request. Please provide 'status'.",
+      });
+    }
+
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    // Update the status of the specified applicant
+    const updatedApplicant = await Applicant.findByIdAndUpdate(
+      applicantId,
+      {
+        $push: {
+          applicant_status: {
+            statusUpdatedBy: statusUpdatedBy,
+            status: newStatus,
+            updateAt: updatedAt,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedApplicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    if (newStatus === "Approved") {
+      const { rental_adress, rental_unit } = updatedApplicant;
+
+      await Applicant.updateMany(
+        {
+          rental_adress,
+          rental_units,
+          _id: { $ne: applicantId },
+          "applicant_status.status": { $ne: "Approved" },
+        },
+        {
+          $push: {
+            applicant_status: {
+              statusUpdatedBy: "Admin",
+              status: "Rejected",
+              updateAt: updatedAt,
+            },
+          },
+        }
+      );
+    }
+
+    res.json({
+      statusCode: 200,
+      data: updatedApplicant,
+      message: "Applicant Status Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+router.get("/applicant_get", async (req, res) => {
+  try {
+    // Extract tenant_mobileNumber and status from query parameters
+    const { applicant_phoneNumber, status } = req.query;
+
+    // Build a filter object based on provided parameters
+    const filter = {};
+    if (applicant_phoneNumber) {
+      filter.applicant_phoneNumber = applicant_phoneNumber;
+    }
+
+    // If status is provided, use aggregation to filter array elements
+    if (status) {
+      filter.applicant_status = {
+        $elemMatch: {
+          status: status,
+        },
+      };
+    }
+
+    // Use the filter object in the MongoDB query
+    var data = await Applicant.find(filter);
+
+    // Process the data to include only matching elements in the response
+    const filteredData = data.map((document) => {
+      // Reverse the order of the applicant_status array for each document
+      document.applicant_status.reverse();
+
+      // Check if the status of the first object matches the provided status
+      if (
+        document.applicant_status.length > 0 &&
+        document.applicant_status[0].status === status
+      ) {
+        return {
+          ...document.toObject(), // Convert Mongoose document to plain object
+          applicant_status: document.applicant_status,
+        };
+      } else {
+        return null; // Exclude documents without matching status
+      }
+    });
+
+    // Remove null entries from the filteredData array
+    const finalData = filteredData.filter((entry) => entry !== null);
+
+    res.json({
+      data: finalData,
+      statusCode: 200,
+      message: "Read All applicants",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/applicant/:applicant_id/checklist", async (req, res) => {
+  try {
+    const applicant_id = req.params.applicant_id;
+    const checklist = req.body.applicant_checklist;
+
+    if (!applicant_id || !checklist || !Array.isArray(checklist)) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Invalid request. Please provide a valid 'applicant_checklist' array.",
+      });
+    }
+
+    const applicant = await Applicant.findOneAndUpdate(
+      { applicant_id: applicant_id }, // Ensure you search by _id field
+      { applicant_checklist: checklist },
+      { new: true }
+    );
+
+    if (!applicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    res.json({
+      updatedApplicant: applicant,
+      statusCode: 200,
+      message: "Applicant checklist updated successfully.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
+router.put("/applicant/:applicant_id/checked-checklist", async (req, res) => {
+  try {
+    const applicant_id = req.params.applicant_id;
+    const checkedChecklist = req.body.applicant_checkedChecklist;
+
+    if (!applicant_id || !checkedChecklist) {
+      return res.status(400).json({
+        statusCode: 400,
+        message:
+          "Invalid request. Please provide 'applicant_checkedChecklist'.",
+      });
+    }
+
+    const applicant = await Applicant.findOneAndUpdate(
+      applicant_id,
+      { applicant_checkedChecklist: checkedChecklist },
+      { new: true }
+    );
+
+    if (!applicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    res.json({
+      updatedApplicant: applicant,
+      statusCode: 200,
+      message: "Checked checklist updated successfully.",
+    });
+  } catch (error) {
+    res.status(500).json({
       statusCode: 500,
       message: error.message,
     });

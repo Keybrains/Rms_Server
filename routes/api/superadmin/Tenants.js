@@ -9,7 +9,11 @@ var Rentals = require("../../../modals/superadmin/Rentals");
 var RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
 var PropertyType = require("../../../modals/superadmin/PropertyType");
-const { createTenantToken } = require("../../../authentication");
+const {
+  createTenantToken,
+  hashPassword,
+  hashCompare,
+} = require("../../../authentication");
 var moment = require("moment");
 
 router.get("/tenant", async (req, res) => {
@@ -125,6 +129,9 @@ router.post("/tenants", async (req, res) => {
       tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
       tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
+      let hashConvert = await hashPassword(req.body.tenant_password);
+      req.body.tenant_password = hashConvert;
+
       const tenant = await Tenant.create(tenantData);
       res.json({
         statusCode: 200,
@@ -221,17 +228,13 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // const compare = await bcrypt.compare(req.body.password, tenant.tenant_password);
+    const compare = await hashCompare(
+      req.body.password,
+      tenant.tenant_password
+    );
 
-    // if (!compare) {
-    //   return res.status(200).json({
-    //     statusCode: 202,
-    //     message: "Invalid Tenant password",
-    //   });
-    // }
-
-    if (req.body.password !== tenant.tenant_password) {
-      return res.json({
+    if (!compare) {
+      return res.status(200).json({
         statusCode: 202,
         message: "Invalid Tenant password",
       });
@@ -403,6 +406,27 @@ router.get("/tenant_summary/:lease_id", async (req, res) => {
       data: data,
       message: "Read All Request",
     });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
+router.get("/property_count/:tenant_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+
+    const countData = await Lease.find({ tenant_id: tenant_id });
+
+    res.json({
+      statusCode: 200,
+      data: countData.length,
+      message: "Read All Request",
+    });
+
   } catch (error) {
     res.json({
       statusCode: 500,

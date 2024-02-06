@@ -12,7 +12,7 @@ const { default: mongoose } = require("mongoose");
 
 // ============== Super Admin ==================================
 
-router.get("/admin/:admin_id", async (req, res) => {
+router.get("/properties/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
     var pageSize = parseInt(req.query.pageSize) || 10;
@@ -32,6 +32,7 @@ router.get("/admin/:admin_id", async (req, res) => {
         $limit: pageSize,
       },
     ]);
+    console.log(data, "data")
 
     var count = await Rentals.countDocuments({ admin_id: admin_id });
 

@@ -78,7 +78,7 @@ router.post("/leases", async (req, res) => {
           cosignerData.tenant_id = tenant.tenant_id;
           cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
           cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-  
+
           cosigner = await Cosigner.create(cosignerData);
         }
         for (const chargesData of chargeData) {
@@ -344,6 +344,34 @@ router.post("/lease_mail", async (req, res) => {
       statusCode: 500,
       message: errorMessage,
       errorDetails: error, // Include the entire error object for more information
+    });
+  }
+});
+
+router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
+  try {
+    const { rental_id, unit_id } = req.params;
+    const leases = await Lease.find({ rental_id, unit_id });
+
+    const tenantData = [];
+
+    for (const lease of leases) {
+      const tenant = await Tenant.findOne({
+        tenant_id: lease.tenant_id,
+      });
+
+      tenantData.push(tenant);
+    }
+
+    res.json({
+      statusCode: 200,
+      data: tenantData,
+      message: "Data retrieved successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
     });
   }
 });
