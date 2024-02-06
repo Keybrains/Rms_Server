@@ -35,6 +35,7 @@ var imagesRouter = require('./routes/api/Images')
 var cronjobRoutes = require('./routes/api/Cronjob')
 var creditCardRoutes = require('./routes/api/CreditCard')
 var lateFeeRoutes = require('./routes/api/Latefee')
+var surChargeRoutes = require('./routes/api/Surcharge')
 
 var app = express();
 
@@ -75,6 +76,8 @@ app.use('/api/cronjob', cronjobRoutes)
 app.use('/api/images', imagesRouter)
 app.use('/api/creditcard', creditCardRoutes)
 app.use('/api/latefee', lateFeeRoutes)
+app.use('/api/surcharge', surChargeRoutes)
+
 app.use(function (req, res, next) {
   next(createError(404));
 });

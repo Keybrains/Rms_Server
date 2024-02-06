@@ -44,6 +44,12 @@ const nmiPaymentSchema = new Schema({
   }, 
   surcharge: {
     type: Number,
+  },  
+  surcharge_percent: {
+    type: Number,
+  },
+  total_amount: {
+    type: Number,
     required: true,
   },
   expiration_date: {
