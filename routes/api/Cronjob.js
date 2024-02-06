@@ -36,7 +36,7 @@ async function logToDatabase(status, cronjob_type, date, reason = null) {
 }
 
 //shedule payment for nmi transaction
-cron.schedule("34 09 * * *", async () => {
+cron.schedule("43 11 * * *", async () => {
   const cronjobs = await Cronjobs.find();
   const isCronjobRunning = cronjobs[0].isCronjobRunning;
   try {

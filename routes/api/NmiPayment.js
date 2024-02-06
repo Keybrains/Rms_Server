@@ -426,11 +426,11 @@ router.post("/sale", async (req, res) => {
       memo: paymentDetails.memo,
       account: paymentDetails.account,
       date: paymentDetails.date,
-      //card_number: paymentDetails.card_number,
+      total_amount: paymentDetails.total_amount,
       amount: paymentDetails.amount,
       surcharge: paymentDetails.surcharge,
-      //expiration_date: paymentDetails.expiration_date,
-      //cvv: paymentDetails.cvv,
+      surcharge_percent: paymentDetails.surcharge_percent,
+      cvv: paymentDetails.cvv,
       tenantId: paymentDetails.tenantId,
       customer_vault_id: paymentDetails.customer_vault_id,
       billing_id: paymentDetails.billing_id,
@@ -739,7 +739,6 @@ router.post("/update_sale/:id", async (req, res) => {
   try {
     // Extract necessary data from the request
     const { paymentDetails, planId } = req.body;
-    console.log("manu-----------------", paymentDetails);
 
     const nmiConfig = {
       type: "sale",
@@ -1076,13 +1075,13 @@ router.post("/postnmipayments", async (req, res) => {
       type2: paymentDetails.type2,
       amount: paymentDetails.amount,
       surcharge: paymentDetails.surcharge,
+      surcharge_percent: paymentDetails.surcharge_percent,
       property: paymentDetails.property,
       unit: paymentDetails.unit,
       tenantId: paymentDetails.tenantId,
       status: paymentDetails.status,
       check_number: paymentDetails.check_number,
-      card_number: paymentDetails.card_number,
-      expiration_date: paymentDetails.expiration_date,
+      total_amount: paymentDetails.total_amount,
       customer_vault_id: paymentDetails.customer_vault_id,
       billing_id: paymentDetails.billing_id,
       cvv: paymentDetails.cvv,
@@ -1247,6 +1246,7 @@ router.post("/manual-refund/:id", async (req, res) => {
         date: refundDetails.date,
         check_number: refundDetails.check_number,
         amount: refundDetails.amount,
+        total_amount: refundDetails.total_amount,
         property: refundDetails.property,
         unit: refundDetails.unit,
       });
@@ -1326,9 +1326,8 @@ router.post("/refund", async (req, res) => {
         tenantId: refundDetails.tenantId,
         account: refundDetails.account,
         date: refundDetails.date,
-        card_number: refundDetails.card_number,
         amount: refundDetails.amount,
-        expiration_date: refundDetails.expiration_date,
+        total_amount: refundDetails.total_amount,
         cvv: refundDetails.cvv,
         customer_vault_id: refundDetails.customer_vault_id,
         billing_id: refundDetails.billing_id,
@@ -1866,6 +1865,7 @@ router.post("/create-customer-vault", async (req, res) => {
         
              
                 <li><strong>Customer Vault Id:</strong> ${parsedResponse.customer_vault_id}</li>
+                <li><strong>Billing Id:</strong> ${req.body.billing_id}</li>
              
         
                 <p>If you have any questions or concerns regarding your vault, please feel free to contact our customer support.</p>
