@@ -9,6 +9,7 @@ var Leasing = require("../../../modals/superadmin/Leasing");
 const Tenants = require("../../../modals/superadmin/Tenant");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
+const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 
 // ============== Super Admin ==================================
 
@@ -38,8 +39,11 @@ router.get("/properties/:admin_id", async (req, res) => {
 
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
+      const admin_id = data[i].admin_id
       const rentalOwner = data[i].rentalowner_id;
       const propertyType = data[i].property_id;
+
+      const admin_data = await Admin_Register.findOne({admin_id: admin_id}, "admin_id first_name last_name")
 
       // Fetch client information
       const rental_owner_data = await RentalOwner.findOne({
@@ -51,7 +55,7 @@ router.get("/properties/:admin_id", async (req, res) => {
         property_id: propertyType,
       });
 
-      // Attach client and property information to the data item
+      data[i].admin_data = admin_data
       data[i].rental_owner_data = rental_owner_data;
       data[i].property_type_data = property_type_data;
     }

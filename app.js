@@ -47,6 +47,7 @@ var Plans_PurchasedRouter = require("./routes/api/superadmin/Plans_Purchased.js"
 var VendorAdmindRouter = require("./routes/api/superadmin/Vendor.js");
 var ApplicantAdmindRouter = require("./routes/api/superadmin/Applicant.js");
 var WorkOrderRouter = require("./routes/api/superadmin/WorkOrder.js");
+var RentalOwnerRouter = require("./routes/api/superadmin/RentalOwner.js");
 
 var app = express();
 
@@ -79,6 +80,7 @@ app.use("/api/purchase", Plans_PurchasedRouter);
 app.use("/api/vendor", VendorAdmindRouter);
 app.use("/api/applicant", ApplicantAdmindRouter);
 app.use("/api/work-order", WorkOrderRouter);
+app.use("/api/rental_owner", RentalOwnerRouter);
 
 app.use(function (req, res, next) {
   next(createError(404));

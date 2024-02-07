@@ -7,36 +7,27 @@ const Rentals = require("../../../modals/superadmin/Rentals");
 const Unit = require("../../../modals/superadmin/Unit");
 const Tenant = require("../../../modals/superadmin/Tenant");
 const StaffMember = require("../../../modals/superadmin/StaffMember");
+const Vendor = require("../../../modals/superadmin/Vendor");
 
 router.post("/work-order", async (req, res) => {
   try {
-    var data = {};
-
-    const workOrder = req.body.workOrder;
-
     const timestamp = Date.now();
     const workId = `${timestamp}`;
-    workOrder["workOrder_id"] = workId;
-    workOrder["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    req.body.workOrder["workOrder_id"] = workId;
+    req.body.workOrder["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    var workOrder = await WorkOrder.create(req.body.workOrder);
 
-    var createdWorkOrder = await WorkOrder.create(workOrder);
-    data.workOrder = createdWorkOrder;
-    const parts = req.body.parts;
-    data.parts = [];
-    for (const part of parts) {
-      const partId = `${timestamp}`;
-      part["parts_id"] = partId;
-      part["workOrder_id"] = data.workOrder.workOrder_id;
-      part["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-      part["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-      var createdParts = await Parts.create(part);
-      data.parts.push(createdParts);
-    }
+    const partId = `${timestamp}`;
+    req.body.parts["parts_id"] = partId;
+    req.body.parts["workOrder_id"] = workOrder.workOrder_id;
+    req.body.parts["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    req.body.parts["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    var parts = await Parts.create(req.body.parts);
 
     res.json({
       statusCode: 200,
-      data: data,
+      data: { workOrder, parts },
       message: "Add Umit Successfully",
     });
   } catch (error) {
@@ -52,14 +43,8 @@ router.get("/work-order/:workOrder_id", async (req, res) => {
     const workOrder_id = req.params.workOrder_id;
 
     const workOrderData = await WorkOrder.findOne({ workOrder_id });
-    if (!workOrderData) {
-      return res.status(201).json({
-        statusCode: 201,
-        message: "Work Order not found.",
-      });
-    }
 
-    const partsData = await Parts.findOne({ workOrder_id });
+    const partsData = await Parts.find({ workOrder_id });
 
     const rentalAdress = await Rentals.findOne({
       rental_id: workOrderData.rental_id,
@@ -73,22 +58,28 @@ router.get("/work-order/:workOrder_id", async (req, res) => {
       staffmember_id: workOrderData.staffmember_id,
     });
 
-    if (workOrderData.tenant_id) {
-      const tenantData = await Tenant.findOne({
-        tenant_id: workOrderData.tenant_id,
-      });
-    }
+    const vendor = await Vendor.findOne({
+      vendor_id: workOrderData.vendor_id,
+    });
 
-    if (!partsData) {
-      return res.status(202).json({
-        statusCode: 202,
-        message: "Parts data not found for the specified workOrder.",
+    var tenantData;
+    if (workOrderData.tenant_id) {
+      tenantData = await Tenant.findOne({
+        tenant_id: workOrderData.tenant_id,
       });
     }
 
     res.json({
       statusCode: 200,
-      data: { workOrderData, partsData },
+      data: {
+        workOrderData,
+        partsData,
+        rentalAdress,
+        rentalUnit,
+        staffMember,
+        vendor,
+        tenantData,
+      },
       message: "Data retrieved successfully",
     });
   } catch (error) {
@@ -114,43 +105,9 @@ router.get("/work-orders/:admin_id", async (req, res) => {
     const resultDataArray = [];
 
     for (const workOrderData of workOrdersData) {
-      const partsData = await Parts.findOne({
+      const partsData = await Parts.find({
         workOrder_id: workOrderData.workOrder_id,
       });
-
-      const rentalAdress = await Rentals.findOne({
-        rental_id: workOrderData.rental_id,
-      });
-
-      if (rentalAdress) {
-        partsData.rental_adress = rentalAdress.rental_adress;
-      }
-
-      const rentalUnit = await Unit.findOne({
-        unit_id: workOrderData.unit_id,
-      });
-
-      if (rentalUnit) {
-        partsData.rental_unit = rentalUnit.rental_unit;
-      }
-
-      const staffMember = await StaffMember.findOne({
-        staffmember_id: workOrderData.staffmember_id,
-      });
-
-      if (staffMember) {
-        partsData.staffmember_name = staffMember.staffmember_name;
-      }
-
-      if (workOrderData.tenant_id) {
-        const tenantData = await Tenant.findOne({
-          tenant_id: workOrderData.tenant_id,
-        });
-        if (condition) {
-          partsData.tenant_firstName = tenantData.tenant_firstName;
-          partsData.tenant_lastName = tenantData.tenant_lastName;
-        }
-      }
 
       resultDataArray.push({
         workOrderData,

@@ -1,7 +1,52 @@
 var express = require("express");
 var router = express.Router();
 var Unit = require("../../../modals/superadmin/Unit");
+var Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
+
+// ===================  Super Admin============================
+
+router.get("/unit/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+
+    var data = await Unit.aggregate([
+      {
+        $match: { admin_id: admin_id }, 
+      },
+      {
+        $sort: { createdAt: -1 }, 
+      },
+    ]);
+
+    for (let i = 0; i < data.length; i++) {
+      const admin_id = data[i].admin_id;
+
+      const admin_data = await Admin_Register.findOne(
+        { admin_id: admin_id },
+        "admin_id first_name last_name"
+      );
+
+      data[i].admin_data = admin_data;
+    }
+
+    const count = data.length;
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      count: count,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+// ====================  Admin  ==================================
 
 router.get("/rental_unit/:rental_id", async (req, res) => {
   try {

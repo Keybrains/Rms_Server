@@ -15,51 +15,41 @@ const {
   hashCompare,
 } = require("../../../authentication");
 var moment = require("moment");
+const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 
-router.get("/tenant", async (req, res) => {
+// ================= Super Admin =================================
+
+router.get("/tenant/get/:admin_id", async (req, res) => {
   try {
-    var pageSize = parseInt(req.query.pageSize) || 10;
-    var pageNumber = parseInt(req.query.pageNumber) || 0;
+    const admin_id = req.params.admin_id;
 
     var data = await Tenant.aggregate([
       {
-        $sort: { createdAt: -1 },
+        $match: { admin_id: admin_id }, // Filter by user_id
       },
       {
-        $skip: pageSize * pageNumber,
-      },
-      {
-        $limit: pageSize,
+        $sort: { createdAt: -1 }, // Filter by user_id
       },
     ]);
 
-    var count = await Tenant.countDocuments();
-
     for (let i = 0; i < data.length; i++) {
-      const tenant = data[i];
+      const admin_id = data[i].admin_id;
 
-      // Fetch unit data based on tenant_id from Lease collection
-      const leases = await Lease.find({ tenant_id: tenant.tenant_id });
-
-      // Fetch unit data from Unit collection based on unit_id from leases
-      const unitData = await Promise.all(
-        leases.map(async (lease) => {
-          const unit = await Unit.findOne({ unit_id: lease.unit_id });
-          return unit;
-        })
+      const admin_data = await Admin_Register.findOne(
+        { admin_id: admin_id },
+        "admin_id first_name last_name"
       );
 
-      data[i].unit_data = unitData.length > 1 ? unitData : unitData[0];
-      data[i].admin_data = await AdminRegister.findOne({
-        admin_id: tenant.admin_id,
-      });
+      data[i].admin_data = admin_data;
     }
+
+    const count = data.length;
 
     res.json({
       statusCode: 200,
       data: data,
       count: count,
-      message: "Read All Tenant",
+      message: "Read All Request",
     });
   } catch (error) {
     res.json({
@@ -69,7 +59,65 @@ router.get("/tenant", async (req, res) => {
   }
 });
 
-// ============== User ==================================
+// ============== Admin ==================================
+
+router.get("/tenant_details/:tenant_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+
+    var data = await Tenant.aggregate([
+      {
+        $match: { tenant_id: tenant_id }, // Filter by user_id
+      },
+      {
+        $sort: { createdAt: -1 }, // Filter by user_id
+      },
+    ]);
+
+    data[0].leaseData = [];
+    // Fetch lease data for the current tenant
+    const lease_data = await Lease.find({ tenant_id: tenant_id });
+
+    // Loop through each lease data for the current tenant
+    for (let j = 0; j < lease_data.length; j++) {
+      const rental_id = lease_data[j].rental_id;
+      // Fetch unit data for the current rental_id
+      const rental_data = await Rentals.findOne({ rental_id: rental_id });
+
+      const unit_id = lease_data[j].unit_id;
+      // Fetch unit data for the current unit_id
+      const unit_data = await Unit.findOne({ unit_id: unit_id });
+      // Add unit_data to lease_data object
+
+      const object = {
+        lease_id: lease_data[j].lease_id,
+        start_date: lease_data[j].start_date,
+        end_date: lease_data[j].end_date,
+        rental_id: rental_id,
+        rental_adress: rental_data.rental_adress,
+        rentalowner_id: rental_data.rentalowner_id,
+        unit_id: unit_id,
+        rental_unit: unit_data.rental_unit || "",
+      };
+
+      data[0].leaseData.push(object);
+    }
+
+    const count = data.length;
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      count: count,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 router.get("/tenants/:admin_id", async (req, res) => {
   const admin_id = req.params.admin_id;
@@ -414,7 +462,6 @@ router.get("/tenant_summary/:lease_id", async (req, res) => {
   }
 });
 
-
 router.get("/property_count/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
@@ -426,7 +473,6 @@ router.get("/property_count/:tenant_id", async (req, res) => {
       data: countData.length,
       message: "Read All Request",
     });
-
   } catch (error) {
     res.json({
       statusCode: 500,
