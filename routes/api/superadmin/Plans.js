@@ -14,7 +14,7 @@ router.post("/plans", async (req, res) => {
       req.body["plan_id"] = uniqueId;
       req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
       req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-      if (req.body.billing_interval === "Days") {
+      if (req.body.plan_price === 0) {
         req.body["is_free_trial"] = true;
       }
       var data = await Plans.create(req.body);

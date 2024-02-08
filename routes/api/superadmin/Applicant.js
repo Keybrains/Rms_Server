@@ -358,7 +358,8 @@ router.put("/applicant/:applicant_id/checklist", async (req, res) => {
     if (!applicant_id || !checklist || !Array.isArray(checklist)) {
       return res.status(400).json({
         statusCode: 400,
-        message: "Invalid request. Please provide a valid 'applicant_checklist' array.",
+        message:
+          "Invalid request. Please provide a valid 'applicant_checklist' array.",
       });
     }
 
@@ -387,7 +388,6 @@ router.put("/applicant/:applicant_id/checklist", async (req, res) => {
     });
   }
 });
-
 
 router.put("/applicant/:applicant_id/checked-checklist", async (req, res) => {
   try {
@@ -427,5 +427,97 @@ router.put("/applicant/:applicant_id/checked-checklist", async (req, res) => {
     });
   }
 });
+
+router.put("/applicant/note_attachment/:applicant_id", async (req, res) => {
+  try {
+    const applicantId = req.params.applicant_id;
+
+    const { applicant_notes, applicant_file } = req.body;
+
+    if (!applicant_notes && !applicant_file) {
+      return res.status(400).json({
+        statusCode: 400,
+        message:
+          "Invalid request. Please provide 'applicant_notes' and/or 'applicant_file'.",
+      });
+    }
+
+    const updateFields = {};
+    if (applicant_notes || applicant_file) {
+      const newNoteAndFile = { applicant_notes, applicant_file };
+      updateFields.$push = { applicant_NotesAndFile: newNoteAndFile };
+    }
+
+    const updatedApplicant = await Applicant.findOneAndUpdate(
+      { applicant_id: applicantId }, // Corrected: Wrapping applicantId in filter object
+      updateFields,
+      { new: true }
+    );
+
+    if (!updatedApplicant) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Applicant not found.",
+      });
+    }
+
+    // Log the state before and after the update
+    console.log(
+      "Before Update - applicant_NotesAndFile:",
+      updatedApplicant.applicant_NotesAndFile
+    );
+    console.log("Updated Applicant:", updatedApplicant);
+    console.log(
+      "After Update - applicant_NotesAndFile:",
+      updatedApplicant.applicant_NotesAndFile
+    );
+
+    res.json({
+      statusCode: 200,
+      data: updatedApplicant,
+      message: "Applicant Notes and/or Attachment Updated Successfully",
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+router.delete(
+  "/applicant/note_attachment/:applicant_id/:noteAndFileId",
+  async (req, res) => {
+    try {
+      const { applicant_id, noteAndFileId } = req.params;
+
+      const updatedApplicant = await Applicant.findOneAndUpdate(
+        { applicant_id: applicant_id },
+        { $pull: { applicant_NotesAndFile: { _id: noteAndFileId } } },
+        { new: true }
+      );
+
+      if (!updatedApplicant) {
+        return res.status(404).json({
+          statusCode: 404,
+          message: "Applicant not found.",
+        });
+      }
+
+      res.json({
+        statusCode: 200,
+        data: updatedApplicant,
+        message: "Note and File Deleted Successfully",
+      });
+    } catch (err) {
+      console.error("Error:", err);
+      res.status(500).json({
+        statusCode: 500,
+        message: err.message,
+      });
+    }
+  }
+);
 
 module.exports = router;

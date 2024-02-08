@@ -93,6 +93,7 @@ router.get("/tenant_details/:tenant_id", async (req, res) => {
         lease_id: lease_data[j].lease_id,
         start_date: lease_data[j].start_date,
         end_date: lease_data[j].end_date,
+        lease_type: lease_data[j].lease_type,
         rental_id: rental_id,
         rental_adress: rental_data.rental_adress,
         rentalowner_id: rental_data.rentalowner_id,

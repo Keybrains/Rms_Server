@@ -63,6 +63,7 @@ router.post("/register", async (req, res) => {
 
     const checkCompanyName = await AdminRegister.findOne({
       company_name: req.body.company_name,
+      isAdmin_delete: false,
     });
 
     if (checkCompanyName) {
@@ -322,8 +323,8 @@ router.delete("/admin", async (req, res) => {
     const adminIdsToUpdate = req.body;
 
     // Update the isAdmin_delete field for the specified admin IDs
-    const result = await Admin.updateMany(
-      { _id: { $in: adminIdsToUpdate } },
+    const result = await AdminRegister.updateMany(
+      { admin_id: { $in: adminIdsToUpdate } },
       { $set: { isAdmin_delete: true } }
     );
 
@@ -339,4 +340,5 @@ router.delete("/admin", async (req, res) => {
     });
   }
 });
+
 module.exports = router;

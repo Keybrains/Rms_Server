@@ -1,10 +1,120 @@
 var express = require("express");
 var router = express.Router();
+const axios = require("axios");
+const cheerio = require("cheerio");
+const puppeteer = require("puppeteer");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
   res.render("index", { title: "Express" });
 });
+
+// router.get("/test", async (req, res) => {
+//   try {
+//     // Launch a headful browser
+//     const browser = await puppeteer.launch({ headless: false,defaultViewport: null,args: ['--start-maximized']  });
+
+//     // Open a new page
+//     const page = await browser.newPage();
+
+//     // Navigate to the login page
+//     await page.goto("http://localhost:3000/auth/login");
+// //     await puppeteer.launch({ 
+// //       headless: false,
+// //       defaultViewport: null,
+      
+// // });
+//     // Wait for the login form to appear
+//     await page.waitForSelector('input[name="email"]');
+
+//     // Fill in email and password fields with a 2-second delay between each action
+//     await page.type('input[name="email"]', 'shivam@gmail.com');
+//     await delay(2000);
+//     await page.type('input[name="password"]', 'Shivam@123');
+//     await delay(2000);
+
+//     // Click on the login button
+//     await page.click('button[type="submit"]');
+//     await delay(2000);
+
+//     // Wait for the login process to complete (you might need to adjust the selector)
+//     await page.waitForNavigation();
+//     await delay(2000);
+
+//     // Maximize the browser window
+   
+//     // Close the browser after 5 seconds (just for demonstration)
+//     // setTimeout(async () => {
+//     //   await browser.close();
+//     // }, 5000);
+
+//     res.send("Login successful.");
+//   } catch (error) {
+//     console.error("Error occurred:", error);
+//     res.status(500).send("An error occurred while logging in.");
+//   }
+// });
+
+
+router.get("/test/:admin_id", async (req, res) => {
+  try {
+    const { adminId } = req.params;
+
+    // Fetch the admin record from your database based on adminId
+    // Assuming you have a function to fetch the admin record by adminId
+    const adminRecord = await fetchAdminRecord(admin_id);
+    console.log(adminRecord, "adminRecord======================")
+
+    if (!adminRecord) {
+      return res.status(404).send("Admin record not found.");
+    }
+
+    // Launch a headful browser
+    const browser = await puppeteer.launch({ headless: false });
+
+    // Open a new page
+    const page = await browser.newPage();
+
+    // Navigate to the login page
+    await page.goto("http://localhost:3000/auth/login");
+
+    // Wait for the login form to appear
+    await page.waitForSelector('input[name="email"]');
+
+    // Fill in email and password fields with admin's email and password
+    await page.type('input[name="email"]', adminRecord.email);
+    await delay(2000);
+    await page.type('input[name="password"]', adminRecord.password);
+    await delay(2000);
+
+    // Click on the login button
+    await page.click('button[type="submit"]');
+    await delay(2000);
+
+    // Wait for the login process to complete
+    await page.waitForNavigation();
+    await delay(2000);
+
+    // Maximize the tab by pressing keyboard shortcut
+    await page.keyboard.down('Control');
+    await page.keyboard.down('Shift');
+    await page.keyboard.press('F');
+
+    res.send("Login successful.");
+  } catch (error) {
+    console.error("Error occurred:", error);
+    res.status(500).send("An error occurred while logging in.");
+  }
+});
+
+
+function delay(time) {
+  return new Promise(function(resolve) {
+    setTimeout(resolve, time)
+  });
+}
+
+
 
 module.exports = router;
 

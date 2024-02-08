@@ -12,6 +12,8 @@ const registerSchema = new Schema({
   createdAt: { type: String },
   updatedAt: { type: String },
   isAdmin_delete: { type: Boolean, default: false },
+  is_addby_superdmin: { type: Boolean, default: false },
+  role: { type: String },
   trial: {
     status: { type: String },
     start_date: { type: String },

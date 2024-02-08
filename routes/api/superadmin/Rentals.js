@@ -33,17 +33,20 @@ router.get("/properties/:admin_id", async (req, res) => {
         $limit: pageSize,
       },
     ]);
-    console.log(data, "data")
+    console.log(data, "data");
 
     var count = await Rentals.countDocuments({ admin_id: admin_id });
 
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
-      const admin_id = data[i].admin_id
+      const admin_id = data[i].admin_id;
       const rentalOwner = data[i].rentalowner_id;
       const propertyType = data[i].property_id;
 
-      const admin_data = await Admin_Register.findOne({admin_id: admin_id}, "admin_id first_name last_name")
+      const admin_data = await Admin_Register.findOne(
+        { admin_id: admin_id },
+        "admin_id first_name last_name"
+      );
 
       // Fetch client information
       const rental_owner_data = await RentalOwner.findOne({
@@ -55,7 +58,7 @@ router.get("/properties/:admin_id", async (req, res) => {
         property_id: propertyType,
       });
 
-      data[i].admin_data = admin_data
+      data[i].admin_data = admin_data;
       data[i].rental_owner_data = rental_owner_data;
       data[i].property_type_data = property_type_data;
     }

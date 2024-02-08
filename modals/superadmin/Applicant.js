@@ -14,15 +14,19 @@ const applicantSchema = new Schema({
   applicant_checklist: { type: Array },
   applicant_checkedChecklist: { type: Array },
   applicant_emailsend_date: { type: String },
-  isMovedin:{type:Boolean, default:false},
+  isMovedin: { type: Boolean, default: false },
   createdAt: { type: String },
   updatedAt: { type: String },
-  applicant_NotesAndFile: [
-    {
-      applicant_notes: String,
-      applicant_file: String,
-    },
-  ],
+  applicant_NotesAndFile: {
+    type: [
+      {
+        applicant_notes: String,
+        applicant_file: String,
+      },
+    ],
+    default: [],
+  },
+
   applicant_status: [
     {
       status: String,
