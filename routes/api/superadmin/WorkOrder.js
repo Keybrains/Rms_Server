@@ -45,33 +45,33 @@ router.post("/work-order", async (req, res) => {
   }
 });
 
-router.get("/work-order/:workOrder_id", async (req, res) => {
+router.get("/workorder_details/:workOrder_id", async (req, res) => {
   try {
     const workOrder_id = req.params.workOrder_id;
 
     const workOrderData = await WorkOrder.findOne({ workOrder_id });
 
-    const partsData = await Parts.find({ workOrder_id });
+    const partsandcharge_data = await Parts.find({ workOrder_id });
 
-    const rentalAdress = await Rentals.findOne({
+    const property_data = await Rentals.findOne({
       rental_id: workOrderData.rental_id,
     });
 
-    const rentalUnit = await Unit.findOne({
+    const unit_data = await Unit.findOne({
       unit_id: workOrderData.unit_id,
     });
 
-    const staffMember = await StaffMember.findOne({
+    const staff_data = await StaffMember.findOne({
       staffmember_id: workOrderData.staffmember_id,
     });
 
-    const vendor = await Vendor.findOne({
+    const vendor_data = await Vendor.findOne({
       vendor_id: workOrderData.vendor_id,
     });
 
-    var tenantData;
+    var tenant_data;
     if (workOrderData.tenant_id) {
-      tenantData = await Tenant.findOne({
+      tenant_data = await Tenant.findOne({
         tenant_id: workOrderData.tenant_id,
       });
     }
@@ -79,13 +79,13 @@ router.get("/work-order/:workOrder_id", async (req, res) => {
     res.json({
       statusCode: 200,
       data: {
-        workOrderData,
-        partsData,
-        rentalAdress,
-        rentalUnit,
-        staffMember,
-        vendor,
-        tenantData,
+        ...workOrderData.toObject(),
+        partsandcharge_data,
+        property_data,
+        unit_data,
+        staff_data,
+        vendor_data,
+        tenant_data,
       },
       message: "Data retrieved successfully",
     });
@@ -298,6 +298,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
         $sort: { createdAt: -1 }, // Filter by user_id
       },
     ]);
+    const return_data = [];
 
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
@@ -309,88 +310,35 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
         rental_id: rental_id,
         unit_id: unit_id,
       });
-      const unit_data = await Unit.findOne({
-        unit_id: unit_id,
-      });
-      const rental_data = await Rentals.findOne({
-        rental_id: rental_id,
-      });
+      if (workorder_data) {
+        const unit_data = await Unit.findOne({
+          unit_id: unit_id,
+        });
+        const rental_data = await Rentals.findOne({
+          rental_id: rental_id,
+        });
 
-      // Attach client and property information to the data item
-      data[i].workorder_data = workorder_data;
-      data[i].unit_data = unit_data;
-      data[i].rental_data = rental_data;
+        return_data.push({
+          workOrder_id: workorder_data.workOrder_id,
+          work_subject: workorder_data.work_subject,
+          work_category: workorder_data.work_category,
+          priority: workorder_data.priority,
+          status: workorder_data.status,
+          createdAt: workorder_data.createdAt,
+          updatedAt: workorder_data.updatedAt,
+          rental_id: rental_data.rental_id,
+          unit_id: unit_data.unit_id,
+          rental_adress: rental_data.rental_adress,
+          rental_unit: unit_data.rental_unit,
+        });
+      }
     }
 
-    const count = data.length;
+    const count = return_data.length;
 
     res.json({
       statusCode: 200,
-      data: data,
-      count: count,
-      message: "Read All Request",
-    });
-  } catch (error) {
-    res.json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
-
-router.get("/workorder_details/:workOrder_id", async (req, res) => {
-  try {
-    const workOrder_id = req.params.workOrder_id;
-
-    var data = await WorkOrder.aggregate([
-      {
-        $match: { workOrder_id: workOrder_id }, // Filter by user_id
-      },
-      {
-        $sort: { createdAt: -1 }, // Filter by user_id
-      },
-    ]);
-
-    // Fetch client and property information for each item in data
-    for (let i = 0; i < data.length; i++) {
-      const unit_id = data[i].unit_id;
-      const rental_id = data[i].rental_id;
-      const tenant_id = data[i].tenant_id;
-      const vendor_id = data[i].vendor_id;
-
-      // Fetch property information
-      const unit_data = await Unit.findOne({
-        unit_id: unit_id,
-      });
-      const property_data = await Rentals.findOne({
-        rental_id: rental_id,
-      });
-
-      const tenant_data = await Tenant.findOne({
-        tenant_id: tenant_id,
-      });
-
-      const vendor_data = await Tenant.findOne({
-        vendor_id: vendor_id,
-      });
-
-      const partsandcharge_data = await Parts.find({
-        workOrder_id: workOrder_id,
-      });
-
-      // Attach client and property information to the data item
-      data[i].unit_data = unit_data;
-      data[i].property_data = property_data;
-      data[i].tenant_data = tenant_data;
-      data[i].vendor_data = vendor_data;
-      data[i].partsandcharge_data = partsandcharge_data;
-    }
-
-    const count = data.length;
-
-    res.json({
-      statusCode: 200,
-      data: data,
+      data: return_data,
       count: count,
       message: "Read All Request",
     });
