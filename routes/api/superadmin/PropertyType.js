@@ -41,6 +41,54 @@ router.post("/property_type", async (req, res) => {
   }
 });
 
+
+router.post("/search", async (req, res) => {
+  try {
+    const searchValue = req.body.search;
+    const adminId = req.body.admin_id;
+
+    let query = {
+      admin_id: adminId,
+    };
+
+    if (searchValue) {
+      query.$or = [
+        { property_type: { $regex: new RegExp(searchValue, "i") } },
+        { propertysub_type: { $regex: new RegExp(searchValue, "i") } },
+      ];
+    }
+
+    const data = await PropertyType.find(query);
+
+    const promises = data.map((propertyType) => {
+      return AdminRegister.findOne({ admin_id: propertyType.admin_id });
+    });
+
+    const adminDataArray = await Promise.all(promises);
+
+    const updatedData = data.map((propertyType, index) => {
+      return {
+        ...propertyType._doc,
+        admin_data: adminDataArray[index],
+      };
+    });
+
+    const dataCount = updatedData.length;
+
+    res.json({
+      statusCode: 200,
+      data: updatedData,
+      count: dataCount,
+      message: "Search successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 //get all property type for Super-Admin
 router.get("/property_type/:admin_id", async (req, res) => {
   try {

@@ -45,6 +45,59 @@ router.get("/rental_owner/:admin_id", async (req, res) => {
   }
 });
 
+router.post("/search", async (req, res) => {
+  try {
+    const searchValue = req.body.search;
+    const adminId = req.body.admin_id;
+
+    let query = {
+      admin_id: adminId,
+    };
+
+    if (searchValue) {
+      query.$or = [
+        { rentalOwner_firstName: { $regex: new RegExp(searchValue, "i") } },
+        { rentalOwner_lastName: { $regex: new RegExp(searchValue, "i") } },
+        { rentalOwner_primaryEmail: { $regex: new RegExp(searchValue, "i") } },
+        {
+          rentalOwner_phoneNumber: !isNaN(searchValue)
+            ? Number(searchValue)
+            : null,
+        },
+      ];
+    }
+
+    const data = await RentalOwner.find(query);
+
+    const promises = data.map((rentalOwner) => {
+      return RentalOwner.findOne({ admin_id: rentalOwner.admin_id });
+    });
+
+    const adminDataArray = await Promise.all(promises);
+
+    const updatedData = data.map((rentalOwner, index) => {
+      return {
+        ...rentalOwner._doc,
+        admin_data: adminDataArray[index],
+      };
+    });
+
+    const dataCount = updatedData.length;
+
+    res.json({
+      statusCode: 200,
+      data: updatedData,
+      count: dataCount,
+      message: "Search successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.get("/rentalowner_details/:rentalowner_id", async (req, res) => {
   try {
     const rentalowner_id = req.params.rentalowner_id;
@@ -82,6 +135,24 @@ router.get("/rentalowner_details/:rentalowner_id", async (req, res) => {
     res.json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+
+router.get("/rental_owner_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const rentals = await RentalOwner.find({ admin_id });
+    const count = rentals.length;
+    res.status(200).json({
+      statusCode: 200,
+      count: count,
+      message: "Work-Order not found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
     });
   }
 });

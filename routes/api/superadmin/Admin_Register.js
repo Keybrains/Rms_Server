@@ -10,6 +10,14 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var JWT = require("jsonwebtoken");
 var JWTD = require("jwt-decode");
 var moment = require("moment");
+const bcrypt = require("bcrypt");
+const StaffMember = require("../../../modals/superadmin/StaffMember");
+const PropertyType = require("../../../modals/superadmin/PropertyType");
+const RentalOwner = require("../../../modals/superadmin/RentalOwner");
+const Tenant = require("../../../modals/superadmin/Tenant");
+const Unit = require("../../../modals/superadmin/Unit");
+const Lease = require("../../../modals/superadmin/Leasing");
+const Rentals = require("../../../modals/superadmin/Rentals");
 
 //Admin Registers
 // router.post("/register", async (req, res) => {
@@ -121,6 +129,107 @@ router.post("/register", async (req, res) => {
 });
 
 //Admin Login
+// router.post("/login", async (req, res) => {
+//   try {
+//     const user = await AdminRegister.findOne({
+//       email: req.body.email,
+//       isAdmin_delete: false,
+//     });
+
+//     if (!user) {
+//       return res
+//         .status(201)
+//         .json({ statusCode: 201, message: "User doesn't exist" });
+//     }
+
+//     const isMatch = await hashCompare(req.body.password, user.password);
+
+//     if (!isMatch) {
+//       return res
+//         .status(200)
+//         .json({ statusCode: 202, message: "Invalid Admin Password" });
+//     }
+
+//     const currentDate = moment().startOf("day");
+//     let response;
+
+//     // Check trial status and validity (ignoring time)
+//     if (
+//       user.trial.status === "active" &&
+//       currentDate.isBetween(
+//         moment(user.trial.start_date).startOf("day"),
+//         moment(user.trial.end_date).startOf("day"),
+//         null,
+//         "[]"
+//       )
+//     ) {
+//       response = {
+//         statusCode: 200,
+//         message: "User Authenticated",
+//         token: await createToken({
+//           _id: user._id,
+//           admin_id: user.admin_id,
+//           first_name: user.first_name,
+//           last_name: user.last_name,
+//           email: user.email,
+//           company_name: user.company_name,
+//           phone_number: user.phone_number,
+//         }),
+//       };
+//     } else if (user.trial.status === "inactive") {
+//       if (user.subscription.status === "inactive") {
+//         response = {
+//           statusCode: 203,
+//           message:
+//             "Your plan purchase has expired. Please purchase a new plan.",
+//         };
+//       } else {
+//         // Check subscription start and end dates
+//         const subscriptionStart = moment(user.subscription.start_date).startOf(
+//           "day"
+//         );
+//         const subscriptionEnd = moment(user.subscription.end_date).startOf(
+//           "day"
+//         );
+
+//         if (
+//           user.subscription.status === "active" &&
+//           currentDate.isBetween(subscriptionStart, subscriptionEnd, null, "[]")
+//         ) {
+//           response = {
+//             statusCode: 200,
+//             message: "User Authenticated",
+//             token: await createToken({
+//               _id: user._id,
+//               admin_id: user.admin_id,
+//               first_name: user.first_name,
+//               last_name: user.last_name,
+//               email: user.email,
+//               company_name: user.company_name,
+//               phone_number: user.phone_number,
+//             }),
+//           };
+//         } else {
+//           response = {
+//             statusCode: 203,
+//             message:
+//               "Your subscription has expired. Please purchase a new plan.",
+//           };
+//         }
+//       }
+//     } else {
+//       response = {
+//         statusCode: 201,
+//         message: "Your free trial has expired. Please purchase a subscription.",
+//       };
+//     }
+
+//     return res.json(response);
+//   } catch (error) {
+//     res.json({ statusCode: 500, message: error.message });
+//   }
+// });
+
 router.post("/login", async (req, res) => {
   try {
     const user = await AdminRegister.findOne({
@@ -134,7 +243,11 @@ router.post("/login", async (req, res) => {
         .json({ statusCode: 201, message: "User doesn't exist" });
     }
 
-    const isMatch = await hashCompare(req.body.password, user.password);
+    // Compare the encrypted password sent from the scraper with the hashed password stored in the database
+    const isMatch = await compareEncryptedPassword(
+      req.body.password,
+      user.password
+    );
 
     if (!isMatch) {
       return res
@@ -221,6 +334,11 @@ router.post("/login", async (req, res) => {
     res.json({ statusCode: 500, message: error.message });
   }
 });
+
+// Function to compare the encrypted password sent from the scraper with the hashed password stored in the database
+async function compareEncryptedPassword(encryptedPassword, hashedPassword) {
+  return bcrypt.compare(encryptedPassword, hashedPassword);
+}
 
 router.get("/admin", async (req, res) => {
   try {
@@ -337,6 +455,67 @@ router.delete("/admin", async (req, res) => {
     res.json({
       statusCode: 500,
       message: err.message,
+    });
+  }
+});
+
+router.get("/admin_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const staffMember = (await StaffMember.find({ admin_id: admin_id })).length;
+    const propertyType = (await PropertyType.find({ admin_id: admin_id }))
+      .length;
+    const rental_owner = (await RentalOwner.find({ admin_id: admin_id }))
+      .length;
+    const tenant = (await Tenant.find({ admin_id: admin_id })).length;
+    const unit = (await Unit.find({ admin_id: admin_id })).length;
+    const lease = (await Lease.find({ admin_id: admin_id })).length;
+    const rentals_properties = (await Rentals.find({ admin_id: admin_id }))
+      .length;
+
+    res.status(200).json({
+      statusCode: 200,
+      staff_member: staffMember,
+      property_type: propertyType,
+      rentals_properties: rentals_properties,
+      rental_owner: rental_owner,
+      tenant: tenant,
+      unit: unit,
+      lease: lease,
+      message: "Count get successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/admin_profile/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const data = await AdminRegister.findOne(
+      { admin_id: admin_id },
+      "-password"
+    );
+
+    if (data.length === 0) {
+      return res.json({
+        statusCode: 404,
+        message: "No record found for the specified admin_id",
+      });
+    }
+
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read Admin Profile",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
     });
   }
 });

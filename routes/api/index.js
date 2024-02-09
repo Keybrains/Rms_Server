@@ -3,6 +3,9 @@ var router = express.Router();
 const axios = require("axios");
 const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
+const Admin_Register = require("../../modals/superadmin/Admin_Register");
+const { hashCompare } = require("../../authentication");
+const bcrypt = require('bcrypt')
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
@@ -19,10 +22,10 @@ router.get("/", function (req, res, next) {
 
 //     // Navigate to the login page
 //     await page.goto("http://localhost:3000/auth/login");
-// //     await puppeteer.launch({ 
+// //     await puppeteer.launch({
 // //       headless: false,
 // //       defaultViewport: null,
-      
+
 // // });
 //     // Wait for the login form to appear
 //     await page.waitForSelector('input[name="email"]');
@@ -42,7 +45,7 @@ router.get("/", function (req, res, next) {
 //     await delay(2000);
 
 //     // Maximize the browser window
-   
+
 //     // Close the browser after 5 seconds (just for demonstration)
 //     // setTimeout(async () => {
 //     //   await browser.close();
@@ -55,19 +58,19 @@ router.get("/", function (req, res, next) {
 //   }
 // });
 
-
 router.get("/test/:admin_id", async (req, res) => {
   try {
-    const { adminId } = req.params;
+    const admin_id = req.params.admin_id;
 
     // Fetch the admin record from your database based on adminId
-    // Assuming you have a function to fetch the admin record by adminId
-    const adminRecord = await fetchAdminRecord(admin_id);
-    console.log(adminRecord, "adminRecord======================")
+    const adminRecord = await Admin_Register.findOne({ admin_id: admin_id });
 
     if (!adminRecord) {
       return res.status(404).send("Admin record not found.");
     }
+
+    // Hash the password retrieved from the database
+    const hashedPassword = await hashPassword(adminRecord.password);
 
     // Launch a headful browser
     const browser = await puppeteer.launch({ headless: false });
@@ -81,10 +84,10 @@ router.get("/test/:admin_id", async (req, res) => {
     // Wait for the login form to appear
     await page.waitForSelector('input[name="email"]');
 
-    // Fill in email and password fields with admin's email and password
+    // Fill in email and password fields with admin's email and hashed password
     await page.type('input[name="email"]', adminRecord.email);
     await delay(2000);
-    await page.type('input[name="password"]', adminRecord.password);
+    await page.type('input[name="password"]', hashedPassword); // Use hashed password here
     await delay(2000);
 
     // Click on the login button
@@ -96,9 +99,9 @@ router.get("/test/:admin_id", async (req, res) => {
     await delay(2000);
 
     // Maximize the tab by pressing keyboard shortcut
-    await page.keyboard.down('Control');
-    await page.keyboard.down('Shift');
-    await page.keyboard.press('F');
+    await page.keyboard.down("Control");
+    await page.keyboard.down("Shift");
+    await page.keyboard.press("F");
 
     res.send("Login successful.");
   } catch (error) {
@@ -107,14 +110,17 @@ router.get("/test/:admin_id", async (req, res) => {
   }
 });
 
-
-function delay(time) {
-  return new Promise(function(resolve) {
-    setTimeout(resolve, time)
-  });
+// Function to hash a password
+async function hashPassword(password) {
+  const saltRounds = 10; // Recommended number of salt rounds
+  return bcrypt.hash(password, saltRounds);
 }
 
-
+function delay(time) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, time);
+  });
+}
 
 module.exports = router;
 

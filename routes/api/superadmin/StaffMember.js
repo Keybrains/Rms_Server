@@ -60,9 +60,14 @@ router.get("/staffmember/:admin_id", async (req, res) => {
 router.post("/search", async (req, res) => {
   try {
     const searchValue = req.body.search;
+    const adminId = req.body.admin_id;
 
-    const data = await StaffMember.find({
-      $or: [
+    let query = {
+      admin_id: adminId,
+    };
+
+    if (searchValue) {
+      query.$or = [
         { staffmember_name: { $regex: new RegExp(searchValue, "i") } },
         { staffmember_designation: { $regex: new RegExp(searchValue, "i") } },
         { staffmember_email: { $regex: new RegExp(searchValue, "i") } },
@@ -71,20 +76,23 @@ router.post("/search", async (req, res) => {
             ? Number(searchValue)
             : null,
         },
-      ].filter((condition) => condition),
+      ];
+    }
+
+    const data = await StaffMember.find(query);
+
+    const promises = data.map((staffMember) => {
+      return AdminRegister.findOne({ admin_id: staffMember.admin_id });
     });
 
-    // Fetch admin data for each staff member asynchronously
-    const promises = data.map(async (staffMember) => {
-      const adminData = staffMember.admin_id;
-      const admin_data = await AdminRegister.findOne({
-        admin_id: adminData,
-      });
-      return { ...staffMember._doc, admin_data }; // Attach abcd to staffMember data
-    });
+    const adminDataArray = await Promise.all(promises);
 
-    // Wait for all promises to resolve
-    const updatedData = await Promise.all(promises);
+    const updatedData = data.map((staffMember, index) => {
+      return {
+        ...staffMember._doc,
+        admin_data: adminDataArray[index],
+      };
+    });
 
     const dataCount = updatedData.length;
 
@@ -529,6 +537,24 @@ router.get("/staffmember_summary/:lease_id", async (req, res) => {
     res.json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+
+router.get("/staff_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const rentals = await StaffMember.find({ admin_id });
+    const count = rentals.length;
+    res.status(200).json({
+      statusCode: 200,
+      count: count,
+      message: "Work-Order not found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
     });
   }
 });

@@ -77,6 +77,8 @@ router.get("/properties/:admin_id", async (req, res) => {
   }
 });
 
+
+
 // ============== User ==================================
 
 router.post("/rentals", async (req, res) => {
@@ -473,6 +475,24 @@ router.delete("/rental-owners/:rentalowner_id", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/rental_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const rentals = await Rentals.find({ admin_id });
+    const count = rentals.length;
+    res.status(200).json({
+      statusCode: 200,
+      count: count,
+      message: "Work-Order not found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
   }
 });
 

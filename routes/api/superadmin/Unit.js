@@ -46,6 +46,53 @@ router.get("/unit/:admin_id", async (req, res) => {
   }
 });
 
+router.post("/search", async (req, res) => {
+  try {
+    const searchValue = req.body.search;
+    const adminId = req.body.admin_id;
+
+    let query = {
+      admin_id: adminId,
+    };
+
+    if (searchValue) {
+      query.$or = [
+        { rental_unit: { $regex: new RegExp(searchValue, "i") } },
+        { rental_unit_adress: { $regex: new RegExp(searchValue, "i") } },
+      ];
+    }
+
+    const data = await Tenant.find(query);
+
+    const promises = data.map((tenant) => {
+      return Tenant.findOne({ admin_id: tenant.admin_id });
+    });
+
+    const adminDataArray = await Promise.all(promises);
+
+    const updatedData = data.map((tenant, index) => {
+      return {
+        ...tenant._doc,
+        admin_data: adminDataArray[index],
+      };
+    });
+
+    const dataCount = updatedData.length;
+
+    res.json({
+      statusCode: 200,
+      data: updatedData,
+      count: dataCount,
+      message: "Search successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 // ====================  Admin  ==================================
 
 router.get("/rental_unit/:rental_id", async (req, res) => {

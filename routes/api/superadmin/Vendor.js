@@ -14,6 +14,7 @@ router.post("/login", async (req, res) => {
     const vendor = await Vendor.findOne({
       vendor_email: req.body.email,
     });
+    console.log(vendor, "vendor")
 
     if (!vendor) {
       return res.status(201).json({

@@ -5,7 +5,6 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Rentals = require("../../../modals/superadmin/Rentals");
 var Unit = require("../../../modals/superadmin/Unit");
-var Rentals = require("../../../modals/superadmin/Rentals");
 var RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
 var PropertyType = require("../../../modals/superadmin/PropertyType");
@@ -53,6 +52,60 @@ router.get("/tenant/get/:admin_id", async (req, res) => {
     });
   } catch (error) {
     res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
+router.post("/search", async (req, res) => {
+  try {
+    const searchValue = req.body.search;
+    const adminId = req.body.admin_id;
+
+    let query = {
+      admin_id: adminId,
+    };
+
+    if (searchValue) {
+      query.$or = [
+        { tenant_firstName: { $regex: new RegExp(searchValue, "i") } },
+        { tenant_lastName: { $regex: new RegExp(searchValue, "i") } },
+        { tenant_email: { $regex: new RegExp(searchValue, "i") } },
+        {
+          tenant_phoneNumber: !isNaN(searchValue)
+            ? Number(searchValue)
+            : null,
+        },
+      ];
+    }
+
+    const data = await Tenant.find(query);
+
+    const promises = data.map((tenant) => {
+      return Tenant.findOne({ admin_id: tenant.admin_id });
+    });
+
+    const adminDataArray = await Promise.all(promises);
+
+    const updatedData = data.map((tenant, index) => {
+      return {
+        ...tenant._doc,
+        admin_data: adminDataArray[index],
+      };
+    });
+
+    const dataCount = updatedData.length;
+
+    res.json({
+      statusCode: 200,
+      data: updatedData,
+      count: dataCount,
+      message: "Search successful",
+    });
+  } catch (error) {
+    res.status(500).json({
       statusCode: 500,
       message: error.message,
     });
@@ -478,6 +531,24 @@ router.get("/property_count/:tenant_id", async (req, res) => {
     res.json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+
+router.get("/tenant_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const rentals = await Tenant.find({ admin_id });
+    const count = rentals.length;
+    res.status(200).json({
+      statusCode: 200,
+      count: count,
+      message: "Work-Order not found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
     });
   }
 });
