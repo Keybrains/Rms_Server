@@ -150,9 +150,10 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
   try {
     const { workOrder_id } = req.params;
 
+    console.log(req.body);
     // Ensure that updatedAt field is set
     req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-
+    console.log(req.body);
     const result = await WorkOrder.findOneAndUpdate(
       { workOrder_id: workOrder_id },
       { $set: req.body.workOrder },

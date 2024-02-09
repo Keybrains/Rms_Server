@@ -77,8 +77,6 @@ router.get("/properties/:admin_id", async (req, res) => {
   }
 });
 
-
-
 // ============== User ==================================
 
 router.post("/rentals", async (req, res) => {
@@ -492,6 +490,29 @@ router.get("/rental_count/:admin_id", async (req, res) => {
     res.status(500).json({
       statusCode: 500,
       message: err.message,
+    });
+  }
+});
+
+router.put("/proparty_image/:rental_id", async (req, res) => {
+  try {
+    console.log(rental_id, req.body);
+    const { rental_id } = req.params;
+    const data = await Rentals.findOneAndUpdate(
+      { rental_id, admin_id },
+      { $set: req.body },
+      { new: true }
+    );
+
+    res.status(200).json({
+      statusCode: 200,
+      data: data,
+      message: "Image updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
     });
   }
 });
