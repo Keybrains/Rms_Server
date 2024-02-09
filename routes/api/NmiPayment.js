@@ -1532,20 +1532,18 @@ const sendNmiRequest = async (config, paymentDetails) => {
 
 router.post("/add-plan", async (req, res) => {
   try {
-    console.log("API hitt start");
     const {
-      security_key,
-      recurring,
+      //security_key,
       planPayments,
       planAmount,
       planName,
       planId,
-      dayFrequency,
-      billingCycle,
+      //dayFrequency,
+      day_of_month,
+      month_frequency,
       // termsConditions,
       // earlyCancellationFee,
       // dueChargeMethod,
-      chargeAmount,
       // allowMemberChangePlan,
       // allowMemberCancelBilling,
       // allowMemberPauseBilling,
@@ -1553,11 +1551,13 @@ router.post("/add-plan", async (req, res) => {
 
     let postData = {
       recurring: "add_plan",
-      plan_payments: planPayments,
+      plan_payments: planPayments, //if 0 than payments done until cancel
       plan_amount: planAmount,
       plan_name: planName,
       plan_id: planId,
-      day_frequency: dayFrequency ? dayFrequency : 30,
+      //day_frequency: dayFrequency ? dayFrequency : 30,
+      month_frequency: month_frequency,
+      day_of_month: day_of_month,
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
     };
 
@@ -1577,28 +1577,56 @@ router.post("/add-plan", async (req, res) => {
         const parsedResponse = querystring.parse(response.data);
 
         if (parsedResponse.response_code == 100) {
-          const newPaymentPlan = await PaymentPlans.create({
-            planId,
-            planName,
-            planAmount,
-            planPayments,
-            chargeDayFrequency: dayFrequency,
-            billingCycle,
-            // planTermsAndConditions: termsConditions,
-            // earlyCancellationFee,
-            // dueChargeMethod,
-            chargeAmount,
-            // allowMemberChangePlan,
-            // allowMemberCancelBilling,
-            // allowMemberPauseBilling,
-          });
-
-          const paymentPlanSaved = await newPaymentPlan.save();
           console.log("API hitt End");
 
-          if (paymentPlanSaved)
             sendResponse(res, "Payment plan added successfully.");
-          else sendResponse(res, "Failed to add payment plan!", 400);
+        } else sendResponse(res, parsedResponse.responsetext, 403);
+        console.log("parsedResponse.responsetext", parsedResponse.responsetext);
+      })
+      .catch(function (error) {
+        //console.log("for 500", res);
+
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+router.post("/delete-plan", async (req, res) => {
+  try {
+    const {
+      //security_key,
+      current_plan_id,
+      planId,
+    } = req.body;
+
+    let postData = {
+      recurring: "delete_plan",
+      current_plan_id:current_plan_id,
+      plan_id: planId,
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+    };
+
+    postData = querystring.stringify(postData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: postData,
+    };
+
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+
+        if (parsedResponse.response_code == 100) {
+          console.log("API hitt End");
+
+            sendResponse(res, "Payment plan added successfully.");
         } else sendResponse(res, parsedResponse.responsetext, 403);
         console.log("parsedResponse.responsetext", parsedResponse.responsetext);
       })
