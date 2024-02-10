@@ -496,10 +496,10 @@ router.get("/rental_count/:admin_id", async (req, res) => {
 
 router.put("/proparty_image/:rental_id", async (req, res) => {
   try {
-    console.log(rental_id, req.body);
+    
     const { rental_id } = req.params;
     const data = await Rentals.findOneAndUpdate(
-      { rental_id, admin_id },
+      { rental_id },
       { $set: req.body },
       { new: true }
     );
