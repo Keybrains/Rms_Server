@@ -157,4 +157,25 @@ router.get("/rental_owner_count/:admin_id", async (req, res) => {
   }
 });
 
+router.post("/rental_owner", async (req, res) => {
+  try {
+    const rentalOwnerTimestamp = Date.now();
+    req.body.rentalowner_id = `${rentalOwnerTimestamp}`;
+    req.body.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    req.body.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const rentalOwner = await RentalOwner.create(req.body);
+    res.status(200).json({
+      statusCode: 200,
+      data: rentalOwner,
+      message: "Rental-Owner Added Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;
