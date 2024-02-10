@@ -62,17 +62,17 @@ router.post("/search", async (req, res) => {
       ];
     }
 
-    const data = await Tenant.find(query);
+    const data = await Unit.find(query);
 
-    const promises = data.map((tenant) => {
-      return Tenant.findOne({ admin_id: tenant.admin_id });
+    const promises = data.map((unit_data) => {
+      return Unit.findOne({ admin_id: unit_data.admin_id });
     });
 
     const adminDataArray = await Promise.all(promises);
 
-    const updatedData = data.map((tenant, index) => {
+    const updatedData = data.map((unit_data, index) => {
       return {
-        ...tenant._doc,
+        ...unit_data._doc,
         admin_data: adminDataArray[index],
       };
     });
