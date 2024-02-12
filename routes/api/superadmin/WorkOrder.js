@@ -146,24 +146,83 @@ router.get("/work-orders/:admin_id", async (req, res) => {
   }
 });
 
+// router.put("/work-order/:workOrder_id", async (req, res) => {
+//   try {
+//     const { workOrder_id } = req.params;
+
+//     // Ensure that updatedAt field is set
+//     req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+//     console.log(req.body);
+//     const result = await WorkOrder.findOneAndUpdate(
+//       { workOrder_id: workOrder_id },
+//       { $set: req.body.workOrder },
+//       { new: true }
+//     );
+
+//     const parts = [];
+
+//     for (const part of req.body.parts) {
+//       part["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+//       const partsData = await Parts.findOneAndUpdate(
+//         { parts_id: part.parts_id },
+//         { $set: part },
+//         { new: true }
+//       );
+//       parts.push(partsData);
+//     }
+
+//     if (result) {
+//       res.json({
+//         statusCode: 200,
+//         data: { result, parts },
+//         message: "Work-Order updsted Successfully",
+//       });
+//     } else {
+//       res.status(202).json({
+//         statusCode: 202,
+//         message: "Work-Order not found",
+//       });
+//     }
+//   } catch (err) {
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: err.message,
+//     });
+//   }
+// });
+
 router.put("/work-order/:workOrder_id", async (req, res) => {
   try {
     const { workOrder_id } = req.params;
+    const { status, date, staffmember_id, updated_by } = req.body.workOrder;
 
-    console.log(req.body);
-    // Ensure that updatedAt field is set
-    req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    console.log(req.body);
+    // Ensure that updatedAt field is set to current date
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
     const result = await WorkOrder.findOneAndUpdate(
       { workOrder_id: workOrder_id },
-      { $set: req.body.workOrder },
+      {
+        $set: {
+          ...req.body.workOrder,
+          updatedAt
+        },
+        $push: {
+          workorder_updates: {
+            status,
+            date,
+            staffmember_id,
+            updated_by,
+            updatedAt
+          }
+        }
+      },
       { new: true }
     );
 
     const parts = [];
 
     for (const part of req.body.parts) {
-      part["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+      part["updatedAt"] = updatedAt;
       const partsData = await Parts.findOneAndUpdate(
         { parts_id: part.parts_id },
         { $set: part },
@@ -176,7 +235,7 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
       res.json({
         statusCode: 200,
         data: { result, parts },
-        message: "Work-Order updsted Successfully",
+        message: "Work-Order updated Successfully",
       });
     } else {
       res.status(202).json({
@@ -191,6 +250,9 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
     });
   }
 });
+
+
+
 
 router.get("/vendor_work/:vendor_id", async (req, res) => {
   try {
@@ -340,6 +402,35 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
     res.json({
       statusCode: 200,
       data: return_data,
+      count: count,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/rental_workorder/:rental_id", async (req, res) => {
+  try {
+    const rental_id = req.params.rental_id;
+
+    var data = await WorkOrder.aggregate([
+      {
+        $match: { rental_id: rental_id }, // Filter by user_id
+      },
+      {
+        $sort: { createdAt: -1 }, // Filter by user_id
+      },
+    ]);
+
+    const count = data.length;
+
+    res.json({
+      statusCode: 200,
+      data: data,
       count: count,
       message: "Read All Request",
     });
