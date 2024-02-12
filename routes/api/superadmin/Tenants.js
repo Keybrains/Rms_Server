@@ -58,7 +58,6 @@ router.get("/tenant/get/:admin_id", async (req, res) => {
   }
 });
 
-
 router.post("/search", async (req, res) => {
   try {
     const searchValue = req.body.search;
@@ -74,9 +73,7 @@ router.post("/search", async (req, res) => {
         { tenant_lastName: { $regex: new RegExp(searchValue, "i") } },
         { tenant_email: { $regex: new RegExp(searchValue, "i") } },
         {
-          tenant_phoneNumber: !isNaN(searchValue)
-            ? Number(searchValue)
-            : null,
+          tenant_phoneNumber: !isNaN(searchValue) ? Number(searchValue) : null,
         },
       ];
     }
