@@ -58,7 +58,6 @@ router.get("/tenant/get/:admin_id", async (req, res) => {
   }
 });
 
-
 router.post("/search", async (req, res) => {
   try {
     const searchValue = req.body.search;
@@ -74,9 +73,7 @@ router.post("/search", async (req, res) => {
         { tenant_lastName: { $regex: new RegExp(searchValue, "i") } },
         { tenant_email: { $regex: new RegExp(searchValue, "i") } },
         {
-          tenant_phoneNumber: !isNaN(searchValue)
-            ? Number(searchValue)
-            : null,
+          tenant_phoneNumber: !isNaN(searchValue) ? Number(searchValue) : null,
         },
       ];
     }
@@ -544,6 +541,48 @@ router.get("/tenant_count/:admin_id", async (req, res) => {
       statusCode: 200,
       count: count,
       message: "Work-Order not found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+router.get("/rental_tenant/:rental_id", async (req, res) => {
+  try {
+    const { rental_id } = req.params;
+    const leases = await Lease.find({ rental_id });
+
+    const countsMap = {};
+    leases.forEach((lease) => {
+      const key = `${lease.unit_id}-${lease.tenant_id}`;
+      countsMap[key] = (countsMap[key] || 0) + 1;
+    });
+
+    const countsArray = Object.entries(countsMap).map(([key, count]) => {
+      const [unitId, tenantId] = key.split("-");
+      return {
+        unit_id: parseInt(unitId),
+        tenant_id: parseInt(tenantId),
+        total_count: count,
+      };
+    });
+
+    const tenants = [];
+    for (const lease of countsArray) {
+      const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+      if (tenant) {
+        const object = { ...tenant.toObject(), ...lease };
+        tenants.push(object);
+      }
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      data: tenants,
+      count: tenants.length,
     });
   } catch (error) {
     res.status(500).json({

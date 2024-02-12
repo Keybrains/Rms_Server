@@ -21,6 +21,15 @@ const workOrderSchema = new Schema({
   work_charge_to: { type: String },
   status: { type: String },
   date: { type: String },
+  workorder_updates: [
+    {
+      status: { type: String },
+      date: { type: String },
+      updated_by: { type: Object },
+      staffmember_id: { type: String },
+      updatedAt: { type: String },
+    },
+  ],
 
   createdAt: { type: String },
   updatedAt: { type: String },
