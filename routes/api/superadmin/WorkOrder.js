@@ -204,7 +204,7 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
       {
         $set: {
           ...req.body.workOrder,
-          updatedAt
+          updatedAt,
         },
         $push: {
           workorder_updates: {
@@ -212,9 +212,9 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
             date,
             staffmember_id,
             updated_by,
-            updatedAt
-          }
-        }
+            updatedAt,
+          },
+        },
       },
       { new: true }
     );
@@ -250,9 +250,6 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
     });
   }
 });
-
-
-
 
 router.get("/vendor_work/:vendor_id", async (req, res) => {
   try {
@@ -419,12 +416,19 @@ router.get("/rental_workorder/:rental_id", async (req, res) => {
 
     var data = await WorkOrder.aggregate([
       {
-        $match: { rental_id: rental_id }, // Filter by user_id
+        $match: { rental_id: rental_id },
       },
       {
-        $sort: { createdAt: -1 }, // Filter by user_id
+        $sort: { createdAt: -1 },
       },
     ]);
+
+    for (const work of data) {
+      const staffmember = await StaffMember.findOne({
+        staffmember_id: work.staffmember_id,
+      });
+      work.staffmember_name = staffmember ? staffmember.staffmember_name : null;
+    }
 
     const count = data.length;
 

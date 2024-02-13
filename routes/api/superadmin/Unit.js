@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var Unit = require("../../../modals/superadmin/Unit");
+var Lease = require("../../../modals/superadmin/Leasing");
 var Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
 
@@ -12,10 +13,10 @@ router.get("/unit/:admin_id", async (req, res) => {
 
     var data = await Unit.aggregate([
       {
-        $match: { admin_id: admin_id }, 
+        $match: { admin_id: admin_id },
       },
       {
-        $sort: { createdAt: -1 }, 
+        $sort: { createdAt: -1 },
       },
     ]);
 
@@ -104,6 +105,41 @@ router.get("/rental_unit/:rental_id", async (req, res) => {
         $match: { rental_id: rental_id },
       },
     ]);
+
+    const leases = await Lease.find({ rental_id });
+
+    const countsMap = {};
+    leases.forEach((lease) => {
+      const key = lease.unit_id;
+      if (!countsMap[key]) {
+        countsMap[key] = {};
+      }
+      countsMap[key][lease.tenant_id] =
+        (countsMap[key][lease.tenant_id] || 0) + 1;
+    });
+
+    const countsArray = Object.entries(countsMap).map(
+      ([unitId, tenantCounts]) => {
+        const totalCount = Object.values(tenantCounts).reduce(
+          (acc, count) => acc + count,
+          0
+        );
+        return {
+          unit_id: parseInt(unitId),
+          tenant_counts: tenantCounts,
+          total_count: totalCount,
+        };
+      }
+    );
+
+    data.forEach((unit) => {
+      const unitCounts = countsArray.find(
+        (item) => item.unit_id == unit.unit_id
+      );
+      if (unitCounts) {
+        unit.counts = unitCounts.total_count;
+      }
+    });
 
     res.json({
       statusCode: 200,

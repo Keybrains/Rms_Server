@@ -34,7 +34,7 @@ router.get("/lease/get/:admin_id", async (req, res) => {
     for (let i = 0; i < data.length; i++) {
       const unitId = data[i].unit_id;
       const tenant_id = data[i].tenant_id;
-      const rental_id = data[i].rental_id
+      const rental_id = data[i].rental_id;
 
       const unit_data = await Unit.findOne({ unit_id: unitId }).exec();
 
@@ -43,11 +43,11 @@ router.get("/lease/get/:admin_id", async (req, res) => {
         "tenant_id admin_id tenant_firstName tenant_lastName createdAt updatedAt"
       );
 
-      const rental_data = await Rentals.findOne({rental_id: rental_id })
+      const rental_data = await Rentals.findOne({ rental_id: rental_id });
 
       data[i].tenant_data = tenant_data;
       data[i].unit_data = unit_data;
-      data[i].tenant_data = tenant_data
+      data[i].tenant_data = tenant_data;
     }
 
     const count = data.length;
@@ -429,6 +429,34 @@ router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+router.get("/unit_leases/:unit_id", async (req, res) => {
+  const unit_id = req.params.unit_id;
+  try {
+    const leases = await Lease.find({ unit_id: unit_id });
+
+    const data = [];
+
+    await Promise.all(
+      leases.map(async (lease) => {
+        const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+        
+        data.push({
+          tenant,
+          lease,
+        });
+      })
+    );
+
+    res.json({
+      statusCode: 200,
+      data: data,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
