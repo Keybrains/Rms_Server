@@ -48,6 +48,7 @@ var VendorAdmindRouter = require("./routes/api/superadmin/Vendor.js");
 var ApplicantAdmindRouter = require("./routes/api/superadmin/Applicant.js");
 var WorkOrderRouter = require("./routes/api/superadmin/WorkOrder.js");
 var RentalOwnerRouter = require("./routes/api/superadmin/RentalOwner.js");
+var ChargesRouter = require("./routes/api/superadmin/Charges.js");
 
 // Payments
 var PaymentRouter = require("./routes/api/payments/Payment.js");
@@ -85,6 +86,7 @@ app.use("/api/vendor", VendorAdmindRouter);
 app.use("/api/applicant", ApplicantAdmindRouter);
 app.use("/api/work-order", WorkOrderRouter);
 app.use("/api/rental_owner", RentalOwnerRouter);
+app.use("/api/charge", ChargesRouter);
 
 // Payment
 app.use("/api/payment", PaymentRouter);
