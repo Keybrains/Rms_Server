@@ -28,7 +28,7 @@ router.post("/payment", async (req, res) => {
   }
 });
 
-router.get("/payment/:lease_id", async (req, res) => {
+router.get("/charges/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
 
@@ -70,7 +70,7 @@ router.get("/payment/:lease_id", async (req, res) => {
 
     res.json({
       statusCode: 200,
-      totalPayments: totalPayments,
+      totalCharges: totalPayments,
       message: "Read All Lease",
     });
   } catch (error) {
@@ -94,6 +94,55 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
     var charge = await Charge.aggregate([
       {
         $match: { lease_id: lease_id },
+      },
+    ]);
+
+    const data = [
+      ...payment.map((item) => ({ ...item, type: "payment" })),
+      ...charge.map((item) => ({ ...item, type: "charge" })),
+    ];
+
+    const sortedDates = data.sort(
+      (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)
+    );
+
+    var amount = 0;
+    for (const item of sortedDates) {
+      if (item.type === "payment") {
+        amount -= item.amount;
+      } else if (item.type === "charge") {
+        amount += item.amount;
+      }
+      item.balance = amount;
+    }
+
+    res.json({
+      statusCode: 200,
+      data: sortedDates.reverse(),
+      totalAmount: amount,
+      message: "Read All Lease",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/tenant_financial/:tenant_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+
+    var payment = await Payment.aggregate([
+      {
+        $match: { tenant_id: tenant_id },
+      },
+    ]);
+
+    var charge = await Charge.aggregate([
+      {
+        $match: { tenant_id: tenant_id },
       },
     ]);
 
