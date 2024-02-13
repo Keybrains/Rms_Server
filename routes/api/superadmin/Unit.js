@@ -4,6 +4,8 @@ var Unit = require("../../../modals/superadmin/Unit");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
+var Lease = require("../../../modals/superadmin/Leasing");
+
 
 // ===================  Super Admin============================
 
@@ -137,7 +139,9 @@ router.get("/rental_unit/:rental_id", async (req, res) => {
         (item) => item.unit_id == unit.unit_id
       );
       if (unitCounts) {
+        console.log(unitCounts);
         unit.counts = unitCounts.total_count;
+        console.log(unit);
       }
     });
 

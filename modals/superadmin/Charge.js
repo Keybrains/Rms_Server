@@ -3,13 +3,14 @@ const Schema = mongoose.Schema;
 
 const chargeSchema = new Schema({
   charge_id: { type: String },
-
   admin_id: { type: String },
   tenant_id: { type: String },
   lease_id: { type: String },
+
   memo: { type: String },
   charge_type: { type: String },
   account: { type: String },
+  type: { type: String },
   amount: { type: Number },
   date: { type: String },
   rent_cycle: { type: String },

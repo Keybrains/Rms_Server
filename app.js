@@ -49,6 +49,10 @@ var ApplicantAdmindRouter = require("./routes/api/superadmin/Applicant.js");
 var WorkOrderRouter = require("./routes/api/superadmin/WorkOrder.js");
 var RentalOwnerRouter = require("./routes/api/superadmin/RentalOwner.js");
 
+// Payments
+var PaymentRouter = require("./routes/api/payments/Payment.js");
+var SurchargeRouter = require("./routes/api/payments/Surcharge.js");
+
 var app = express();
 
 // view engine setup
@@ -81,6 +85,10 @@ app.use("/api/vendor", VendorAdmindRouter);
 app.use("/api/applicant", ApplicantAdmindRouter);
 app.use("/api/work-order", WorkOrderRouter);
 app.use("/api/rental_owner", RentalOwnerRouter);
+
+// Payment
+app.use("/api/payment", PaymentRouter);
+app.use("/api/surcharge", SurchargeRouter);
 
 app.use(function (req, res, next) {
   next(createError(404));

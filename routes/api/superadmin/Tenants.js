@@ -558,8 +558,15 @@ router.get("/rental_tenant/:rental_id", async (req, res) => {
     const tenants = [];
     for (const lease of leases) {
       const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+      const unit = await Unit.findOne({ unit_id: lease.unit_id });
       if (tenant) {
-        tenants.push({ ...tenant.toObject(), ...lease.toObject() });
+        tenants.push({
+          ...tenant.toObject(),
+          ...lease.toObject(),
+          ...rental.toObject(),
+          ...unit.toObject(),
+        });
       }
     }
 
