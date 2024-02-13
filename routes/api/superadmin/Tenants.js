@@ -555,27 +555,18 @@ router.get("/rental_tenant/:rental_id", async (req, res) => {
     const { rental_id } = req.params;
     const leases = await Lease.find({ rental_id });
 
-    const countsMap = {};
-    leases.forEach((lease) => {
-      const key = `${lease.unit_id}-${lease.tenant_id}`;
-      countsMap[key] = (countsMap[key] || 0) + 1;
-    });
-
-    const countsArray = Object.entries(countsMap).map(([key, count]) => {
-      const [unitId, tenantId] = key.split("-");
-      return {
-        unit_id: parseInt(unitId),
-        tenant_id: parseInt(tenantId),
-        total_count: count,
-      };
-    });
-
     const tenants = [];
-    for (const lease of countsArray) {
+    for (const lease of leases) {
       const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+      const unit = await Unit.findOne({ unit_id: lease.unit_id });
       if (tenant) {
-        const object = { ...tenant.toObject(), ...lease };
-        tenants.push(object);
+        tenants.push({
+          ...tenant.toObject(),
+          ...lease.toObject(),
+          ...rental.toObject(),
+          ...unit.toObject(),
+        });
       }
     }
 

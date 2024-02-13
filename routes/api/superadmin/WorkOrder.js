@@ -419,12 +419,19 @@ router.get("/rental_workorder/:rental_id", async (req, res) => {
 
     var data = await WorkOrder.aggregate([
       {
-        $match: { rental_id: rental_id }, // Filter by user_id
+        $match: { rental_id: rental_id },
       },
       {
-        $sort: { createdAt: -1 }, // Filter by user_id
+        $sort: { createdAt: -1 },
       },
     ]);
+
+    for (const work of data) {
+      const staffmember = await StaffMember.findOne({
+        staffmember_id: work.staffmember_id,
+      });
+      work.staffmember_name = staffmember ? staffmember.staffmember_name : null;
+    }
 
     const count = data.length;
 

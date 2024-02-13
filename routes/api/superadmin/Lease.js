@@ -34,7 +34,7 @@ router.get("/lease/get/:admin_id", async (req, res) => {
     for (let i = 0; i < data.length; i++) {
       const unitId = data[i].unit_id;
       const tenant_id = data[i].tenant_id;
-      const rental_id = data[i].rental_id
+      const rental_id = data[i].rental_id;
 
       const unit_data = await Unit.findOne({ unit_id: unitId }).exec();
 
@@ -43,11 +43,11 @@ router.get("/lease/get/:admin_id", async (req, res) => {
         "tenant_id admin_id tenant_firstName tenant_lastName createdAt updatedAt"
       );
 
-      const rental_data = await Rentals.findOne({rental_id: rental_id })
+      const rental_data = await Rentals.findOne({ rental_id: rental_id });
 
       data[i].tenant_data = tenant_data;
       data[i].unit_data = unit_data;
-      data[i].tenant_data = tenant_data
+      data[i].tenant_data = tenant_data;
     }
 
     const count = data.length;
@@ -426,6 +426,83 @@ router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/unit_leases/:unit_id", async (req, res) => {
+  const unit_id = req.params.unit_id;
+  try {
+    const leases = await Lease.find({ unit_id: unit_id });
+
+    const data = [];
+
+    await Promise.all(
+      leases.map(async (lease) => {
+        const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+        const charge = await Charge.findOne({
+          lease_id: lease.lease_id,
+          charge_type: "Last Month's Rent",
+        });
+        data.push({
+          tenant,
+          lease,
+          charge,
+        });
+      })
+    );
+
+    res.json({
+      statusCode: 200,
+      data: data,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/lease_summary/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
+
+    var data = await Lease.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    //   // Fetch client and property information for each item in data
+    for (let i = 0; i < data.length; i++) {
+      const tenant_id = data[i].tenant_id;
+      const unit_id = data[i].unit_id;
+      const rental_id = data[i].rental_id;
+
+      // Fetch property information
+      const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
+      const rental_data = await Rentals.findOne({
+        rental_id: rental_id,
+      });
+      const unit_data = await Unit.findOne({ unit_id: unit_id });
+
+      // Attach client and property information to the data item
+      data[i].tenant_data = tenant_data;
+      data[i].rental_data = rental_data;
+      data[i].unit_data = unit_data;
+    }
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
       statusCode: 500,
       message: error.message,
     });
