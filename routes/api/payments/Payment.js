@@ -81,7 +81,7 @@ router.get("/payment/:lease_id", async (req, res) => {
   }
 });
 
-router.get("/test/:lease_id", async (req, res) => {
+router.get("/charges_payments/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
 
@@ -129,7 +129,5 @@ router.get("/test/:lease_id", async (req, res) => {
     });
   }
 });
-
-
 
 module.exports = router;
