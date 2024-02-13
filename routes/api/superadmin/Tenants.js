@@ -583,4 +583,50 @@ router.get("/rental_tenant/:rental_id", async (req, res) => {
   }
 });
 
+router.get("/leases/:lease_id", async (req, res) => {
+  try {
+    const { lease_id } = req.params;
+
+    const getedLease = await Lease.findOne({ lease_id });
+    const leasesData = await Lease.find({
+      rental_id: getedLease.rental_id,
+      unit_id: getedLease.unit_id,
+    });
+
+    const tenants = [];
+    for (const lease of leasesData) {
+      const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+      const unit = await Unit.findOne({ unit_id: lease.unit_id });
+      if (tenant) {
+        const object = {
+          lease_id: lease.lease_id,
+          tenant_id: lease.tenant_id,
+          admin_id: lease.admin_id,
+          rental_id: lease.rental_id,
+          unit_id: lease.unit_id,
+          lease_type: lease.lease_type,
+          start_date: lease.start_date,
+          end_date: lease.end_date,
+          tenant_firstName: tenant.tenant_firstName,
+          tenant_lastName: tenant.tenant_lastName,
+          tenant_email: tenant.tenant_email,
+          rental_adress: rental.rental_adress,
+          rental_unit: unit.rental_unit,
+        };
+        tenants.push(object);
+      }
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      data: tenants,
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
 module.exports = router;

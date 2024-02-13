@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var Payment = require("../../../modals/payment/Payment");
+var Surcharge = require("../../../modals/payment/Surcharge");
 var moment = require("moment");
 const Charge = require("../../../modals/superadmin/Charge");
 const Leasing = require("../../../modals/superadmin/Leasing");
@@ -28,9 +29,14 @@ router.post("/payment", async (req, res) => {
   }
 });
 
-router.get("/payment/:lease_id", async (req, res) => {
+router.get("/charges/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
+
+    const lease_data = await Leasing.findOne({ lease_id });
+    const surcharge = await Surcharge.findOne({
+      admin_id: lease_data.admin_id,
+    });
 
     var payment = await Payment.aggregate([
       {
@@ -70,7 +76,8 @@ router.get("/payment/:lease_id", async (req, res) => {
 
     res.json({
       statusCode: 200,
-      totalPayments: totalPayments,
+      totalCharges: totalPayments,
+      Surcharge: surcharge,
       message: "Read All Lease",
     });
   } catch (error) {
@@ -81,7 +88,7 @@ router.get("/payment/:lease_id", async (req, res) => {
   }
 });
 
-router.get("/test/:lease_id", async (req, res) => {
+router.get("/charges_payments/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
 
@@ -130,6 +137,53 @@ router.get("/test/:lease_id", async (req, res) => {
   }
 });
 
+router.get("/tenant_financial/:tenant_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
 
+    var payment = await Payment.aggregate([
+      {
+        $match: { tenant_id: tenant_id },
+      },
+    ]);
+
+    var charge = await Charge.aggregate([
+      {
+        $match: { tenant_id: tenant_id },
+      },
+    ]);
+
+    const data = [
+      ...payment.map((item) => ({ ...item, type: "payment" })),
+      ...charge.map((item) => ({ ...item, type: "charge" })),
+    ];
+
+    const sortedDates = data.sort(
+      (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)
+    );
+
+    var amount = 0;
+    for (const item of sortedDates) {
+      if (item.type === "payment") {
+        amount -= item.amount;
+      } else if (item.type === "charge") {
+        amount += item.amount;
+      }
+      item.balance = amount;
+    }
+
+    res.json({
+      statusCode: 200,
+      data: sortedDates.reverse(),
+      totalAmount: amount,
+      message: "Read All Lease",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 module.exports = router;

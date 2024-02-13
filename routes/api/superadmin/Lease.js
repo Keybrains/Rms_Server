@@ -7,6 +7,7 @@ var Charge = require("../../../modals/superadmin/Charge");
 var Unit = require("../../../modals/superadmin/Unit");
 var Rentals = require("../../../modals/superadmin/Rentals");
 var emailService = require("./emailService");
+const RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
@@ -477,28 +478,101 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
       },
     ]);
 
-    //   // Fetch client and property information for each item in data
-    for (let i = 0; i < data.length; i++) {
-      const tenant_id = data[i].tenant_id;
-      const unit_id = data[i].unit_id;
-      const rental_id = data[i].rental_id;
+    const tenant_id = data[0].tenant_id;
+    const unit_id = data[0].unit_id;
+    const rental_id = data[0].rental_id;
 
-      // Fetch property information
-      const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
-      const rental_data = await Rentals.findOne({
-        rental_id: rental_id,
-      });
-      const unit_data = await Unit.findOne({ unit_id: unit_id });
+    const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
+    const rental_data = await Rentals.findOne({
+      rental_id: rental_id,
+    });
 
-      // Attach client and property information to the data item
-      data[i].tenant_data = tenant_data;
-      data[i].rental_data = rental_data;
-      data[i].unit_data = unit_data;
-    }
+    const rentalOwner_data = await RentalOwner.findOne({
+      rentalowner_id: rental_data.rentalowner_id,
+    });
+
+    const unit_data = await Unit.findOne({ unit_id: unit_id });
+    const charge = await Charge.findOne({
+      lease_id: lease_id,
+      charge_type: "Last Month's Rent",
+    });
+
+    const object = {
+      lease_id: data[0].lease_id,
+      tenant_id: data[0].tenant_id,
+      admin_id: data[0].admin_id,
+      rental_id: data[0].rental_id,
+      unit_id: data[0].unit_id,
+      lease_type: data[0].lease_type,
+      start_date: data[0].start_date,
+      end_date: data[0].end_date,
+      tenant_firstName: tenant_data.tenant_firstName,
+      tenant_lastName: tenant_data.tenant_lastName,
+      tenant_email: tenant_data.tenant_email,
+      rental_adress: rental_data.rental_adress,
+      rental_unit: unit_data.rental_unit,
+      rentalOwner_firstName: rentalOwner_data.rentalOwner_firstName,
+      rentalOwner_lastName: rentalOwner_data.rentalOwner_lastName,
+      charge_id: charge.charge_id,
+      amount: charge.amount,
+      date: charge.date,
+    };
 
     res.json({
       statusCode: 200,
-      data: data,
+      data: object,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/lease_moveout/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
+    req.body["end_date"] = req.body.moveout_date;
+
+    const lease = await Lease.findOneAndUpdate(
+      { lease_id },
+      {
+        $set: {
+          end_date: req.body.end_date,
+          moveout_notice_given_date: req.body.moveout_notice_given_date,
+          moveout_date: req.body.moveout_date,
+        },
+      },
+      { new: true }
+    );
+
+    res.json({
+      statusCode: 200,
+      data: lease,
+      message: "Entry Updated Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/tenants/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
+
+    var data = await Lease.findOne({ lease_id });
+
+    const tenant_id = data.tenant_id;
+    const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
+
+    res.json({
+      statusCode: 200,
+      data: tenant_data,
       message: "Read All Request",
     });
   } catch (error) {
