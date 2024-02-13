@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var Unit = require("../../../modals/superadmin/Unit");
+var Lease = require("../../../modals/superadmin/Leasing");
 var Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
 var Lease = require("../../../modals/superadmin/Leasing");
@@ -14,10 +15,10 @@ router.get("/unit/:admin_id", async (req, res) => {
 
     var data = await Unit.aggregate([
       {
-        $match: { admin_id: admin_id }, 
+        $match: { admin_id: admin_id },
       },
       {
-        $sort: { createdAt: -1 }, 
+        $sort: { createdAt: -1 },
       },
     ]);
 

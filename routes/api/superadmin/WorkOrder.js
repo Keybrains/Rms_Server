@@ -204,7 +204,7 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
       {
         $set: {
           ...req.body.workOrder,
-          updatedAt
+          updatedAt,
         },
         $push: {
           workorder_updates: {
@@ -212,9 +212,9 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
             date,
             staffmember_id,
             updated_by,
-            updatedAt
-          }
-        }
+            updatedAt,
+          },
+        },
       },
       { new: true }
     );
@@ -250,9 +250,6 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
     });
   }
 });
-
-
-
 
 router.get("/vendor_work/:vendor_id", async (req, res) => {
   try {
