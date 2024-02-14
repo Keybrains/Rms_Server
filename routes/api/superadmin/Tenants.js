@@ -12,6 +12,7 @@ const { createTenantToken } = require("../../../authentication");
 var moment = require("moment");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const crypto = require("crypto");
+var emailService = require("./emailService");
 
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
@@ -244,6 +245,25 @@ router.post("/tenants", async (req, res) => {
       tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
       tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
+      // Ensure recipient email is defined
+      if (!req.body.tenant_email) {
+        return res
+          .status(400)
+          .json({ message: "Recipient email not provided" });
+      }
+
+      const subject = "Tenant Login Credentials";
+      const text = `
+        <p>Hello,</p>
+        <p>Here are your credentials for tenant login:</p>
+        <p>Email: ${req.body.tenant_email}</p>
+        <p>Password: ${req.body.tenant_password}</p>
+        <p>Login URL: https://your-tenant-login-url.com</p>
+      `;
+
+      // Send email with login credentials
+      await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
+
       let hashConvert = encrypt(req.body.tenant_password);
       req.body.tenant_password = hashConvert;
 
@@ -251,7 +271,7 @@ router.post("/tenants", async (req, res) => {
       res.json({
         statusCode: 200,
         data: tenant,
-        message: "Add Lease Successfully",
+        message: "Add Tenant Successfully",
       });
     }
   } catch (error) {
