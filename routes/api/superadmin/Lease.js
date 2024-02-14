@@ -447,11 +447,17 @@ router.get("/unit_leases/:unit_id", async (req, res) => {
           lease_id: lease.lease_id,
           charge_type: "Last Month's Rent",
         });
-        data.push({
-          tenant,
-          lease,
-          charge,
-        });
+        const object = {
+          tenant_id: tenant.tenant_id,
+          tenant_firstName: tenant.tenant_firstName,
+          tenant_lastName: tenant.tenant_lastName,
+          start_date: lease.start_date,
+          end_date: lease.end_date,
+          lease_id: lease.lease_id,
+          lease_type: lease.lease_type,
+          amount: charge.amount,
+        };
+        data.push(object);
       })
     );
 
@@ -535,7 +541,7 @@ router.put("/lease_moveout/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
     req.body["end_date"] = req.body.moveout_date;
-
+    console.log(req.body);
     const lease = await Lease.findOneAndUpdate(
       { lease_id },
       {

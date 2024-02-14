@@ -8,13 +8,25 @@ var Unit = require("../../../modals/superadmin/Unit");
 var RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var StaffMember = require("../../../modals/superadmin/StaffMember");
 var PropertyType = require("../../../modals/superadmin/PropertyType");
-const {
-  createTenantToken,
-  hashPassword,
-  hashCompare,
-} = require("../../../authentication");
+const { createTenantToken } = require("../../../authentication");
 var moment = require("moment");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
+const crypto = require("crypto");
+
+const encrypt = (text) => {
+  const cipher = crypto.createCipher("aes-256-cbc", "mansi");
+  let encrypted = cipher.update(text, "utf-8", "hex");
+  encrypted += cipher.final("hex");
+  return encrypted;
+};
+
+const decrypt = (text) => {
+  // Make sure to require the crypto module
+  const decipher = crypto.createDecipher("aes-256-cbc", "mansi");
+  let decrypted = decipher.update(text, "hex", "utf-8");
+  decrypted += decipher.final("utf-8");
+  return decrypted;
+};
 
 // ================= Super Admin =================================
 
@@ -200,6 +212,10 @@ router.get("/get_tenant/:tenant_id", async (req, res) => {
       return res.status(201).json({ message: "No tenants found." });
     }
 
+    const pass = decrypt(tenants.tenant_password);
+    console.log(pass);
+    tenants.tenant_password = pass;
+
     res.json({
       statusCode: 200,
       data: tenants,
@@ -228,7 +244,7 @@ router.post("/tenants", async (req, res) => {
       tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
       tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      let hashConvert = await hashPassword(req.body.tenant_password);
+      let hashConvert = encrypt(req.body.tenant_password);
       req.body.tenant_password = hashConvert;
 
       const tenant = await Tenant.create(tenantData);
@@ -327,12 +343,9 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const compare = await hashCompare(
-      req.body.password,
-      tenant.tenant_password
-    );
-
-    if (!compare) {
+    const pass = decrypt(tenant.tenant_password);
+    console.log(pass);
+    if (req.body.password !== pass) {
       return res.status(200).json({
         statusCode: 202,
         message: "Invalid Tenant password",
@@ -610,6 +623,7 @@ router.get("/leases/:lease_id", async (req, res) => {
           end_date: lease.end_date,
           tenant_firstName: tenant.tenant_firstName,
           tenant_lastName: tenant.tenant_lastName,
+          tenant_phoneNumber: tenant.tenant_phoneNumber,
           tenant_email: tenant.tenant_email,
           rental_adress: rental.rental_adress,
           rental_unit: unit.rental_unit,
@@ -629,4 +643,5 @@ router.get("/leases/:lease_id", async (req, res) => {
     });
   }
 });
+
 module.exports = router;
