@@ -3,6 +3,8 @@ const Schema = mongoose.Schema;
 
 const registerSchema = new Schema({
   admin_id: { type: String },
+  superadmin_id: { type: String },
+  roll: { type: String, default: "admin" },
   first_name: { type: String },
   last_name: { type: String },
   email: { type: String },

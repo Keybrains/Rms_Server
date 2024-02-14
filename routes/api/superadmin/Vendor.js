@@ -28,6 +28,7 @@ router.post("/login", async (req, res) => {
   try {
     const vendor = await Vendor.findOne({
       vendor_email: req.body.email,
+      admin_id: req.body.admin_id,
     });
     console.log(vendor, "vendor");
 
@@ -39,7 +40,7 @@ router.post("/login", async (req, res) => {
     }
 
 
-    const passwordMatch = decrypt(req.body.password, vendor.vendor_password);
+    const passwordMatch = decrypt(vendor.vendor_password);
 
     if (!passwordMatch) {
       return res.json({
@@ -48,7 +49,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    if (req.body.password !== vendor.vendor_password) {
+    if (req.body.password !== passwordMatch) {
       return res.json({
         statusCode: 202,
         message: "Invalid Vendor password",
@@ -68,7 +69,7 @@ router.post("/login", async (req, res) => {
 
     res.json({
       statusCode: 200,
-      vendorToken: token,
+      token: token,
     });
   } catch (error) {
     console.error(error);
@@ -96,6 +97,8 @@ router.post("/vendor", async (req, res) => {
       vendorData.vendor_id = `${vendorTimestamp}`;
       vendorData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
       vendorData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+      let hashConvert = encrypt(req.body.vendor_password);
+      req.body.vendor_password = hashConvert;
 
 
 
