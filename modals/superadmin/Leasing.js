@@ -12,6 +12,8 @@ const leasesSchema = new Schema({
   start_date: { type: String, default: "" },
   end_date: { type: String, default: "" },
   uploaded_file: { type: Array, default: "" },
+  moveout_notice_given_date: { type: String, default: "" },
+  moveout_date: { type: String, default: "" },
   createdAt: { type: String },
   updatedAt: { type: String },
 });

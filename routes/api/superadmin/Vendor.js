@@ -5,8 +5,22 @@ var Vendor = require("../../../modals/superadmin/Vendor");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Unit = require("../../../modals/superadmin/Unit");
 const { createVenorToken } = require("../../../authentication");
-const bcrypt = require("bcryptjs");
 var moment = require("moment");
+const crypto = require("crypto");
+const encrypt = (text) => {
+  const cipher = crypto.createCipher("aes-256-cbc", "mansi");
+  let encrypted = cipher.update(text, "utf-8", "hex");
+  encrypted += cipher.final("hex");
+  return encrypted;
+};
+
+const decrypt = (text) => {
+  // Make sure to require the crypto module
+  const decipher = crypto.createDecipher("aes-256-cbc", "mansi");
+  let decrypted = decipher.update(text, "hex", "utf-8");
+  decrypted += decipher.final("utf-8");
+  return decrypted;
+};
 
 // Vendor Login
 router.post("/login", async (req, res) => {
@@ -14,7 +28,7 @@ router.post("/login", async (req, res) => {
     const vendor = await Vendor.findOne({
       vendor_email: req.body.email,
     });
-    console.log(vendor, "vendor")
+    console.log(vendor, "vendor");
 
     if (!vendor) {
       return res.status(201).json({
@@ -23,14 +37,14 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // const passwordMatch = await bcrypt.compare(req.body.password, vendor.vendor_password);
+    const passwordMatch = decrypt(req.body.password, vendor.vendor_password);
 
-    // if (!passwordMatch) {
-    //   return res.json({
-    //     statusCode: 202,
-    //     message: "Invalid Vendor password",
-    //   });
-    // }
+    if (!passwordMatch) {
+      return res.json({
+        statusCode: 202,
+        message: "Invalid Vendor password",
+      });
+    }
 
     if (req.body.password !== vendor.vendor_password) {
       return res.json({

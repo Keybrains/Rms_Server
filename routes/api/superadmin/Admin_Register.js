@@ -1,11 +1,6 @@
 var express = require("express");
 var router = express.Router();
-var {
-  verifyToken,
-  hashPassword,
-  hashCompare,
-  createToken,
-} = require("../../../authentication");
+var { createToken } = require("../../../authentication");
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var JWT = require("jsonwebtoken");
 var JWTD = require("jwt-decode");
@@ -20,6 +15,21 @@ const Lease = require("../../../modals/superadmin/Leasing");
 const Rentals = require("../../../modals/superadmin/Rentals");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 
+const crypto = require("crypto");
+const encrypt = (text) => {
+  const cipher = crypto.createCipher("aes-256-cbc", "mansi");
+  let encrypted = cipher.update(text, "utf-8", "hex");
+  encrypted += cipher.final("hex");
+  return encrypted;
+};
+
+const decrypt = (text) => {
+  // Make sure to require the crypto module
+  const decipher = crypto.createDecipher("aes-256-cbc", "mansi");
+  let decrypted = decipher.update(text, "hex", "utf-8");
+  decrypted += decipher.final("utf-8");
+  return decrypted;
+};
 //Admin Registers
 // router.post("/register", async (req, res) => {
 //   try {
@@ -81,9 +91,8 @@ router.post("/register", async (req, res) => {
         .send({ statusCode: 402, message: "CompanyName already in use" });
     }
 
-    let hashConvert = await hashPassword(req.body.password, req.body.cPassword);
+    let hashConvert = encrypt(req.body.password);
     req.body.password = hashConvert;
-    req.body.cPassword = hashConvert;
 
     const timestamp = Date.now();
     const uniqueId = `${timestamp}`;
@@ -245,12 +254,9 @@ router.post("/login", async (req, res) => {
     }
 
     // Compare the encrypted password sent from the scraper with the hashed password stored in the database
-    const isMatch = await compareEncryptedPassword(
-      req.body.password,
-      user.password
-    );
+    const isMatch = decrypt(user.password);
 
-    if (!isMatch) {
+    if (req.body.password !== isMatch) {
       return res
         .status(200)
         .json({ statusCode: 202, message: "Invalid Admin Password" });
@@ -335,11 +341,6 @@ router.post("/login", async (req, res) => {
     res.json({ statusCode: 500, message: error.message });
   }
 });
-
-// Function to compare the encrypted password sent from the scraper with the hashed password stored in the database
-async function compareEncryptedPassword(encryptedPassword, hashedPassword) {
-  return bcrypt.compare(encryptedPassword, hashedPassword);
-}
 
 router.get("/admin", async (req, res) => {
   try {
