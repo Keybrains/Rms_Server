@@ -230,6 +230,11 @@ router.post("/staff_member", async (req, res) => {
       staffmember_email: req.body.staffmember_email,
       admin_id: req.body.admin_id,
     });
+
+    const adminData = await AdminRegister.findOne({
+      admin_id: req.body.admin_id,
+    });
+
     if (!findStaffMember) {
       const timestamp = Date.now();
       const uniqueId = `${timestamp}`;
@@ -243,7 +248,7 @@ router.post("/staff_member", async (req, res) => {
         <p>Here are your credentials for staffmember login:</p>
         <p>Email: ${req.body.staffmember_email}</p>
         <p>Password: ${req.body.staffmember_password}</p>
-        <p>Login URL: https://your-staffmember-login-url.com</p>
+        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/staffmember/login</p>
       `;
 
       await emailService.sendWelcomeEmail(

@@ -87,6 +87,10 @@ router.post("/vendor", async (req, res) => {
       admin_id: vendorData.admin_id,
       vendor_phoneNumber: vendorData.vendor_phoneNumber,
     });
+
+    const adminData = await AdminRegister.findOne({
+      admin_id: req.body.admin_id,
+    });
     if (existingVendor) {
       return res.status(201).json({
         statusCode: 201,
@@ -108,7 +112,7 @@ router.post("/vendor", async (req, res) => {
         <p>Here are your credentials for vendor login:</p>
         <p>Email: ${req.body.vendor_email}</p>
         <p>Password: ${req.body.vendor_password}</p>
-        <p>Login URL: https://your-vendor-login-url.com</p>
+        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/vendor/login</p>
       `;
   
       // Send email with login credentials

@@ -234,6 +234,11 @@ router.post("/tenants", async (req, res) => {
       admin_id: tenantData.admin_id,
       tenant_phoneNumber: tenantData.tenant_phoneNumber,
     });
+
+    const adminData = await AdminRegister.findOne({
+      admin_id: req.body.admin_id,
+    });
+
     if (existingTenants) {
       return res.status(201).json({
         statusCode: 201,
@@ -258,7 +263,7 @@ router.post("/tenants", async (req, res) => {
         <p>Here are your credentials for tenant login:</p>
         <p>Email: ${req.body.tenant_email}</p>
         <p>Password: ${req.body.tenant_password}</p>
-        <p>Login URL: https://your-tenant-login-url.com</p>
+        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/tenants/login</p>
       `;
 
       // Send email with login credentials
