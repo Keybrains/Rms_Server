@@ -521,4 +521,122 @@ router.get("/admin_profile/:admin_id", async (req, res) => {
   }
 });
 
+router.post("/superadmin_register", async (req, res) => {
+  try {
+    const user = await AdminRegister.findOne({
+      email: req.body.email,
+    });
+    if (user) {
+      return res
+        .status(401)
+        .send({ statusCode: 401, message: "Email already in use" });
+    }
+
+    const checkCompanyName = await AdminRegister.findOne({
+      company_name: req.body.company_name,
+    });
+
+    if (checkCompanyName) {
+      return res
+        .status(402)
+        .send({ statusCode: 402, message: "CompanyName already in use" });
+    }
+
+    let hashConvert = encrypt(req.body.password);
+    req.body.password = hashConvert;
+
+    const timestamp = Date.now();
+    const uniqueId = `${timestamp}`;
+
+    req.body["superadmin_id"] = uniqueId;
+    req.body["roll"] = "super_admin";
+    req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const data = await AdminRegister.create(req.body);
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Added successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.post("/superadmin_login", async (req, res) => {
+  try {
+    console.log(req.body);
+    const superAdmin = await AdminRegister.findOne({
+      email: req.body.email,
+      role: req.body.role,
+    });
+    console.log(req.body);
+    if (!superAdmin) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: "superAdmin does not exist",
+      });
+    }
+    console.log(req.body);
+    const isMatch = decrypt(superAdmin.password);
+    console.log(req.body);
+    if (req.body.password !== isMatch) {
+      return res.json({
+        statusCode: 202,
+        message: "Invalid Super-Admin password",
+      });
+    }
+
+    const token = await createToken({
+      superadmin_id: superAdmin.superadmin_id,
+      first_name: superAdmin.first_name,
+      last_name: superAdmin.last_name,
+      email: superAdmin.email,
+      phone_number: superAdmin.phone_number,
+      company_name: superAdmin.company_name,
+      createdAt: superAdmin.createdAt,
+      updatedAt: superAdmin.updatedAt,
+    });
+
+    res.json({
+      statusCode: 200,
+      token: token,
+      data: superAdmin,
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/check_company/:admin", async (req, res) => {
+  try {
+    const admin = req.params.admin;
+    const adminData = await AdminRegister.findOne({ company_name: admin });
+    if (!adminData) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: "Admin Not Found",
+      });
+    }
+    res.json({
+      statusCode: 200,
+      data: adminData,
+      message: "Added successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;

@@ -334,6 +334,7 @@ router.post("/login", async (req, res) => {
   try {
     const tenant = await Tenant.findOne({
       tenant_email: req.body.email,
+      admin_id: req.body.admin_id,
     });
 
     if (!tenant) {
@@ -344,7 +345,7 @@ router.post("/login", async (req, res) => {
     }
 
     const pass = decrypt(tenant.tenant_password);
-    console.log(pass);
+    
     if (req.body.password !== pass) {
       return res.status(200).json({
         statusCode: 202,
@@ -372,8 +373,7 @@ router.post("/login", async (req, res) => {
 
     res.json({
       statusCode: 200,
-      // expiresAt: expiresIn,
-      tenantToken: token,
+      token: token,
     });
   } catch (error) {
     console.error(error);

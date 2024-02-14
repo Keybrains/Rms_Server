@@ -13,6 +13,22 @@ const Unit = require("../../../modals/superadmin/Unit");
 const Leasing = require("../../../modals/superadmin/Leasing");
 const RentalOwner = require("../../../modals/superadmin/RentalOwner");
 const PropertyType = require("../../../modals/superadmin/PropertyType");
+const crypto = require("crypto");
+
+const encrypt = (text) => {
+  const cipher = crypto.createCipher("aes-256-cbc", "mansi");
+  let encrypted = cipher.update(text, "utf-8", "hex");
+  encrypted += cipher.final("hex");
+  return encrypted;
+};
+
+const decrypt = (text) => {
+  // Make sure to require the crypto module
+  const decipher = crypto.createDecipher("aes-256-cbc", "mansi");
+  let decrypted = decipher.update(text, "hex", "utf-8");
+  decrypted += decipher.final("utf-8");
+  return decrypted;
+};
 
 // ============== Super Admin ==================================
 
@@ -160,8 +176,10 @@ router.post("/getByAdmin", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const staff_member = await StaffMember.findOne({
+      admin_id: req.body.admin_id,
       staffmember_email: req.body.email,
     });
+    console.log(req.body, staff_member);
 
     if (!staff_member) {
       return res.status(201).json({
@@ -170,12 +188,9 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const compare = await hashCompare(
-      req.body.password,
-      staff_member.staffmember_password
-    );
-
-    if (!compare) {
+    const compare = decrypt(staff_member.staffmember_password);
+    console.log(compare);
+    if (req.body.password !== compare) {
       return res.status(200).json({
         statusCode: 202,
         message: "Invalid Saff-Member password",
@@ -196,7 +211,7 @@ router.post("/login", async (req, res) => {
 
     res.json({
       statusCode: 200,
-      staff_memberToken: token,
+      token: token,
     });
   } catch (error) {
     console.error(error);
@@ -221,7 +236,7 @@ router.post("/staff_member", async (req, res) => {
       req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
       req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      let hashConvert = await hashPassword(req.body.staffmember_password);
+      let hashConvert = encrypt(req.body.staffmember_password);
       req.body.staffmember_password = hashConvert;
 
       var data = await StaffMember.create(req.body);
