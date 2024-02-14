@@ -341,11 +341,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Function to compare the encrypted password sent from the scraper with the hashed password stored in the database
-async function compareEncryptedPassword(encryptedPassword, hashedPassword) {
-  return bcrypt.compare(encryptedPassword, hashedPassword);
-}
-
 router.get("/admin", async (req, res) => {
   try {
     var pageSize = parseInt(req.query.pageSize) || 10; // Default to 10 if not provided

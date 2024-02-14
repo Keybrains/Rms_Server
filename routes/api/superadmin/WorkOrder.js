@@ -103,8 +103,8 @@ router.get("/work-orders/:admin_id", async (req, res) => {
 
     const workOrdersData = await WorkOrder.find({ admin_id });
     if (!workOrdersData || workOrdersData.length === 0) {
-      return res.status(404).json({
-        statusCode: 404,
+      return res.status(200).json({
+        statusCode: 201,
         message: "No work orders found for the specified admin.",
       });
     }
