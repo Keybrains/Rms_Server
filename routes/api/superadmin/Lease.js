@@ -11,7 +11,22 @@ const RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
+const crypto = require("crypto");
 
+const encrypt = (text) => {
+  const cipher = crypto.createCipher("aes-256-cbc", "mansi");
+  let encrypted = cipher.update(text, "utf-8", "hex");
+  encrypted += cipher.final("hex");
+  return encrypted;
+};
+
+const decrypt = (text) => {
+  // Make sure to require the crypto module
+  const decipher = crypto.createDecipher("aes-256-cbc", "mansi");
+  let decrypted = decipher.update(text, "hex", "utf-8");
+  decrypted += decipher.final("utf-8");
+  return decrypted;
+};
 // ===================  Super Admin ==================================
 
 router.get("/lease/get/:admin_id", async (req, res) => {
@@ -101,7 +116,9 @@ router.post("/leases", async (req, res) => {
         tenantData.tenant_id = `${tenantTimestamp}`;
         tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
         tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
+        const pass = encrypt(tenantData.tenant_password);
+        console.log(pass);
+        tenantData.tenant_password = pass;
         tenant = await Tenant.create(tenantData);
 
         const leaseTimestamp = Date.now();

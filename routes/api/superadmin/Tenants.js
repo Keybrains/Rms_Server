@@ -305,13 +305,15 @@ router.put("/tenants/:tenant_id", async (req, res) => {
 
     // Ensure that updatedAt field is set
     req.body.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    const pass = encrypt(req.body.tenant_password);
+    console.log(pass);
+    req.body.tenant_password = pass;
 
     const result = await Tenant.findOneAndUpdate(
       { tenant_id: tenant_id },
       { $set: req.body },
       { new: true }
     );
-
     if (result) {
       res.json({
         statusCode: 200,
@@ -384,7 +386,7 @@ router.post("/login", async (req, res) => {
     }
 
     const pass = decrypt(tenant.tenant_password);
-    
+
     if (req.body.password !== pass) {
       return res.status(200).json({
         statusCode: 202,
