@@ -23,7 +23,7 @@ const rentalownernSchema = new Schema({
   city: { type: String },
   state: { type: String },
   country: { type: String },
-  postal_code: { type: Number },
+  postal_code: { type: String },
 
   createdAt: { type: String },
   updatedAt: { type: String },
