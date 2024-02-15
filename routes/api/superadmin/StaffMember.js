@@ -340,7 +340,7 @@ router.delete("/staff_member/:staffmember_id", async (req, res) => {
 router.put("/staff_member/:staffmember_id", async (req, res) => {
   try {
     const { staffmember_id } = req.params;
-    const {
+    var {
       admin_id,
       staffmember_email,
       staffmember_name,
@@ -348,6 +348,7 @@ router.put("/staff_member/:staffmember_id", async (req, res) => {
       staffmember_phoneNumber,
       staffmember_password,
     } = req.body;
+    req.body.staffmember_password = encrypt(staffmember_password);
 
     if (!admin_id) {
       res.status(401).json({
@@ -362,7 +363,6 @@ router.put("/staff_member/:staffmember_id", async (req, res) => {
       staffmember_name,
       staffmember_designation,
       staffmember_phoneNumber,
-      staffmember_password,
     });
 
     if (existingProperty) {
@@ -405,7 +405,8 @@ router.put("/staff_member/:staffmember_id", async (req, res) => {
 router.get("/staff/member/:staffmember_id", async (req, res) => {
   try {
     const staffmember_id = req.params.staffmember_id;
-    const data = await StaffMember.find({ staffmember_id });
+    const data = await StaffMember.findOne({ staffmember_id });
+    data.staffmember_password = decrypt(data.staffmember_password);
 
     if (data.length === 0) {
       return res.json({

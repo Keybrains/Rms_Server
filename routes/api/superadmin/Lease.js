@@ -303,11 +303,16 @@ router.get("/leases/:admin_id", async (req, res) => {
         const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
         const rental = await Rentals.findOne({ rental_id: lease.rental_id });
         const unit = await Unit.findOne({ unit_id: lease.unit_id });
+        const charge = await Charge.findOne({
+          lease_id: lease.lease_id,
+          charge_type: "Last Month's Rent",
+        });
         data.push({
           tenant,
           rental,
           unit,
           lease,
+          charge,
         });
       })
     );

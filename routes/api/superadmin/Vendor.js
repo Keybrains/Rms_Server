@@ -141,6 +141,7 @@ router.get("/get_vendor/:vendor_id", async (req, res) => {
       return res.status(201).json({ message: "No vendors found." });
     }
 
+    vendors.vendor_password = decrypt(vendors.vendor_password);
     res.json({
       statusCode: 200,
       data: vendors,
@@ -157,7 +158,7 @@ router.put("/update_vendor/:vendor_id", async (req, res) => {
 
     // Ensure that updatedAt field is set
     req.body.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
+    req.body.vendor_password = encrypt(req.body.vendor_password);
     const result = await Vendor.findOneAndUpdate(
       { vendor_id: vendor_id },
       { $set: req.body },

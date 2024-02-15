@@ -43,6 +43,13 @@ router.get("/tenant/get/:admin_id", async (req, res) => {
       },
     ]);
 
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "Tenants not found for the specified admin.",
+      });
+    }
+
     for (let i = 0; i < data.length; i++) {
       const admin_id = data[i].admin_id;
 
@@ -136,6 +143,13 @@ router.get("/tenant_details/:tenant_id", async (req, res) => {
       },
     ]);
 
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "Tenant not found.",
+      });
+    }
+
     data[0].leaseData = [];
     // Fetch lease data for the current tenant
     const lease_data = await Lease.find({ tenant_id: tenant_id });
@@ -190,7 +204,7 @@ router.get("/tenants/:admin_id", async (req, res) => {
     if (tenants.length === 0) {
       return res
         .status(201)
-        .json({ message: "No tenants found for the given admin_id" });
+        .json({ message: "No tenants found for the given admin" });
     }
 
     res.json({
@@ -209,7 +223,7 @@ router.get("/get_tenant/:tenant_id", async (req, res) => {
     const tenants = await Tenant.findOne({ tenant_id: tenant_id });
 
     if (tenants.length === 0) {
-      return res.status(201).json({ message: "No tenants found." });
+      return res.status(201).json({ message: "No tenant found." });
     }
 
     const pass = decrypt(tenants.tenant_password);
@@ -285,10 +299,10 @@ router.put("/tenants/:tenant_id", async (req, res) => {
         message: "Tenant not found",
       });
     }
-  } catch (err) {
+  } catch (error) {
     res.status(500).json({
       statusCode: 500,
-      message: err.message,
+      message: error.message,
     });
   }
 });
@@ -391,8 +405,8 @@ router.get("/tenant_profile/:tenant_id", async (req, res) => {
     const tenantData = await Tenant.findOne({ tenant_id: tenant_id });
 
     if (!tenantData) {
-      return res.status(404).json({
-        statusCode: 404,
+      return res.status(201).json({
+        statusCode: 201,
         message: "Tenant not found",
       });
     }
@@ -433,8 +447,8 @@ router.get("/tenant_property/:tenant_id", async (req, res) => {
     const tenantData = await Tenant.findOne({ tenant_id: tenant_id });
 
     if (!tenantData) {
-      return res.status(404).json({
-        statusCode: 404,
+      return res.status(201).json({
+        statusCode: 201,
         message: "Tenant not found",
       });
     }
@@ -481,6 +495,13 @@ router.get("/tenant_summary/:lease_id", async (req, res) => {
         $sort: { createdAt: -1 },
       },
     ]);
+
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "Lease not found.",
+      });
+    }
 
     //   // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
@@ -558,7 +579,7 @@ router.get("/tenant_count/:admin_id", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
-      message: err.message,
+      message: error.message,
     });
   }
 });
@@ -591,7 +612,7 @@ router.get("/rental_tenant/:rental_id", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
-      message: err.message,
+      message: error.message,
     });
   }
 });
@@ -617,6 +638,8 @@ router.get("/leases/:lease_id", async (req, res) => {
           tenant_id: lease.tenant_id,
           admin_id: lease.admin_id,
           rental_id: lease.rental_id,
+          moveout_notice_given_date: lease.moveout_notice_given_date,
+          moveout_date: lease.moveout_date,
           unit_id: lease.unit_id,
           lease_type: lease.lease_type,
           start_date: lease.start_date,
@@ -639,7 +662,7 @@ router.get("/leases/:lease_id", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
-      message: err.message,
+      message: error.message,
     });
   }
 });

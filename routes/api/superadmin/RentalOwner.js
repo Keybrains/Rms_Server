@@ -111,18 +111,6 @@ router.get("/rentalowner_details/:rentalowner_id", async (req, res) => {
       },
     ]);
 
-    //   for (let i = 0; i < data.length; i++) {
-    //     const admin_id = data[i].admin_id;
-
-    //     const admin = await Admin_Register.findOne({ admin_id: admin_id });
-
-    //     data[i].admin = {
-    //       admin_id: admin.admin_id,
-    //       first_name: admin.first_name,
-    //       last_name: admin.last_name,
-    //     };
-    //   }
-
     const count = data.length;
 
     res.json({
@@ -174,6 +162,29 @@ router.post("/rental_owner", async (req, res) => {
     res.json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+
+router.put("/rental_owner/:rentalowner_id", async (req, res) => {
+  try {
+    console.log(req.body);
+    console.log(req.params.rentalowner_id);
+    req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    let result = await RentalOwner.findOneAndUpdate(
+      { rentalowner_id: req.params.rentalowner_id },
+      { $set: req.body },
+      { new: true }
+    );
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "RentalOwner Updated Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
     });
   }
 });

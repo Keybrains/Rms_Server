@@ -496,7 +496,6 @@ router.get("/rental_count/:admin_id", async (req, res) => {
 
 router.put("/proparty_image/:rental_id", async (req, res) => {
   try {
-    
     const { rental_id } = req.params;
     const data = await Rentals.findOneAndUpdate(
       { rental_id },
@@ -514,6 +513,41 @@ router.put("/proparty_image/:rental_id", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+router.delete("/rental/:rental_id", async (req, res) => {
+  const rental_id = req.params.rental_id;
+  try {
+    const existingTenant = await Leasing.findOne({
+      rental_id: rental_id,
+    });
+
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Cannot delete rental. The rental is already assigned to a tenant.`,
+      });
+    } else {
+      const deletedTenant = await Rentals.deleteOne({
+        rental_id: rental_id,
+      });
+
+      if (deletedTenant.deletedCount === 1) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: `Rental deleted successfully.`,
+        });
+      } else {
+        return res.status(201).json({
+          statusCode: 201,
+          message: `Rental not found. No action taken.`,
+        });
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
