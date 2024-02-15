@@ -16,6 +16,7 @@ const Rentals = require("../../../modals/superadmin/Rentals");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 
 const crypto = require("crypto");
+const Plans = require("../../../modals/superadmin/Plans");
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
   let encrypted = cipher.update(text, "utf-8", "hex");
@@ -637,6 +638,24 @@ router.get("/check_company/:admin", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+router.get("/superadmin_count", async (req, res) => {
+  try {
+    const admin = (
+      await AdminRegister.find({ roll: "admin", isAdmin_delete: false })
+    ).length;
+    const plan = (await Plans.find()).length;
+
+    res.json({
+      statusCode: 200,
+      admin: admin,
+      plan: plan,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
