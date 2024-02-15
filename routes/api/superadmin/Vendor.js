@@ -203,4 +203,22 @@ router.put("/update_vendor/:vendor_id", async (req, res) => {
   }
 });
 
+router.delete("/delete_vendor/:vendor_id", async (req, res) => {
+  try {
+    let result = await Vendor.findOneAndDelete({
+      vendor_id: req.params.vendor_id,
+    });
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Vendor Deleted Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 module.exports = router;
