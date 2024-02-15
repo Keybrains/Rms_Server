@@ -6,11 +6,21 @@ const planSchema = new Schema({
   plan_name: { type: String },
 
   plan_price: { type: Number },
+  billing_interval: { type: String },
   features: {
     type: Array,
   },
   plan_days: {
     type: Number,
+  },
+  day_of_month: {
+    type: Number,
+  },
+  plan_periods: {
+    type: Number,
+  },
+  billingOption: {
+    type: String,
   },
   is_free_trial: {
     type: Boolean,
