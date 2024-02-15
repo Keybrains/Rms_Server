@@ -248,7 +248,7 @@ router.post("/staff_member", async (req, res) => {
         <p>Here are your credentials for staffmember login:</p>
         <p>Email: ${req.body.staffmember_email}</p>
         <p>Password: ${req.body.staffmember_password}</p>
-        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/staffmember/login</p>
+        <p>Login URL: https://302-properties.vercel.app/auth/${adminData.company_name}/staffmember/login</p>
       `;
 
       await emailService.sendWelcomeEmail(
