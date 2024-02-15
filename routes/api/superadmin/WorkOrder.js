@@ -51,6 +51,12 @@ router.get("/workorder_details/:workOrder_id", async (req, res) => {
 
     const workOrderData = await WorkOrder.findOne({ workOrder_id });
 
+    if (!workOrderData) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "Work Order Not Found",
+      });
+    }
     const partsandcharge_data = await Parts.find({ workOrder_id });
 
     const property_data = await Rentals.findOne({
@@ -196,7 +202,6 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
     const { workOrder_id } = req.params;
     const { status, date, staffmember_id, updated_by } = req.body.workOrder;
 
-    // Ensure that updatedAt field is set to current date
     const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
     const result = await WorkOrder.findOneAndUpdate(
@@ -264,6 +269,13 @@ router.get("/vendor_work/:vendor_id", async (req, res) => {
       },
     ]);
 
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "No work orders found for the specified vendor.",
+      });
+    }
+
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
       const rental_id = data[i].rental_id;
@@ -309,6 +321,13 @@ router.get("/staff_work/:staffmember_id", async (req, res) => {
         $sort: { createdAt: -1 }, // Filter by user_id
       },
     ]);
+
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "No work orders found for the specified staff member.",
+      });
+    }
 
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
@@ -358,6 +377,14 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
         $sort: { createdAt: -1 }, // Filter by user_id
       },
     ]);
+
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "No work orders found for the specified tenant.",
+      });
+    }
+
     const return_data = [];
 
     // Fetch client and property information for each item in data
@@ -422,6 +449,13 @@ router.get("/rental_workorder/:rental_id", async (req, res) => {
         $sort: { createdAt: -1 },
       },
     ]);
+
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "No work orders found for the specified property.",
+      });
+    }
 
     for (const work of data) {
       const staffmember = await StaffMember.findOne({

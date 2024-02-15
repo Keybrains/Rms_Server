@@ -22,6 +22,13 @@ router.get("/unit/:admin_id", async (req, res) => {
       },
     ]);
 
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "Units data not found for the specified admin.",
+      });
+    }
+
     for (let i = 0; i < data.length; i++) {
       const admin_id = data[i].admin_id;
 
@@ -108,7 +115,21 @@ router.get("/rental_unit/:rental_id", async (req, res) => {
       },
     ]);
 
+    if (!data) {
+      res.status(201).json({
+        statusCode: 201,
+        message: "Unit not found for the specified property.",
+      });
+    }
+
     const leases = await Lease.find({ rental_id });
+
+    if (!leases) {
+      res.status(202).json({
+        statusCode: 202,
+        message: "Lease not found for the specified property.",
+      });
+    }
 
     const countsMap = {};
     leases.forEach((lease) => {
@@ -220,6 +241,41 @@ router.post("/unit", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+router.delete("/unit/:unit_id", async (req, res) => {
+  const unit_id = req.params.unit_id;
+  try {
+    const existingTenant = await Leasing.findOne({
+      unit_id: unit_id,
+    });
+
+    if (existingTenant) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Cannot delete unit. The unit is already assigned to a tenant.`,
+      });
+    } else {
+      const deletedTenant = await Unit.deleteOne({
+        unit_id: unit_id,
+      });
+
+      if (deletedTenant.deletedCount === 1) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: `Unit deleted successfully.`,
+        });
+      } else {
+        return res.status(201).json({
+          statusCode: 201,
+          message: `Unit not found. No action taken.`,
+        });
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
