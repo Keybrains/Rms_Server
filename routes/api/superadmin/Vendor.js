@@ -4,6 +4,7 @@ var Tenant = require("../../../modals/superadmin/Tenant");
 var Vendor = require("../../../modals/superadmin/Vendor");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Unit = require("../../../modals/superadmin/Unit");
+var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 const { createVenorToken } = require("../../../authentication");
 var moment = require("moment");
 const crypto = require("crypto");
@@ -38,7 +39,6 @@ router.post("/login", async (req, res) => {
         message: "Vendor does not exist",
       });
     }
-
 
     const passwordMatch = decrypt(vendor.vendor_password);
 
@@ -104,17 +104,15 @@ router.post("/vendor", async (req, res) => {
       let hashConvert = encrypt(req.body.vendor_password);
       req.body.vendor_password = hashConvert;
 
-
-
       const subject = "Vendor Login Credentials";
       const text = `
         <p>Hello,</p>
         <p>Here are your credentials for vendor login:</p>
         <p>Email: ${req.body.vendor_email}</p>
         <p>Password: ${req.body.vendor_password}</p>
-        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/vendor/login</p>
+        <p>Login URL: http://localhost:3000/auth/${adminData?.company_name}/vendor/login</p>
       `;
-  
+
       // Send email with login credentials
       await emailService.sendWelcomeEmail(req.body.vendor_email, subject, text);
 
