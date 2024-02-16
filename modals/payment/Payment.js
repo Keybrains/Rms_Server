@@ -11,15 +11,21 @@ const paymentSchema = new Schema({
   billing_id: { type: Number },
   check_number: { type: String },
 
-  account: { type: String },
-  type: { type: String },
-  amount: { type: Number },
+  entry: [
+    {
+      account: { type: String },
+      amount: { type: Number },
+      memo: { type: String },
+      surcharge_amount: { type: Number },
+      status: { type: String },
+      date: { type: String },
+      charge_type: { type: String },
+    },
+  ],
+  
+  is_autoPayment: { type: Boolean },
   payment_type: { type: String },
-  memo: { type: String },
-  surcharge_amount: { type: Number },
-  // total_amount: { type: Number },
-  status: { type: String },
-  date: { type: String },
+  type: { type: String, default: "Payment" },
   payment_attachment: { type: Array },
 
   createdAt: { type: String },
