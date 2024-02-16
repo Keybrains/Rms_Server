@@ -11,43 +11,6 @@ const propertiesSchema = new mongoose.Schema({
   },
 });
 
-// // Define the 'payment' schema
-// const paymentSchema = new mongoose.Schema({
-//   response: {
-//     type: Number,
-//   },
-//   responsetext: {
-//     type: String,
-//   },
-//   authcode: {
-//     type: String,
-//   },
-//   transactionid: {
-//     type: String,
-//   },
-//   avsresponse: {
-//     type: Number,
-//   },
-//   cvvresponse: {
-//     type: String,
-//   },
-//   type: {
-//     type: String,
-//   },
-//   response_code: {
-//     type: String,
-//   },
-//   cc_type: {
-//     type: String,
-//   },
-//   cc_exp: {
-//     type: String,
-//   },
-//   cc_number: {
-//     type: String,
-//   },
-// });
-
 // Define the 'Payment and Charge' schema
 const paymentAndChargeSchema = new mongoose.Schema({
   type: {
@@ -59,16 +22,40 @@ const paymentAndChargeSchema = new mongoose.Schema({
   payment_type: {
     type: String,
   },
+  status: {
+    type: String,
+  },
   account: {
     type: String,
   },
   amount: {
     type: Number,
+  },  
+  surcharge: {
+    type: Number,
+  },  
+  total_amount: {
+    type: Number,
+  },
+  customer_vault_id: {
+    type: Number,
+  },
+  billing_id: {
+    type: Number,
+  },
+  check_number: {
+    type: String,
   },
   rental_adress: {
     type: String,
   },
   tenant_firstName: {
+    type: String,
+  },
+  tenant_lastName: {
+    type: String,
+  },
+  email_name: {
     type: String,
   },
   tenant_id: {
@@ -85,7 +72,33 @@ const paymentAndChargeSchema = new mongoose.Schema({
   },
   isPaid:{ type:Boolean,default: false },
   islatefee:{ type:Boolean },
-  // paymentDetails: [paymentSchema],
+  response: {
+    type: Number,
+  },
+  responsetext: {
+    type: String,
+  },
+  authcode: {
+    type: String,
+  },
+  transactionid: {
+    type: String,
+  },
+  avsresponse: {
+    type: String,
+  },
+  cvvresponse: {
+    type: String,
+  },
+  type2: {
+    type: String,
+  },
+  response_code: {
+    type: String,
+  },
+  cc_type: {
+    type: String,
+  },
 });
 
 // Define the 'Unit' schema
