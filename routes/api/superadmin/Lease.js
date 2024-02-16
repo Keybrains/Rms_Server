@@ -155,17 +155,29 @@ router.post("/leases", async (req, res) => {
 
           cosigner = await Cosigner.create(cosignerData);
         }
-        for (const chargesData of chargeData) {
-          const chargeTimestamp = Date.now();
-          chargesData.charge_id = `${chargeTimestamp}`;
-          chargesData.tenant_id = tenant.tenant_id;
-          chargesData.lease_id = lease.lease_id;
-          chargesData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-          chargesData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-          const newCharge = await Charge.create(chargesData);
-          charge.push(newCharge);
+        const chargeTimestamp = Date.now();
+        const createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+        const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+        const filteredCharge = {
+          charge_id: `${chargeTimestamp}`,
+          admin_id: lease.admin_id,
+          tenant_id: lease.tenant_id,
+          lease_id: lease.lease_id,
+          is_leaseAdded: true,
+          createdAt: createdAt,
+          updatedAt: updatedAt,
+          entry: [],
+        };
+
+        for (const chargesData of chargeData) {
+          filteredCharge.entry.push(chargesData);
         }
+
+        console.log(charge);
+        const newCharge = await Charge.create(filteredCharge);
+        charge.push(newCharge);
       }
     } else {
       tenant = existingTenant;
@@ -204,17 +216,30 @@ router.post("/leases", async (req, res) => {
         cosigner = await Cosigner.create(cosignerData);
       }
 
-      for (const chargesData of chargeData) {
-        const chargeTimestamp = Date.now();
-        chargesData.charge_id = `${chargeTimestamp}`;
-        chargesData.tenant_id = tenant.tenant_id;
-        chargesData.lease_id = lease.lease_id;
-        chargesData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        chargesData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+      const chargeTimestamp = Date.now();
+      const createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+      const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-        const newCharge = await Charge.create(chargesData);
-        charge.push(newCharge);
+      const filteredCharge = {
+        charge_id: `${chargeTimestamp}`,
+        admin_id: lease.admin_id,
+        tenant_id: lease.tenant_id,
+        lease_id: lease.lease_id,
+        is_leaseAdded: true,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+        total_amount: 0,
+        entry: [],
+      };
+
+      for (let i = 0; i < chargeData.length; i++) {
+        const chargesData = chargeData[i];
+        filteredCharge.total_amount += parseInt(chargesData.amount);
+        chargesData.entry_id = `${chargeTimestamp}-${i}`;
+        filteredCharge.entry.push(chargesData);
       }
+
+      charge = await Charge.create(filteredCharge);
     }
 
     await session.commitTransaction();

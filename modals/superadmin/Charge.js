@@ -9,6 +9,7 @@ const chargeSchema = new Schema({
 
   entry: [
     {
+      entry_id: { type: String },
       memo: { type: String },
       account: { type: String },
       amount: { type: Number },
@@ -21,6 +22,7 @@ const chargeSchema = new Schema({
     },
   ],
 
+  total_amount: { type: Number },
   is_leaseAdded: { type: Boolean },
   type: { type: String, default: "Charge" },
   uploaded_file: { type: String },
