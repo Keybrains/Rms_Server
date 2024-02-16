@@ -228,7 +228,6 @@ router.get("/get_tenant/:tenant_id", async (req, res) => {
     }
 
     const pass = decrypt(tenants.tenant_password);
-    console.log(pass);
     tenants.tenant_password = pass;
 
     res.json({
@@ -306,7 +305,6 @@ router.put("/tenants/:tenant_id", async (req, res) => {
     // Ensure that updatedAt field is set
     req.body.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
     const pass = encrypt(req.body.tenant_password);
-    console.log(pass);
     req.body.tenant_password = pass;
 
     const result = await Tenant.findOneAndUpdate(

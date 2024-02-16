@@ -5,7 +5,17 @@ const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
 const Admin_Register = require("../../modals/superadmin/Admin_Register");
 const { hashCompare } = require("../../authentication");
-const bcrypt = require('bcrypt')
+const bcrypt = require("bcrypt");
+
+const crypto = require("crypto");
+
+const decrypt = (text) => {
+  // Make sure to require the crypto module
+  const decipher = crypto.createDecipher("aes-256-cbc", "mansi");
+  let decrypted = decipher.update(text, "hex", "utf-8");
+  decrypted += decipher.final("utf-8");
+  return decrypted;
+};
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
@@ -70,10 +80,17 @@ router.get("/test/:admin_id", async (req, res) => {
     }
 
     // Hash the password retrieved from the database
-    const hashedPassword = await hashPassword(adminRecord.password);
+    // const hashedPassword = await hashPassword(adminRecord.password);
+    const pass = decrypt(adminRecord.password);
+    adminRecord.password = pass;
 
     // Launch a headful browser
-    const browser = await puppeteer.launch({ headless: false });
+    // const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({
+      headless: false,
+      defaultViewport: null,
+      args: ["--start-maximized"],
+    });
 
     // Open a new page
     const page = await browser.newPage();
@@ -87,7 +104,7 @@ router.get("/test/:admin_id", async (req, res) => {
     // Fill in email and password fields with admin's email and hashed password
     await page.type('input[name="email"]', adminRecord.email);
     await delay(2000);
-    await page.type('input[name="password"]', hashedPassword); // Use hashed password here
+    await page.type('input[name="password"]', pass); // Use hashed password here
     await delay(2000);
 
     // Click on the login button
