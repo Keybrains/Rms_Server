@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-var LateFee = require("../../modals/Latefee");
+var LateFee = require("../../modals/Payment/Latefee");
 
 router.post("/latefee", async (req, res) => {
     try {   

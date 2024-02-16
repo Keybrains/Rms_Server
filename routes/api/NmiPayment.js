@@ -13,6 +13,7 @@ var querystring = require("querystring");
 const { DOMParser } = require("xmldom");
 const nodemailer = require("nodemailer");
 const { createTransport } = require("nodemailer");
+const AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.socketlabs.com",
@@ -310,6 +311,670 @@ router.post("/purchase", async (req, res) => {
         statusCode: 300,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
       });
+    } else if (nmiResponse.response_code === "400") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(400).json({
+        statusCode: 400,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "410") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(410).json({
+        statusCode: 410,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "411") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(411).json({
+        statusCode: 411,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "420") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(420).json({
+        statusCode: 420,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "421") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(421).json({
+        statusCode: 421,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "430") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(430).json({
+        statusCode: 430,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "440") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(440).json({
+        statusCode: 440,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "441") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(441).json({
+        statusCode: 441,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "460") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(460).json({
+        statusCode: 460,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "461") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(461).json({
+        statusCode: 461,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else {
+      // Payment failed
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res
+        .status(400)
+        .send(`Failed to process payment: ${nmiResponse.responsetext}`);
+    }
+  } catch (error) {
+    // Handle errors
+    console.error("Error:", error);
+    res.status(500).send(error);
+  }
+});
+
+router.post("/new-sale", async (req, res) => {
+  try {
+    // Extract necessary data from the request
+    const { paymentDetails, planId } = req.body;
+
+    const nmiConfig = {
+      type: "sale",
+      //payment: paymentDetails.paymentType,
+      customer_vault_id: paymentDetails.customer_vault_id,
+      billing_id: paymentDetails.billing_id,
+      address1: paymentDetails.rental_adress,
+      amount: paymentDetails.amount,
+      surcharge: paymentDetails.surcharge,
+      first_name: paymentDetails.tenant_firstName,
+      last_name: paymentDetails.tenant_lastName,
+      email: paymentDetails.email_name,
+      plan_id: planId,
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+    };
+
+    const nmiResponse = await sendNmiRequest(nmiConfig, paymentDetails);
+
+    // Save the payment details to MongoDB
+    // const nmiPayment = await AddPaymentAndCharge({
+    //   response: nmiResponse.response,
+    //   responsetext: nmiResponse.responsetext,
+    //   authcode: nmiResponse.authcode,
+    //   transactionid: nmiResponse.transactionid,
+    //   avsresponse: nmiResponse.avsresponse,
+    //   cvvresponse: nmiResponse.cvvresponse,
+    //   type: nmiResponse.type,
+    //   response_code: nmiResponse.response_code,
+    //   cc_type: nmiResponse.cc_type,
+    //   cc_exp: nmiResponse.cc_exp,
+    //   cc_number: nmiResponse.cc_number,
+    // });
+
+    // if (nmiResponse.response_code === "100") {
+    // } else {
+    //   nmiPayment.status = "Failure";
+    // }
+    // Check the response from NMI
+    if (nmiResponse.response_code === "100") {
+      // Payment was successful
+      //nmiPayment.status = "Success";
+      const info = await transporter.sendMail({
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: paymentDetails.email_name,
+        subject: "Payment Confirmation - 302 Properties",
+        html: `     
+          <p>Hello ${paymentDetails.tenant_firstName} ${paymentDetails.tenant_lastName},</p>
+    
+          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+    
+          <strong>Transaction Details:</strong>
+          <ul>
+            <li><strong>Property:</strong> ${paymentDetails.rental_adress}</li>
+            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+          </ul>
+    
+          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+    
+          <p>Thank you for choosing 302 Properties.</p>
+    
+          <p>Best regards,<br>The 302 Properties Team</p>
+        `,
+      });
+      const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
+
+      //await nmiPayment.save();
+
+      return res.status(200).json({
+        statusCode: 100,
+        message: successMessage,
+        data: nmiResponse
+      });
+    } else if (nmiResponse.response_code === "200") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "201") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "202") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(202).json({
+        statusCode: 202,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "203") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(203).json({
+        statusCode: 203,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "204") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(204).json({
+        statusCode: 204,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "220") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(220).json({
+        statusCode: 220,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "221") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(221).json({
+        statusCode: 221,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "222") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(222).json({
+        statusCode: 222,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "223") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(223).json({
+        statusCode: 223,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "224") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(224).json({
+        statusCode: 224,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "225") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(225).json({
+        statusCode: 225,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "226") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(226).json({
+        statusCode: 226,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "240") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(240).json({
+        statusCode: 240,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "250") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(250).json({
+        statusCode: 250,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "251") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(251).json({
+        statusCode: 251,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "252") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(252).json({
+        statusCode: 252,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "253") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(253).json({
+        statusCode: 253,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "260") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(260).json({
+        statusCode: 260,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "261") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(261).json({
+        statusCode: 261,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "262") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(262).json({
+        statusCode: 262,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "263") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(263).json({
+        statusCode: 263,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "264") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(264).json({
+        statusCode: 264,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+      // } else if (nmiResponse.response_code === "300") {
+      //   // Duplicate transaction
+      //   console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      //   return res.status(300).json({
+      //     statusCode: 300,
+      //     message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      //   });
+    } else if (nmiResponse.response_code === "400") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(400).json({
+        statusCode: 400,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "410") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(410).json({
+        statusCode: 410,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "411") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(411).json({
+        statusCode: 411,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "420") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(420).json({
+        statusCode: 420,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "421") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(421).json({
+        statusCode: 421,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "430") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(430).json({
+        statusCode: 430,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "440") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(440).json({
+        statusCode: 440,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "441") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(441).json({
+        statusCode: 441,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "460") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(460).json({
+        statusCode: 460,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "461") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(461).json({
+        statusCode: 461,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else {
+      // Payment failed
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res
+        .status(400)
+        .send(`Failed to process payment: ${nmiResponse.responsetext}`);
+    }
+  } catch (error) {
+    // Handle errors
+    console.error("Error:", error);
+    res.status(500).send(error);
+  }
+});
+
+router.post("/new_update_sale/:id", async (req, res) => {
+  try {
+    // Extract necessary data from the request
+    const { paymentDetails, planId } = req.body;
+    console.log("-------------------------",paymentDetails)
+
+    const nmiConfig = {
+      type: "sale",
+      //payment: paymentDetails.paymentType,
+      customer_vault_id: paymentDetails.customer_vault_id,
+      billing_id: paymentDetails.billing_id,
+      amount: paymentDetails.amount,
+      surcharge: paymentDetails.surcharge,
+      first_name: paymentDetails.tenant_firstName,
+      last_name: paymentDetails.tenant_lastName,
+      email: paymentDetails.email_name,
+      plan_id: planId,
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+    };
+
+    const nmiResponse = await sendNmiRequest(nmiConfig, paymentDetails);
+
+    const existingRecord = await AddPaymentAndCharge.findOne({
+  "unit.paymentAndCharges._id": req.params.id
+});
+console.log("object-------------",existingRecord.unit.paymentAndCharges)
+
+    if (!existingRecord) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Record not found",
+      });
+    }
+   // Find the index of the payment or charge entry within the array
+const paymentIndex = existingRecord.unit[0].paymentAndCharges.findIndex(item => item._id.toString() === req.params.id);
+console.log("object*********",paymentIndex)
+if (paymentIndex === -1) {
+  return res.status(404).json({
+    statusCode: 404,
+    message: "Payment or charge entry not found",
+  });
+}
+
+// Update fields with NMI response
+existingRecord.unit[0].paymentAndCharges[paymentIndex].response = nmiResponse.response;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].responsetext = nmiResponse.responsetext;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].authcode = nmiResponse.authcode;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].transactionid = nmiResponse.transactionid;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].avsresponse = nmiResponse.avsresponse;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].cvvresponse = nmiResponse.cvvresponse;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].type2 = nmiResponse.type;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].response_code = nmiResponse.response_code;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].cc_type = nmiResponse.cc_type;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].cc_exp = nmiResponse.cc_exp;
+existingRecord.unit[0].paymentAndCharges[paymentIndex].cc_number = nmiResponse.cc_number;
+
+if (nmiResponse.response_code === "100") {
+  existingRecord.unit[0].paymentAndCharges[paymentIndex].status = "Success";
+} else {
+  existingRecord.unit[0].paymentAndCharges[paymentIndex].status = "Failure";
+}
+
+await existingRecord.save();
+
+    if (nmiResponse.response_code === "100") {
+      const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
+      const info = await transporter.sendMail({
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: paymentDetails.email_name,
+        subject: "Payment Confirmation - 302 Properties",
+        html: `     
+          <p>Hello ${paymentDetails.tenant_firstName} ${paymentDetails.tenant_lastName},</p>
+    
+          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+    
+          <strong>Transaction Details:</strong>
+          <ul>
+            <li><strong>Property:</strong> ${paymentDetails.rental_adress}</li>
+            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+          </ul>
+    
+          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+    
+          <p>Thank you for choosing 302 Properties.</p>
+    
+          <p>Best regards,<br>The 302 Properties Team</p>
+        `,
+      });
+      return res.status(200).json({
+        statusCode: 100,
+        message: successMessage,
+      });
+    } else if (nmiResponse.response_code === "200") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "201") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "202") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(202).json({
+        statusCode: 202,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "203") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(203).json({
+        statusCode: 203,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "204") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(204).json({
+        statusCode: 204,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "220") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(220).json({
+        statusCode: 220,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "221") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(221).json({
+        statusCode: 221,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "222") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(222).json({
+        statusCode: 222,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "223") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(223).json({
+        statusCode: 223,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "224") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(224).json({
+        statusCode: 224,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "225") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(225).json({
+        statusCode: 225,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "226") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(226).json({
+        statusCode: 226,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "240") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(240).json({
+        statusCode: 240,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "250") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(250).json({
+        statusCode: 250,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "251") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(251).json({
+        statusCode: 251,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "252") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(252).json({
+        statusCode: 252,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "253") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(253).json({
+        statusCode: 253,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "260") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(260).json({
+        statusCode: 260,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "261") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(261).json({
+        statusCode: 261,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "262") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(262).json({
+        statusCode: 262,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "263") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(263).json({
+        statusCode: 263,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+    } else if (nmiResponse.response_code === "264") {
+      // Duplicate transaction
+      console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      return res.status(264).json({
+        statusCode: 264,
+        message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      });
+      // } else if (nmiResponse.response_code === "300") {
+      //   // Duplicate transaction
+      //   console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+      //   return res.status(300).json({
+      //     statusCode: 300,
+      //     message: `Failed to process payment: ${nmiResponse.responsetext}`,
+      //   });
     } else if (nmiResponse.response_code === "400") {
       // Duplicate transaction
       console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
@@ -1215,6 +1880,251 @@ router.put("/updatepayment/:id", async (req, res) => {
   } catch (error) {
     console.error("Error updating NmiPayment:", error);
     res.status(500).send(error);
+  }
+});
+
+router.post("/new-manual-refund/:id", async (req, res) => {
+  try {
+    const { refundDetails } = req.body;
+    const recordId = req.params.id; // Corrected line
+
+    const existingPayment = await AddPaymentAndCharge.findOne({
+      "unit.paymentAndCharges._id": recordId
+    });
+
+    if (!existingPayment) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Original payment not found",
+      });
+    }
+
+    const paymentIndex = existingPayment.unit[0].paymentAndCharges.findIndex(item => item._id.toString() === recordId);
+
+    if (paymentIndex === -1) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Payment or charge entry not found",
+      });
+    }
+
+    const existingAmount = existingPayment.unit[0].paymentAndCharges[paymentIndex].amount;
+
+    if (refundDetails.amount <= existingAmount) { // Removed refundDetails.unit[0].paymentAndCharges.amount
+
+      const nmiPayment = { // Corrected line
+        tenant_firstName: refundDetails.tenant_firstName,
+        tenant_lastName: refundDetails.tenant_lastName,
+        email_name: refundDetails.email_name,
+        payment_type: refundDetails.payment_type,
+        type: "Refund",
+        status: "Success",
+        memo: refundDetails.memo,
+        tenant_id: refundDetails.tenant_id,
+        account: refundDetails.account,
+        date: refundDetails.date,
+        amount: refundDetails.amount,
+        total_amount: refundDetails.total_amount,
+        cvv: refundDetails.cvv,
+        // customer_vault_id: refundDetails.customer_vault_id,
+        // billing_id: refundDetails.billing_id,
+        rental_adress: refundDetails.rental_adress,
+       
+      };
+      try {
+        const updatedDocument = await AddPaymentAndCharge.findOneAndUpdate(
+          { "unit.paymentAndCharges._id": recordId },
+          {
+            $push: {
+              "unit.$[outer].paymentAndCharges": nmiPayment
+            }
+          },
+          {
+            arrayFilters: [
+              {
+                "outer.paymentAndCharges._id": recordId
+              }
+            ],
+            new: true // Return the updated document
+          }
+        ).exec(); // Execute the query and return a promise
+      
+        if (!updatedDocument) {
+          console.error("Document not found");
+          console.log(recordId,"record ID")
+          console.log(refundDetails,"record")
+
+        } else {
+          console.log("Document updated:", updatedDocument);
+          // Handle success
+        }
+      } catch (err) {
+        console.error(err);
+        // Handle error
+      }
+
+      //await nmiPayment.save();
+
+      // Send response after saving
+      res.status(200).json({
+        statusCode: 200,
+        message: "Refund added successfully",
+      });
+
+      // Sending email
+      const info = await transporter.sendMail({
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: refundDetails.email_name,
+        subject: "Refund Confirmation - 302 Properties",
+        html: `     
+          <p>Hello ${refundDetails.tenant_firstName} ${refundDetails.tenant_lastName},</p>
+          <p>We are pleased to inform you that your refund has been processed successfully.</p>
+          <strong>Transaction Details:</strong>
+          <ul>
+            <li><strong>Property:</strong> ${refundDetails.property}</li>
+            <li><strong>Refund For:</strong> ${refundDetails.account}</li>
+            <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
+            <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
+          </ul>
+          <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+          <p>Best regards,<br>
+          The 302 Properties Team</p>
+        `,
+      });
+    } else {
+      res.status(400).json({
+        statusCode: 400,
+        message: "Insufficient balance for the refund",
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send(error);
+  }
+});
+
+
+router.post("/new-refund", async (req, res) => {
+  try {
+    const { refundDetails } = req.body;
+    const recordId = refundDetails._id; 
+
+    const nmiConfig = {
+      type: "refund",
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      transactionid: refundDetails.transactionId,
+      amount: refundDetails.amount,
+      payment: "creditcard",
+    };
+
+    const nmiResponse = await sendNmiRequest(nmiConfig, refundDetails);
+
+    if (nmiResponse.response_code === "100") {
+      // Save the payment details to MongoDB
+      const nmiPayment = {
+        tenant_firstName: refundDetails.tenant_firstName,
+        tenant_lastName: refundDetails.tenant_lastName,
+        email_name: refundDetails.email_name,
+        payment_type: refundDetails.payment_type,
+        type: "Refund",
+        status: "Success",
+        memo: refundDetails.memo,
+        tenant_id: refundDetails.tenant_id,
+        account: refundDetails.account,
+        date: refundDetails.date,
+        amount: refundDetails.amount,
+        total_amount: refundDetails.total_amount,
+        cvv: refundDetails.cvv,
+        customer_vault_id: refundDetails.customer_vault_id,
+        billing_id: refundDetails.billing_id,
+        rental_adress: refundDetails.rental_adress,
+        //unit: refundDetails.unit,
+        response: nmiResponse.response,
+        responsetext: nmiResponse.responsetext,
+        authcode: nmiResponse.authcode,
+        transactionid: nmiResponse.transactionid,
+        avsresponse: nmiResponse.avsresponse,
+        cvvresponse: nmiResponse.cvvresponse,
+        type2: nmiResponse.type,
+        response_code: nmiResponse.response_code,
+        cc_type: nmiResponse.cc_type,
+        cc_exp: nmiResponse.cc_exp,
+        cc_number: nmiResponse.cc_number,
+      };
+      try {
+        const updatedDocument = await AddPaymentAndCharge.findOneAndUpdate(
+          { "unit.paymentAndCharges._id": recordId },
+          {
+            $push: {
+              "unit.$[outer].paymentAndCharges": nmiPayment
+            }
+          },
+          {
+            arrayFilters: [
+              {
+                "outer.paymentAndCharges._id": recordId
+              }
+            ],
+            new: true // Return the updated document
+          }
+        ).exec(); // Execute the query and return a promise
+      
+        if (!updatedDocument) {
+          console.error("Document not found");
+          console.log(recordId,"record ID")
+          console.log(refundDetails,"record")
+
+        } else {
+          console.log("Document updated:", updatedDocument);
+          // Handle success
+        }
+      } catch (err) {
+        console.error(err);
+        // Handle error
+      }
+      const successMessage = `Refund processed successfully! Transaction ID: ${nmiResponse.transactionid}`;
+     
+      const info = await transporter.sendMail({
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: refundDetails.email_name,
+        subject: "Refund Confirmation - 302 Properties",
+        html: `     
+        <p>Hello ${refundDetails.tenant_firstName} ${refundDetails.tenant_lastName},</p>
+  
+        <p>We are pleased to inform you that your refund has been processed successfully.</p>
+  
+        <strong>Transaction Details:</strong>
+        <ul>
+          <li><strong>Property:</strong> ${refundDetails.rental_adress}</li>
+          <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+          <li><strong>Refund For:</strong> ${refundDetails.account}</li>
+          <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
+          <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
+        </ul>
+  
+        <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+  
+        <p>Best regards,<br>
+        The 302 Properties Team</p>
+      `,
+      });
+      return sendResponse(res, successMessage, 200);
+    } else if (nmiResponse.response_code === "300") {
+      // Refund amount exceeds the transaction balance
+      console.log(`Failed to process refund: ${nmiResponse.responsetext}`);
+      return sendResponse(res, nmiResponse.responsetext, 201);
+    } else {
+      // Refund failed
+      console.log(`Failed to process refund: ${nmiResponse.responsetext}`);
+      return sendResponse(
+        res,
+        `Failed to process refund: ${nmiResponse.responsetext}`,
+        400
+      );
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    return sendResponse(res, "Something went wrong!", 500);
   }
 });
 

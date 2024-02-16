@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-var CreditCard = require("../../modals/CreditCard");
+var CreditCard = require("../../modals/Payment/CreditCard");
 //const crypto = require("crypto");
 
 // const encrypt = (text) => {
@@ -108,7 +108,6 @@ router.get("/getCreditCard/:tenant_id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 router.delete('/deleteCreditCard/:customerVaultId', async (req, res) => {
   const { customerVaultId } = req.params;
