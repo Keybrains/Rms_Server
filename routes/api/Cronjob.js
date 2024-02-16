@@ -3,7 +3,7 @@ var router = express.Router();
 var Tenants = require("../../modals/Tenants");
 var CronjobLog = require("../../modals/CronjobLog");
 var Rentals = require("../../modals/Rentals");
-var LateFee = require("../../modals/Latefee");
+var LateFee = require("../../modals/Payment/Latefee");
 var {
   verifyToken,
   hashPassword,
@@ -19,6 +19,7 @@ const PaymentCharges = require("../../modals/AddPaymentAndCharge");
 var NmiPayment = require("../../modals/NmiPayment");
 var Cronjobs = require("../../modals/cronjobs");
 const axios = require("axios");
+const AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
 
 async function logToDatabase(status, cronjob_type, date, reason = null) {
   try {
@@ -34,6 +35,76 @@ async function logToDatabase(status, cronjob_type, date, reason = null) {
     console.error("Error logging to database:", error);
   }
 }
+
+//shedule payment for nmi transaction
+cron.schedule("22 19 * * *", async () => {
+  const cronjobs = await Cronjobs.find();
+  const isCronjobRunning = cronjobs[0].isCronjobRunning;
+  try {
+    if (isCronjobRunning === false) {
+      await Cronjobs.updateOne(
+        { _id: cronjobs[0]._id },
+        { isCronjobRunning: true }
+      );
+      console.log("Cron hitt...!!!");
+      const currentDate = new Date().toISOString().split("T")[0];
+      const fetchedchargespayaments = await AddPaymentAndCharge.find({
+        // status: "Pending",
+        // payment_type: "Credit Card",
+        // date: currentDate,
+      });
+      if (fetchedchargespayaments && fetchedchargespayaments.length > 0) {
+        for (const payment of fetchedchargespayaments) {
+          if (payment.unit && payment.unit.length > 0) {
+            for (const unit of payment.unit) {
+              if (unit.paymentAndCharges && unit.paymentAndCharges.length > 0) {
+                for (const charge of unit.paymentAndCharges) {
+       // for (const charge of fetchedchargespayaments) {
+          if (
+            charge.status === "Pending" &&
+            charge.payment_type === "Credit Card"
+          ) {
+            console.log("---------",charge)
+            const chargeDate = new Date(charge.date)
+              .toISOString()
+              .split("T")[0];
+            console.log("chargedate",chargeDate)
+            console.log("currentdate",currentDate)
+            if (chargeDate === currentDate) {
+              let id = charge._id;
+              console.log(id,"ID")
+              const nmiApiUrl = `https://propertymanager.cloudpress.host/api/nmipayment/new_update_sale/${id}`;
+              try {
+                const response = await axios.post(nmiApiUrl, {
+                  paymentDetails: charge
+                });
+
+                console.log("NMI API Response:", response.data);
+              } catch (error) {
+                console.error("Error sending data to NMI API:", error);
+              }
+            } else {
+              console.log("Charge object:", charge);
+            }
+          }}}}}
+        }
+      }
+      await Cronjobs.updateOne(
+        { _id: cronjobs[0]._id },
+        { isCronjobRunning: false }
+      );
+      console.log("cronjob updated to false");
+    }
+    await logToDatabase("Success", `Rent Late Fee`);
+  } catch (error) {
+    await logToDatabase("Failure", `Rent Late Fee`, error.message);
+    console.error("Error:", error);
+    await Cronjobs.updateOne(
+      { _id: cronjobs[0]._id },
+      { isCronjobRunning: false }
+    );
+  }
+});
 
 //shedule payment for nmi transaction
 cron.schedule("43 11 * * *", async () => {

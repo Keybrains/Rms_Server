@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-var Surcharge = require("../../modals/Surcharge");
+var Surcharge = require("../../modals/Payment/Surcharge");
 
 router.post("/surcharge", async (req, res) => {
     try {   
