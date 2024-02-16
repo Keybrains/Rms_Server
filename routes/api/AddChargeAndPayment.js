@@ -197,9 +197,8 @@ router.get("/get_entry/:entryId", async (req, res) => {
 
 router.get("/financial", async (req, res) => {
   try {
-    const { rental_adress, property_id, unit, tenant_id } = req.query;
+    const { rental_adress, property_id,  tenant_id } = req.query;
 
-    // Use the constructed query object to filter the data
     const data = await AddPaymentAndCharge.aggregate([
       {
         $match: {
@@ -210,12 +209,6 @@ router.get("/financial", async (req, res) => {
       {
         $unwind: "$unit",
       },
-      // {
-      //   $match: {
-      //     "unit.paymentAndCharges.tenant_id": tenant_id,
-      //   },
-      // },
-      
       {
         $addFields: {
           "unit.paymentAndCharges": {
@@ -224,29 +217,6 @@ router.get("/financial", async (req, res) => {
               as: "charge",
               cond: {
                 $eq: ["$$charge.tenant_id", tenant_id],
-              },
-            },
-          },
-        },
-      },
-      {
-        $match: {
-          "unit.paymentAndCharges": { $ne: [] },
-        },
-      },
-      {
-        $addFields: {
-          "unit.paymentAndCharges": {
-            $map: {
-              input: "$unit.paymentAndCharges",
-              as: "charge",
-              in: {
-                $mergeObjects: [
-                  "$$charge",
-                  {
-                    Total: 0, // Initialize Total to 0
-                  },
-                ],
               },
             },
           },
@@ -286,10 +256,22 @@ router.get("/financial", async (req, res) => {
                   "$$charge",
                   {
                     Balance: {
-                      $cond: {
-                        if: { $eq: ["$$charge.type", "Charge"] },
-                        then: "$$charge.amount",
-                        else: { $subtract: [0, "$$charge.amount"] }, // for Payment type
+                      $switch: {
+                        branches: [
+                          {
+                            case: { $eq: ["$$charge.type", "Payment"] },
+                            then: { $multiply: ["$$charge.amount", -1] },
+                          },
+                          {
+                            case: { $eq: ["$$charge.type", "Charge"] },
+                            then: "$$charge.amount",
+                          },
+                          {
+                            case: { $eq: ["$$charge.type", "Refund"] },
+                            then: "$$charge.amount",
+                          },
+                        ],
+                        default: 0,
                       },
                     },
                   },
@@ -328,17 +310,6 @@ router.get("/financial", async (req, res) => {
       },
     ]);
 
-    // // Process the data as needed
-    // const processedData = data.map((item) => ({
-    //   ...item,
-    //   unit: item.unit.map((unitItem) => ({
-    //     ...unitItem,
-    //     paymentAndCharges: unitItem.paymentAndCharges.filter(
-    //       (charge) => charge.tenant_id === tenant_id
-    //     ),
-    //   })),
-    // }));
-
     const sortedData = data.map((item) => ({
       ...item,
       unit: item.unit.map((unitItem) => ({
@@ -349,19 +320,19 @@ router.get("/financial", async (req, res) => {
       })),
     }));
 
-    // Iterate through the result and calculate "Total" and "RunningTotal" for each element
+    // Iterate through the sortedData and set the last RunningTotal to 0
     sortedData.forEach((item) => {
-      item.unit.forEach((unit) => {
+      item.unit.forEach((unitItem) => {
         let runningTotal = 0;
 
-        unit.paymentAndCharges.reverse().forEach((charge) => {
+        unitItem.paymentAndCharges.reverse().forEach((charge) => {
           charge.RunningTotal = runningTotal;
-          charge.Total = runningTotal + charge.amount; // Assuming the amount is the correct property
+          charge.Total = runningTotal + charge.Balance;
           runningTotal = charge.Total;
-      });
+        });
 
         // Reverse the paymentAndCharges array back to its original order
-        unit.paymentAndCharges.reverse();
+        unitItem.paymentAndCharges.reverse();
       });
     });
 
@@ -444,10 +415,22 @@ router.get("/financial_unit", async (req, res) => {
                   "$$charge",
                   {
                     Balance: {
-                      $cond: {
-                        if: { $eq: ["$$charge.type", "Charge"] },
-                        then: "$$charge.amount",
-                        else: { $subtract: [0, "$$charge.amount"] }, // for Payment type
+                      $switch: {
+                        branches: [
+                          {
+                            case: { $eq: ["$$charge.type", "Payment"] },
+                            then: { $multiply: ["$$charge.amount", -1] },
+                          },
+                          {
+                            case: { $eq: ["$$charge.type", "Charge"] },
+                            then: "$$charge.amount",
+                          },
+                          {
+                            case: { $eq: ["$$charge.type", "Refund"] },
+                            then: "$$charge.amount",
+                          },
+                        ],
+                        default: 0,
                       },
                     },
                   },

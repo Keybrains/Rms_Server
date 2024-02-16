@@ -480,6 +480,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(200).json({
         statusCode: 200,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "201") {
       // Duplicate transaction
@@ -487,6 +488,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(201).json({
         statusCode: 201,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "202") {
       // Duplicate transaction
@@ -494,6 +496,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(202).json({
         statusCode: 202,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "203") {
       // Duplicate transaction
@@ -501,6 +504,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(203).json({
         statusCode: 203,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "204") {
       // Duplicate transaction
@@ -508,6 +512,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(204).json({
         statusCode: 204,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "220") {
       // Duplicate transaction
@@ -515,6 +520,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(220).json({
         statusCode: 220,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "221") {
       // Duplicate transaction
@@ -522,6 +528,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(221).json({
         statusCode: 221,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "222") {
       // Duplicate transaction
@@ -529,6 +536,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(222).json({
         statusCode: 222,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "223") {
       // Duplicate transaction
@@ -536,6 +544,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(223).json({
         statusCode: 223,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "224") {
       // Duplicate transaction
@@ -543,6 +552,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(224).json({
         statusCode: 224,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "225") {
       // Duplicate transaction
@@ -550,6 +560,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(225).json({
         statusCode: 225,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "226") {
       // Duplicate transaction
@@ -557,6 +568,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(226).json({
         statusCode: 226,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "240") {
       // Duplicate transaction
@@ -564,6 +576,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(240).json({
         statusCode: 240,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "250") {
       // Duplicate transaction
@@ -571,6 +584,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(250).json({
         statusCode: 250,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "251") {
       // Duplicate transaction
@@ -578,6 +592,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(251).json({
         statusCode: 251,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "252") {
       // Duplicate transaction
@@ -585,6 +600,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(252).json({
         statusCode: 252,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "253") {
       // Duplicate transaction
@@ -592,6 +608,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(253).json({
         statusCode: 253,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "260") {
       // Duplicate transaction
@@ -599,6 +616,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(260).json({
         statusCode: 260,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "261") {
       // Duplicate transaction
@@ -606,6 +624,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(261).json({
         statusCode: 261,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "262") {
       // Duplicate transaction
@@ -613,6 +632,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(262).json({
         statusCode: 262,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "263") {
       // Duplicate transaction
@@ -620,6 +640,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(263).json({
         statusCode: 263,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "264") {
       // Duplicate transaction
@@ -627,20 +648,23 @@ router.post("/new-sale", async (req, res) => {
       return res.status(264).json({
         statusCode: 264,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
-      // } else if (nmiResponse.response_code === "300") {
-      //   // Duplicate transaction
-      //   console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
-      //   return res.status(300).json({
-      //     statusCode: 300,
-      //     message: `Failed to process payment: ${nmiResponse.responsetext}`,
-      //   });
+      } else if (nmiResponse.response_code === "300") {
+        // Duplicate transaction
+        console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
+        return res.status(300).json({
+          statusCode: 300,
+          message: `Failed to process payment: ${nmiResponse.responsetext}`,
+          data: nmiResponse
+        });
     } else if (nmiResponse.response_code === "400") {
       // Duplicate transaction
       console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
       return res.status(400).json({
         statusCode: 400,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "410") {
       // Duplicate transaction
@@ -648,6 +672,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(410).json({
         statusCode: 410,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "411") {
       // Duplicate transaction
@@ -655,6 +680,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(411).json({
         statusCode: 411,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "420") {
       // Duplicate transaction
@@ -662,6 +688,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(420).json({
         statusCode: 420,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "421") {
       // Duplicate transaction
@@ -669,6 +696,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(421).json({
         statusCode: 421,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "430") {
       // Duplicate transaction
@@ -676,6 +704,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(430).json({
         statusCode: 430,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "440") {
       // Duplicate transaction
@@ -683,6 +712,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(440).json({
         statusCode: 440,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "441") {
       // Duplicate transaction
@@ -690,6 +720,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(441).json({
         statusCode: 441,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "460") {
       // Duplicate transaction
@@ -697,6 +728,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(460).json({
         statusCode: 460,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else if (nmiResponse.response_code === "461") {
       // Duplicate transaction
@@ -704,6 +736,7 @@ router.post("/new-sale", async (req, res) => {
       return res.status(461).json({
         statusCode: 461,
         message: `Failed to process payment: ${nmiResponse.responsetext}`,
+        data: nmiResponse
       });
     } else {
       // Payment failed

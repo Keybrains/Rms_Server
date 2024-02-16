@@ -74,7 +74,6 @@ cron.schedule("22 19 * * *", async () => {
               let id = charge._id;
               console.log(id,"ID")
               const nmiApiUrl = `https://propertymanager.cloudpress.host/api/nmipayment/new_update_sale/${id}`;
-              console.log("========url",nmiApiUrl)
               try {
                 const response = await axios.post(nmiApiUrl, {
                   paymentDetails: charge
