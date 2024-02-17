@@ -25,7 +25,7 @@ const chargeSchema = new Schema({
   total_amount: { type: Number },
   is_leaseAdded: { type: Boolean },
   type: { type: String, default: "Charge" },
-  uploaded_file: { type: String },
+  uploaded_file: { type: Array },
 
   createdAt: { type: String },
   updatedAt: { type: String },
