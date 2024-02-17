@@ -170,6 +170,44 @@ router.get("/upload/:filetype/:filename", async (req, res) => {
   }
 });
 
+//new get api
+router.get("/get-file/:filename", async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath1 = path.join(
+      "../.././mern/Rms_client/files/images/",
+      filename
+    );
+    const filePath2 = path.join(
+      "../.././mern/Rms_client/files/docs/",
+      filename
+    );
+    const filePath3 = path.join("../.././mern/Rms_client/files/pdf/", filename);
+
+    if (fs.existsSync(filePath1)) {
+      const fileBuffer = fs.readFileSync(filePath1);
+      res.set("Content-Type", "image/jpeg");
+      res.send(fileBuffer);
+    } else if (fs.existsSync(filePath2)) {
+      const fileBuffer = fs.readFileSync(filePath2);
+      res.set(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+          "application/msword"
+      );
+      res.send(fileBuffer);
+    } else if (fs.existsSync(filePath3)) {
+      const fileBuffer = fs.readFileSync(filePath3);
+      res.set("Content-Type", "application/pdf");
+      res.send(fileBuffer);
+    } else {
+      res.status(404).json({ status: "error", message: "Document not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
 router.delete("/upload/:filetype/:filename", async (req, res) => {
   try {
     const filename = req.params.filename;

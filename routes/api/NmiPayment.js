@@ -653,7 +653,7 @@ router.post("/new-sale", async (req, res) => {
       } else if (nmiResponse.response_code === "300") {
         // Duplicate transaction
         console.log(`Failed to process payment: ${nmiResponse.responsetext}`);
-        return res.status(300).json({
+        return res.status(200).json({
           statusCode: 300,
           message: `Failed to process payment: ${nmiResponse.responsetext}`,
           data: nmiResponse
