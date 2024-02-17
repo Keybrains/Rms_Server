@@ -79,4 +79,62 @@ router.post("/charge", async (req, res) => {
   }
 });
 
+router.get("/charge/:charge_id", async (req, res) => {
+  try {
+    const charge_id = req.params.charge_id;
+
+    var charge_data = await Charge.aggregate([
+      {
+        $match: { charge_id: charge_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    res.json({
+      statusCode: 200,
+      data: charge_data,
+      message: "Read  Charge",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/charge/:charge_id", async (req, res) => {
+  try {
+    const { charge_id } = req.params;
+
+    // Ensure that updatedAt field is set
+    req.body.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    const result = await Charge.findOneAndUpdate(
+      { charge_id: charge_id },
+      { $set: req.body },
+      { new: true }
+    );
+
+    if (result) {
+      res.json({
+        statusCode: 200,
+        data: result,
+        message: "Charge Updated Successfully",
+      });
+    } else {
+      res.status(202).json({
+        statusCode: 202,
+        message: "Vendor not found",
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 module.exports = router;
