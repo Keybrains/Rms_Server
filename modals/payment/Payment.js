@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const paymentSchema = new Schema({
+  payment_id: { type: String },
   admin_id: { type: String },
   lease_id: { type: String },
-  payment_id: { type: String },
   tenant_id: { type: String },
 
   customer_vault_id: { type: Number },
@@ -13,6 +13,7 @@ const paymentSchema = new Schema({
 
   entry: [
     {
+      entry_id: { type: String },
       account: { type: String },
       amount: { type: Number },
       memo: { type: String },
@@ -22,7 +23,8 @@ const paymentSchema = new Schema({
       charge_type: { type: String },
     },
   ],
-  
+
+  total_amount: { type: Number },
   is_autoPayment: { type: Boolean },
   payment_type: { type: String },
   type: { type: String, default: "Payment" },

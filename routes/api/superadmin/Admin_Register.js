@@ -350,7 +350,7 @@ router.get("/admin", async (req, res) => {
 
     var data = await AdminRegister.aggregate([
       {
-        $match: { isAdmin_delete: false },
+        $match: { isAdmin_delete: false, roll: "admin" },
       },
       {
         $sort: { createdAt: -1 },

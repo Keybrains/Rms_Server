@@ -11,6 +11,27 @@ router.post("/payment", async (req, res) => {
     const timestamp = Date.now();
     const uniqueId = `${timestamp}`;
 
+    // Calculate the total amount and initialize entryIds array
+    let totalAmount = 0;
+    const entryIds = [];
+
+    // Loop through each entry and calculate total amount and generate entryId
+    for (let i = 0; i < req.body.entry.length; i++) {
+      const timestampForEntryId = Date.now();
+      const entryId = `${timestampForEntryId}-${i}`; // Include index to ensure uniqueness
+      entryIds.push(entryId);
+
+      // Add entryId to the entry object
+      req.body.entry[i].entry_id = entryId;
+
+      // Calculate total amount
+      totalAmount += req.body.entry[i].amount;
+    }
+
+    // Add total_amount and entry_ids to the request body
+    req.body["total_amount"] = totalAmount;
+    req.body["entry_ids"] = entryIds;
+
     req.body["payment_id"] = uniqueId;
     req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
