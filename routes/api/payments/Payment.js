@@ -50,64 +50,54 @@ router.post("/payment", async (req, res) => {
   }
 });
 
-router.get("/charges/:lease_id", async (req, res) => {
-  try {
-    const lease_id = req.params.lease_id;
+// router.get("/charges_payments/:lease_id", async (req, res) => {
+//   try {
+//     const lease_id = req.params.lease_id;
 
-    const lease_data = await Leasing.findOne({ lease_id });
-    const surcharge = await Surcharge.findOne({
-      admin_id: lease_data.admin_id,
-    });
+//     var payment = await Payment.aggregate([
+//       {
+//         $match: { lease_id: lease_id },
+//       },
+//     ]);
 
-    var payment = await Payment.aggregate([
-      {
-        $match: { lease_id: lease_id },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-    ]);
+//     var charge = await Charge.aggregate([
+//       {
+//         $match: { lease_id: lease_id },
+//       },
+//     ]);
 
-    var charge = await Charge.aggregate([
-      {
-        $match: { lease_id: lease_id },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-    ]);
+//     const data = [
+//       ...payment.map((item) => ({ ...item, type: "payment" })),
+//       ...charge.map((item) => ({ ...item, type: "charge" })),
+//     ];
 
-    // Initialize an object to store total payment amount for each payment type
-    const totalPayments = {};
+//     const sortedDates = data.sort(
+//       (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)
+//     );
 
-    for (const data of charge) {
-      data.charge_amount = data.amount;
-      for (const item of payment) {
-        if (data.charge_type === item.payment_type) {
-          data.charge_amount -= item.amount;
-        }
-      }
-      // Add or update the total payment amount for each payment type
-      if (totalPayments[data.charge_type]) {
-        totalPayments[data.charge_type] += data.charge_amount;
-      } else {
-        totalPayments[data.charge_type] = data.charge_amount;
-      }
-    }
+//     var amount = 0;
+//     for (const item of sortedDates) {
+//       if (item.type === "payment") {
+//         amount -= item.amount;
+//       } else if (item.type === "charge") {
+//         amount += item.amount;
+//       }
+//       item.balance = amount;
+//     }
 
-    res.json({
-      statusCode: 200,
-      totalCharges: totalPayments,
-      Surcharge: surcharge,
-      message: "Read All Lease",
-    });
-  } catch (error) {
-    res.json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
+//     res.json({
+//       statusCode: 200,
+//       data: sortedDates.reverse(),
+//       totalAmount: amount,
+//       message: "Read All Lease",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
 
 router.get("/charges_payments/:lease_id", async (req, res) => {
   try {
@@ -131,24 +121,24 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
     ];
 
     const sortedDates = data.sort(
-      (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
 
-    var amount = 0;
+    var total_amount = 0;
     for (const item of sortedDates) {
       if (item.type === "payment") {
-        amount -= item.amount;
+        total_amount -= item.total_amount;
       } else if (item.type === "charge") {
-        amount += item.amount;
+        total_amount += item.total_amount;
       }
-      item.balance = amount;
+      item.balance = total_amount;
     }
 
     res.json({
       statusCode: 200,
       data: sortedDates.reverse(),
-      totalAmount: amount,
-      message: "Read All Lease",
+      totalBalance: total_amount,
+      message: "Read All Charges",
     });
   } catch (error) {
     res.json({
@@ -180,24 +170,24 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
     ];
 
     const sortedDates = data.sort(
-      (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
 
-    var amount = 0;
+    var total_amount = 0;
     for (const item of sortedDates) {
       if (item.type === "payment") {
-        amount -= item.amount;
+        total_amount -= item.total_amount;
       } else if (item.type === "charge") {
-        amount += item.amount;
+        total_amount += item.total_amount;
       }
-      item.balance = amount;
+      item.balance = total_amount;
     }
 
     res.json({
       statusCode: 200,
       data: sortedDates.reverse(),
-      totalAmount: amount,
-      message: "Read All Lease",
+      totalBalance: total_amount,
+      message: "Read All Tenant-Financial Blance",
     });
   } catch (error) {
     res.json({

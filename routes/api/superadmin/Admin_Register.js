@@ -13,7 +13,7 @@ const Tenant = require("../../../modals/superadmin/Tenant");
 const Unit = require("../../../modals/superadmin/Unit");
 const Lease = require("../../../modals/superadmin/Leasing");
 const Rentals = require("../../../modals/superadmin/Rentals");
-const Admin_Register = require("../../../modals/superadmin/Admin_Register");
+var emailService = require("./emailService");
 
 const crypto = require("crypto");
 const Plans = require("../../../modals/superadmin/Plans");
@@ -71,11 +71,11 @@ const decrypt = (text) => {
 
 router.post("/register", async (req, res) => {
   try {
-    const user = await AdminRegister.findOne({
+    const admin = await AdminRegister.findOne({
       email: req.body.email,
       isAdmin_delete: false,
     });
-    if (user) {
+    if (admin) {
       return res
         .status(401)
         .send({ statusCode: 401, message: "Email already in use" });
@@ -92,15 +92,26 @@ router.post("/register", async (req, res) => {
         .send({ statusCode: 402, message: "CompanyName already in use" });
     }
 
-    let hashConvert = encrypt(req.body.password);
-    req.body.password = hashConvert;
-
     const timestamp = Date.now();
     const uniqueId = `${timestamp}`;
 
     req.body["admin_id"] = uniqueId;
     req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const subject = "Admin Login Credentials";
+    const text = `
+      <p>Hello,</p>
+      <p>Here are your credentials for Admin login:</p>
+      <p>Email: ${req.body.email}</p>
+      <p>Password: ${req.body.password}</p>
+      <p>Login URL: https://302-properties.vercel.app/auth/auth/login</p>
+    `;
+
+    await emailService.sendWelcomeEmail(req.body.email, subject, text);
+
+    let hashConvert = encrypt(req.body.password);
+    req.body.password = hashConvert;
 
     const data = await AdminRegister.create(req.body);
 

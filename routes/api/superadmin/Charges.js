@@ -33,8 +33,6 @@ const moment = require("moment");
 //   }
 // });
 
-
-
 router.post("/charge", async (req, res) => {
   try {
     const timestamp = Date.now();
@@ -70,6 +68,65 @@ router.post("/charge", async (req, res) => {
       statusCode: 200,
       data: data,
       message: "Add Charge Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/charges/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
+
+    const lease_data = await Leasing.findOne({ lease_id });
+    const surcharge = await Surcharge.findOne({
+      admin_id: lease_data.admin_id,
+    });
+
+    var payment = await Payment.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    var charge = await Charge.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    // Initialize an object to store total payment amount for each payment type
+    const totalPayments = {};
+
+    for (const data of charge) {
+      data.charge_amount = data.amount;
+      for (const item of payment) {
+        if (data.charge_type === item.payment_type) {
+          data.charge_amount -= item.amount;
+        }
+      }
+      // Add or update the total payment amount for each payment type
+      if (totalPayments[data.charge_type]) {
+        totalPayments[data.charge_type] += data.charge_amount;
+      } else {
+        totalPayments[data.charge_type] = data.charge_amount;
+      }
+    }
+
+    res.json({
+      statusCode: 200,
+      totalCharges: totalPayments,
+      Surcharge: surcharge,
+      message: "Read All Lease",
     });
   } catch (error) {
     res.json({
