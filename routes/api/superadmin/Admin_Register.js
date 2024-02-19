@@ -17,6 +17,7 @@ var emailService = require("./emailService");
 
 const crypto = require("crypto");
 const Plans = require("../../../modals/superadmin/Plans");
+const Vendor = require("../../../modals/superadmin/Vendor");
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
   let encrypted = cipher.update(text, "utf-8", "hex");
@@ -486,6 +487,7 @@ router.get("/admin_count/:admin_id", async (req, res) => {
     const lease = (await Lease.find({ admin_id: admin_id })).length;
     const rentals_properties = (await Rentals.find({ admin_id: admin_id }))
       .length;
+    const vendor = (await Vendor.find({ admin_id: admin_id })).length;
 
     res.status(200).json({
       statusCode: 200,
@@ -496,6 +498,7 @@ router.get("/admin_count/:admin_id", async (req, res) => {
       tenant: tenant,
       unit: unit,
       lease: lease,
+      vendor: vendor,
       message: "Count get successfully",
     });
   } catch (error) {

@@ -57,8 +57,8 @@ var SurchargeRouter = require("./routes/api/payments/Surcharge.js");
 var app = express();
 
 // view engine setups
-// app.set("views", path.join(__dirname, "views"));
-// app.set("view engine", "jade");
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "jade");
 
 app.use(cors());
 app.use(logger("dev"));
