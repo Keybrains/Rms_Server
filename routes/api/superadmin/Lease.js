@@ -126,7 +126,7 @@ router.post("/leases", async (req, res) => {
         leaseData.tenant_id = tenant.tenant_id;
         leaseData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
         leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
+        leaseData.entry = chargeData;
         lease = await Lease.create(leaseData);
 
         const getRentalsData = await Rentals.findOne({
@@ -134,7 +134,6 @@ router.post("/leases", async (req, res) => {
         });
 
         if (!getRentalsData) {
-          // Handle case when Rentals data is not found
           return res.status(200).json({
             statusCode: 202,
             message: "Rentals data not found for the provided rental_id",
@@ -146,7 +145,7 @@ router.post("/leases", async (req, res) => {
           { $set: { is_rent_on: true } }
         );
 
-        if (cosignerData.cosigner_phoneNumber) {
+        if (cosignerData) {
           const cosignerTimestamp = Date.now();
           cosignerData.cosigner_id = `${cosignerTimestamp}`;
           cosignerData.tenant_id = tenant.tenant_id;
@@ -186,7 +185,7 @@ router.post("/leases", async (req, res) => {
       leaseData.tenant_id = tenant.tenant_id;
       leaseData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
       leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
+      leaseData.entry = chargeData;
       lease = await Lease.create(leaseData);
 
       const getRentalsData = await Rentals.findOne({
@@ -206,7 +205,7 @@ router.post("/leases", async (req, res) => {
         { $set: { is_rent_on: true } }
       );
 
-      if (cosignerData.cosigner_phoneNumber) {
+      if (cosignerData) {
         const cosignerTimestamp = Date.now();
         cosignerData.cosigner_id = `${cosignerTimestamp}`;
         cosignerData.tenant_id = tenant.tenant_id;
@@ -340,24 +339,34 @@ router.get("/leases/:admin_id", async (req, res) => {
 
     const data = [];
 
-    await Promise.all(
-      leases.map(async (lease) => {
-        const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
-        const rental = await Rentals.findOne({ rental_id: lease.rental_id });
-        const unit = await Unit.findOne({ unit_id: lease.unit_id });
-        const charge = await Charge.findOne({
-          lease_id: lease.lease_id,
-          charge_type: "Last Month's Rent",
-        });
-        data.push({
-          tenant,
-          rental,
-          unit,
-          lease,
-          charge,
-        });
-      })
-    );
+    for (const lease of leases) {
+      const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
+      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+      const unit = await Unit.findOne({ unit_id: lease.unit_id });
+
+      const charge = lease?.entry?.filter(
+        (item) => item.charge_type === "Rent"
+      );
+
+      const object = {
+        lease_id: lease.lease_id,
+        tenant_id: lease.tenant_id,
+        rental_id: lease.rental_id,
+        unit_id: lease.unit_id,
+        lease_type: lease.lease_type,
+        start_date: lease.start_date,
+        end_date: lease.end_date,
+        amount: charge[0].amount,
+        tenant_firstName: tenant.tenant_firstName,
+        tenant_lastName: tenant.tenant_lastName,
+        rental_adress: rental.rental_adress,
+        rental_unit: unit.rental_unit,
+        createdAt: lease.createdAt,
+        updatedAt: lease.updatedAt,
+      };
+
+      data.push(object);
+    }
 
     res.json({
       statusCode: 200,
@@ -399,40 +408,40 @@ router.post("/lease_mail", async (req, res) => {
       email: req.body.email,
     };
     // Customize email content
-    const subject =
-      "Welcome to your new Resident Center with Keybrainstech.managebuilding.com!";
-    // const company_name = data.company_name;
-    const buttonText = "Activate account";
-    const buttonLink = `https://http://192.168.1.13:8444/api/api#/client/request/`;
-    const accountInformation = `
-    <div style="border: 1px solid #ccc; padding: 10px; margin-top: 20px;">
-      <p><strong>Account information</strong></p>
-      <p>Website: http://*********.managebuilding.com/Resident/</p>
-      <p>Username: *********@gmail.com</p>
-    </div>
-  `;
+    //   const subject =
+    //     "Welcome to your new Resident Center with Keybrainstech.managebuilding.com!";
+    //   // const company_name = data.company_name;
+    //   const buttonText = "Activate account";
+    //   const buttonLink = `https://http://192.168.1.13:8444/api/api#/client/request/`;
+    //   const accountInformation = `
+    //   <div style="border: 1px solid #ccc; padding: 10px; margin-top: 20px;">
+    //     <p><strong>Account information</strong></p>
+    //     <p>Website: http://*********.managebuilding.com/Resident/</p>
+    //     <p>Username: *********@gmail.com</p>
+    //   </div>
+    // `;
 
-    // const text = `<p><h3>company_name<h3></p><hr />Hello ${req.body.first_name} ${req.body.last_name},<p>We're inviting you to log in to our Job cloud.<p/><p>Job cloud is a self-serve online experience where you can access your account details. Log in any time to view things like recent quotes or invoices.</p>`;
-    const text = `
-      <p><h3>Keybrainstech</h3></p>
-      <hr />
-      <p>Hello Shivam Shukla</p>
-      <p>You're invited to join our Resident Center! After signing in, you can enjoy many benefits including the ability to:.</p>
-      <p>Pay rent online and set up autopay</p>
-      <p>Pay Submit maintenance requests and general inquiries</p>
-      <p>Record information about your renters insurance policy</p>
-      <p><a href="${buttonLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">${buttonText}</a></p>
-      <div ></div>
-      ${accountInformation}
+    //   // const text = `<p><h3>company_name<h3></p><hr />Hello ${req.body.first_name} ${req.body.last_name},<p>We're inviting you to log in to our Job cloud.<p/><p>Job cloud is a self-serve online experience where you can access your account details. Log in any time to view things like recent quotes or invoices.</p>`;
+    //   const text = `
+    //     <p><h3>Keybrainstech</h3></p>
+    //     <hr />
+    //     <p>Hello Shivam Shukla</p>
+    //     <p>You're invited to join our Resident Center! After signing in, you can enjoy many benefits including the ability to:.</p>
+    //     <p>Pay rent online and set up autopay</p>
+    //     <p>Pay Submit maintenance requests and general inquiries</p>
+    //     <p>Record information about your renters insurance policy</p>
+    //     <p><a href="${buttonLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">${buttonText}</a></p>
+    //     <div ></div>
+    //     ${accountInformation}
 
-    `;
+    //   `;
 
-    // const email = req.body.email;
+    //   // const email = req.body.email;
 
-    // const client = await Clients.findOne({ email: req.body.email });
+    //   // const client = await Clients.findOne({ email: req.body.email });
 
-    // Send welcome email using the email service
-    await emailService.sendWelcomeEmail(data.email, subject, text);
+    //   // Send welcome email using the email service
+    //   await emailService.sendWelcomeEmail(data.email, subject, text);
 
     return res.status(200).json({
       statusCode: 200,
@@ -545,15 +554,8 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
     });
 
     const unit_data = await Unit.findOne({ unit_id: unit_id });
-    const charge = await Charge.findOne({
-      lease_id: lease_id,
-      "entry.charge_type": "Last Month's Rent",
-    });
+    const charge = data[0].entry.filter((item) => item.charge_type === "Rent");
 
-    const filteredCharge = charge.entry.filter(
-      (item) => item.charge_type === "Last Month's Rent"
-    );
-    
     const object = {
       lease_id: data[0].lease_id,
       tenant_id: data[0].tenant_id,
@@ -570,14 +572,80 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
       rental_unit: unit_data.rental_unit,
       rentalOwner_firstName: rentalOwner_data.rentalOwner_firstName,
       rentalOwner_lastName: rentalOwner_data.rentalOwner_lastName,
-      charge_id: charge.charge_id,
-      amount: filteredCharge[0].amount,
-      date: filteredCharge[0].date,
+      amount: charge[0].amount,
+      date: charge[0].date,
     };
 
     res.json({
       statusCode: 200,
       data: object,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/get_lease/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
+
+    var data = await Lease.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    const tenant_id = data[0].tenant_id;
+    const unit_id = data[0].unit_id;
+    const rental_id = data[0].rental_id;
+
+    const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
+
+    const password = decrypt(tenant_data.tenant_password);
+    tenant_data.tenant_password = password;
+    
+    const rental_data = await Rentals.findOne({
+      rental_id: rental_id,
+    });
+
+    const rentalOwner_data = await RentalOwner.findOne({
+      rentalowner_id: rental_data.rentalowner_id,
+    });
+
+    const unit_data = await Unit.findOne({ unit_id: unit_id });
+    const rec_charge_data = data[0].entry.filter(
+      (item) => item.charge_type === "Recurring Charge"
+    );
+    const one_charge_data = data[0].entry.filter(
+      (item) => item.charge_type === "One Time Charge"
+    );
+    const rent_charge_data = data[0].entry.filter(
+      (item) => item.charge_type === "Rent"
+    );
+    const Security_charge_data = data[0].entry.filter(
+      (item) => item.charge_type === "Security Deposite"
+    );
+
+    res.json({
+      statusCode: 200,
+      data: {
+        tenant: tenant_data,
+        rental: rental_data,
+        rentalOwner_data,
+        unit_data,
+        rec_charge_data,
+        one_charge_data,
+        rent_charge_data,
+        Security_charge_data,
+        leases: data[0],
+      },
       message: "Read All Request",
     });
   } catch (error) {
@@ -634,9 +702,17 @@ router.get("/tenants/:lease_id", async (req, res) => {
       tenant_data.push(tenant);
     }
 
+    const uniqueTenantData = {};
+    tenant_data.forEach((item) => {
+      uniqueTenantData[item.tenant_id] = item;
+    });
+    
+    const filteredData = Object.values(uniqueTenantData);
+
+
     res.json({
       statusCode: 200,
-      data: tenant_data,
+      data: filteredData,
       message: "Read All Request",
     });
   } catch (error) {

@@ -81,23 +81,21 @@ router.get("/charges/:lease_id", async (req, res) => {
     const totalPayments = {};
 
     for (const data of charge) {
-      data.charge_amount = data.amount;
-      for (const item of payment) {
-        if (data.charge_type === item.payment_type) {
-          data.charge_amount -= item.amount;
+      for (const data2 of data.entry) {
+        data2.charge_amount = data2.amount;
+        for (const item of payment) {
+          for (const item2 of item.entry) {
+            if (data2.charge_type === item2.charge_type) {
+              data2.charge_amount -= item2.amount;
+            }
+          }
         }
-      }
-      // Add or update the total payment amount for each payment type
-      if (totalPayments[data.charge_type]) {
-        totalPayments[data.charge_type] += data.charge_amount;
-      } else {
-        totalPayments[data.charge_type] = data.charge_amount;
       }
     }
 
     res.json({
       statusCode: 200,
-      totalCharges: totalPayments,
+      totalCharges: charge,
       Surcharge: surcharge,
       message: "Read All Lease",
     });
@@ -137,9 +135,9 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
     var amount = 0;
     for (const item of sortedDates) {
       if (item.type === "payment") {
-        amount -= item.amount;
+        amount -= item.total_amount;
       } else if (item.type === "charge") {
-        amount += item.amount;
+        amount += item.total_amount;
       }
       item.balance = amount;
     }
