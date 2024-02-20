@@ -260,7 +260,7 @@ router.get("/financial", async (req, res) => {
                         branches: [
                           {
                             case: { $eq: ["$$charge.type", "Payment"] },
-                            then: { $multiply: ["$$charge.amount", -1] },
+                            then: { $multiply: ["$$charge.total_amount", -1] },
                           },
                           {
                             case: { $eq: ["$$charge.type", "Charge"] },
@@ -268,7 +268,7 @@ router.get("/financial", async (req, res) => {
                           },
                           {
                             case: { $eq: ["$$charge.type", "Refund"] },
-                            then: "$$charge.amount",
+                            then: "$$charge.total_amount",
                           },
                         ],
                         default: 0,
@@ -419,7 +419,7 @@ router.get("/financial_unit", async (req, res) => {
                         branches: [
                           {
                             case: { $eq: ["$$charge.type", "Payment"] },
-                            then: { $multiply: ["$$charge.amount", -1] },
+                            then: { $multiply: ["$$charge.total_amount", -1] },
                           },
                           {
                             case: { $eq: ["$$charge.type", "Charge"] },
@@ -427,7 +427,7 @@ router.get("/financial_unit", async (req, res) => {
                           },
                           {
                             case: { $eq: ["$$charge.type", "Refund"] },
-                            then: "$$charge.amount",
+                            then: "$$charge.total_amount",
                           },
                         ],
                         default: 0,
@@ -548,10 +548,12 @@ router.put("/edit_entry/:entryId", async (req, res) => {
     const { entryId } = req.params;
     const {
       type,
-      charge_type,
+      payment_type,
       account,
       amount,
+      total_amount,
       tenant_firstName,
+      tenant_lastName,
       memo,
       date,
       month_year,
@@ -562,10 +564,12 @@ router.put("/edit_entry/:entryId", async (req, res) => {
     // Build an update object with the fields that need to be modified
     const updateFields = {
       "unit.$[unitElem].paymentAndCharges.$[elem].type": type,
-      "unit.$[unitElem].paymentAndCharges.$[elem].charge_type": charge_type,
+      "unit.$[unitElem].paymentAndCharges.$[elem].payment_type": payment_type,
       "unit.$[unitElem].paymentAndCharges.$[elem].account": account,
       "unit.$[unitElem].paymentAndCharges.$[elem].amount": amount,
+      "unit.$[unitElem].paymentAndCharges.$[elem].total_amount": total_amount,
       "unit.$[unitElem].paymentAndCharges.$[elem].tenant_firstName": tenant_firstName,
+      "unit.$[unitElem].paymentAndCharges.$[elem].tenant_lastName": tenant_lastName,
       "unit.$[unitElem].paymentAndCharges.$[elem].memo": memo,
       "unit.$[unitElem].paymentAndCharges.$[elem].date": date,
       "unit.$[unitElem].paymentAndCharges.$[elem].month_year": month_year,
