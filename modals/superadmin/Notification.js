@@ -17,6 +17,7 @@ const notificationSchema = new Schema({
   is_rental: { type: Boolean, default: false },
   is_lease: { type: Boolean, default: false },
   is_workorder: { type: Boolean, default: false },
+  is_staffmember: { type: Boolean, default: false },
 
   createdAt: {
     type: String,

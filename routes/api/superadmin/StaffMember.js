@@ -483,33 +483,26 @@ router.get("/staffmember_property/:staffmember_id", async (req, res) => {
     const rentalData = await Rentals.find({ staffmember_id });
 
     for (let i = 0; i < rentalData.length; i++) {
-      const rental_id = rentalData[i].rental_id;
+      const property_id = rentalData[i].property_id;
 
-      const unitData = await Unit.find({ rental_id });
+      const property_data = await PropertyType.findOne({ property_id });
 
-      for (let index = 0; index < unitData.length; index++) {
-        const unit_id = unitData[index].unit_id;
-        console.log(unit_id, "vunit_id");
-
-        const leaseData = await Leasing.find({ rental_id, unit_id });
-
-        // Check if leaseData is not empty and if index is within bounds
-        if (leaseData.length > 0 && leaseData[index]) {
-          data.push({
-            lease_id: leaseData[index].lease_id,
-            start_date: leaseData[index].start_date,
-            end_date: leaseData[index].end_date,
-            rental_id: rentalData[i].rental_id,
-            rental_adress: rentalData[i].rental_adress,
-            unit_id: unitData[index].unit_id,
-            rental_unit: unitData[index].rental_unit,
-          });
-        }
-      }
+      data.push({
+        rental_id: rentalData[i].rental_id,
+        rental_adress: rentalData[i].rental_adress,
+        property_id: property_id,
+        propertysub_type: property_data?.propertysub_type,
+        rental_city: rentalData[i].rental_city,
+        rental_country: rentalData[i].rental_country,
+        rental_state: rentalData[i].rental_state,
+        createdAt: rentalData[i].createdAt,
+        updatedAt: rentalData[i].updatedAt,
+      });
     }
 
     res.json({
       statusCode: 200,
+      // data: data,
       data: data,
       message: "Read All Request",
     });
@@ -521,13 +514,13 @@ router.get("/staffmember_property/:staffmember_id", async (req, res) => {
   }
 });
 
-router.get("/staffmember_summary/:lease_id", async (req, res) => {
+router.get("/staffmember_summary/:rental_id", async (req, res) => {
   try {
-    const lease_id = req.params.lease_id;
+    const rental_id = req.params.rental_id;
 
-    var data = await Leasing.aggregate([
+    var data = await Rentals.aggregate([
       {
-        $match: { lease_id: lease_id },
+        $match: { rental_id: rental_id },
       },
       {
         $sort: { createdAt: -1 },
@@ -536,29 +529,31 @@ router.get("/staffmember_summary/:lease_id", async (req, res) => {
 
     //   // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
-      const rental_id = data[i].rental_id;
-      const unit_id = data[i].unit_id;
+      // const rental_id = data[i].rental_id;
+      const rentalowner_id = data[i].rentalowner_id;
+      const staffmember_id = data[i].staffmember_id;
+      const property_id = data[i].property_id;
 
       // Fetch property information
       // const lease_data = await Leasing.findOne({ tenant_id: tenant_id });
-      const rental_data = await Rentals.findOne({
-        rental_id: rental_id,
-      });
+      // const rental_data = await Rentals.findOne({
+      //   rental_id: rental_id,
+      // });
       const staffmember_data = await StaffMember.findOne({
-        staffmember_id: rental_data.staffmember_id,
+        staffmember_id: staffmember_id,
       });
       const rentalowner_data = await RentalOwner.findOne({
-        rentalowner_id: rental_data.rentalowner_id,
+        rentalowner_id: rentalowner_id,
       });
       const unit_data = await Unit.findOne({
-        unit_id: unit_id,
+        rental_id: rental_id,
       });
       const property_type_data = await PropertyType.findOne({
-        property_id: rental_data.property_id,
+        property_id: property_id,
       });
 
       // Attach client and property information to the data item
-      data[i].rental_data = rental_data;
+      // data[i].rental_data = rental_data;
       data[i].staffmember_data = staffmember_data;
       data[i].rentalowner_data = rentalowner_data;
       data[i].unit_data = unit_data;
@@ -568,7 +563,7 @@ router.get("/staffmember_summary/:lease_id", async (req, res) => {
     res.json({
       statusCode: 200,
       data: data,
-      message: "Read All Request",
+      message: "Read Property Details",
     });
   } catch (error) {
     res.json({

@@ -270,17 +270,17 @@ router.post("/tenants", async (req, res) => {
           .json({ message: "Recipient email not provided" });
       }
 
-      const subject = "Tenant Login Credentials";
-      const text = `
-        <p>Hello,</p>
-        <p>Here are your credentials for tenant login:</p>
-        <p>Email: ${req.body.tenant_email}</p>
-        <p>Password: ${req.body.tenant_password}</p>
-        <p>Login URL: https://302-properties.vercel.app/auth/${adminData.company_name}/tenants/login</p>
-      `;
+      // const subject = "Tenant Login Credentials";
+      // const text = `
+      //   <p>Hello,</p>
+      //   <p>Here are your credentials for tenant login:</p>
+      //   <p>Email: ${req.body.tenant_email}</p>
+      //   <p>Password: ${req.body.tenant_password}</p>
+      //   <p>Login URL: https://302-properties.vercel.app/auth/${adminData.company_name}/tenants/login</p>
+      // `;
 
-      // Send email with login credentials
-      await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
+      // // Send email with login credentials
+      // await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
 
       let hashConvert = encrypt(req.body.tenant_password);
       req.body.tenant_password = hashConvert;
@@ -507,7 +507,6 @@ router.get("/tenant_property/:tenant_id", async (req, res) => {
     });
   }
 });
-
 
 router.get("/property_count/:tenant_id", async (req, res) => {
   try {

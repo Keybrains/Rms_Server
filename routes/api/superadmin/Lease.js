@@ -476,9 +476,7 @@ router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
   try {
     const { rental_id, unit_id } = req.params;
     const leases = await Lease.find({ rental_id, unit_id });
-
     const tenantData = [];
-
     for (const lease of leases) {
       const tenant = await Tenant.findOne({
         tenant_id: lease.tenant_id,
@@ -487,9 +485,16 @@ router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
       tenantData.push(tenant);
     }
 
+    const uniqueTenantData = {};
+    tenantData.forEach((item) => {
+      uniqueTenantData[item.tenant_id] = item;
+    });
+
+    const filteredData = Object.values(uniqueTenantData);
+
     res.json({
       statusCode: 200,
-      data: tenantData,
+      data: filteredData,
       message: "Data retrieved successfully",
     });
   } catch (error) {
@@ -577,45 +582,46 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
       lease_id: lease_id,
     });
 
-    const filteredCharge = charge.entry.filter(
-      (item) => item.charge_type === "Last Month's Rent"
-    );
+    const filteredCharge =
+      charge?.entry?.filter(
+        (item) => item?.charge_type === "Last Month's Rent"
+      ) ?? [];
 
     const object = {
-      lease_id: data[0].lease_id,
-      tenant_id: data[0].tenant_id,
-      admin_id: data[0].admin_id,
-      rental_id: data[0].rental_id,
-      unit_id: data[0].unit_id,
-      lease_type: data[0].lease_type,
-      start_date: data[0].start_date,
-      end_date: data[0].end_date,
-      tenant_firstName: tenant_data.tenant_firstName,
-      tenant_lastName: tenant_data.tenant_lastName,
-      tenant_email: tenant_data.tenant_email,
-      rental_adress: rental_data.rental_adress,
-      rental_city: rental_data.rental_city,
-      rental_country: rental_data.rental_country,
-      rental_postcode: rental_data.rental_postcode,
+      lease_id: data[0]?.lease_id,
+      tenant_id: data[0]?.tenant_id,
+      admin_id: data[0]?.admin_id,
+      rental_id: data[0]?.rental_id,
+      unit_id: data[0]?.unit_id,
+      lease_type: data[0]?.lease_type,
+      start_date: data[0]?.start_date,
+      end_date: data[0]?.end_date,
+      tenant_firstName: tenant_data?.tenant_firstName,
+      tenant_lastName: tenant_data?.tenant_lastName,
+      tenant_email: tenant_data?.tenant_email,
+      rental_adress: rental_data?.rental_adress,
+      rental_city: rental_data?.rental_city,
+      rental_country: rental_data?.rental_country,
+      rental_postcode: rental_data?.rental_postcode,
 
-      staffmember_name: staff_data.staffmember_name,
+      staffmember_name: staff_data?.staffmember_name,
 
-      propertysub_type: property_data.propertysub_type,
+      propertysub_type: property_data?.propertysub_type,
 
-      rental_unit: unit_data.rental_unit,
-      rental_unit_adress: unit_data.rental_unit_adress,
-      rental_bed: unit_data.rental_bed,
-      rental_bath: unit_data.rental_bath,
-      rental_sqft: unit_data.rental_sqft,
+      rental_unit: unit_data?.rental_unit,
+      rental_unit_adress: unit_data?.rental_unit_adress,
+      rental_bed: unit_data?.rental_bed,
+      rental_bath: unit_data?.rental_bath,
+      rental_sqft: unit_data?.rental_sqft,
 
-      rentalOwner_firstName: rentalOwner_data.rentalOwner_firstName,
-      rentalOwner_lastName: rentalOwner_data.rentalOwner_lastName,
-      rentalOwner_companyName: rentalOwner_data.rentalOwner_companyName,
-      rentalOwner_primaryEmail: rentalOwner_data.rentalOwner_primaryEmail,
-      rentalOwner_phoneNumber: rentalOwner_data.rentalOwner_phoneNumber,
+      rentalOwner_firstName: rentalOwner_data?.rentalOwner_firstName,
+      rentalOwner_lastName: rentalOwner_data?.rentalOwner_lastName,
+      rentalOwner_companyName: rentalOwner_data?.rentalOwner_companyName,
+      rentalOwner_primaryEmail: rentalOwner_data?.rentalOwner_primaryEmail,
+      rentalOwner_phoneNumber: rentalOwner_data?.rentalOwner_phoneNumber,
       charge_id: charge?.charge_id,
-      amount: filteredCharge[0]?.amount,
-      date: filteredCharge[0]?.date,
+      amount: filteredCharge[0]?.amount ? filteredCharge[0]?.amount : "-",
+      date: filteredCharge[0]?.date ? filteredCharge[0]?.date : "-",
     };
 
     res.json({
