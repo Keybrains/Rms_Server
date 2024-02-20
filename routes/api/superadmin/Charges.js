@@ -2,6 +2,9 @@ var express = require("express");
 var router = express.Router();
 var Charge = require("../../../modals/superadmin/Charge");
 const moment = require("moment");
+const Leasing = require("../../../modals/superadmin/Leasing");
+const Surcharge = require("../../../modals/payment/Surcharge");
+const Payment = require("../../../modals/payment/Payment");
 
 // router.post("/charge", async (req, res) => {
 //   try {
@@ -33,7 +36,59 @@ const moment = require("moment");
 //   }
 // });
 
+router.get("/charges/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
 
+    const lease_data = await Leasing.findOne({ lease_id });
+    const surcharge = await Surcharge.findOne({
+      admin_id: lease_data.admin_id,
+    });
+
+    var payment = await Payment.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    var charge = await Charge.aggregate([
+      {
+        $match: { lease_id: lease_id, is_paid: false },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    for (const data of charge) {
+      for (const data2 of data.entry) {
+        data2.charge_amount = data2.amount;
+        for (const item of payment) {
+          for (const item2 of item.entry) {
+            if (data2.account === item2.account) {
+              data2.charge_amount -= item2.amount;
+            }
+          }
+        }
+      }
+    }
+
+    res.json({
+      statusCode: 200,
+      totalCharges: charge,
+      Surcharge: surcharge,
+      message: "Read All Lease",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 router.post("/charge", async (req, res) => {
   try {

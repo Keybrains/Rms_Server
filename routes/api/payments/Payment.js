@@ -50,63 +50,6 @@ router.post("/payment", async (req, res) => {
   }
 });
 
-router.get("/charges/:lease_id", async (req, res) => {
-  try {
-    const lease_id = req.params.lease_id;
-
-    const lease_data = await Leasing.findOne({ lease_id });
-    const surcharge = await Surcharge.findOne({
-      admin_id: lease_data.admin_id,
-    });
-
-    var payment = await Payment.aggregate([
-      {
-        $match: { lease_id: lease_id },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-    ]);
-
-    var charge = await Charge.aggregate([
-      {
-        $match: { lease_id: lease_id },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-    ]);
-
-    // Initialize an object to store total payment amount for each payment type
-    const totalPayments = {};
-
-    for (const data of charge) {
-      for (const data2 of data.entry) {
-        data2.charge_amount = data2.amount;
-        for (const item of payment) {
-          for (const item2 of item.entry) {
-            if (data2.charge_type === item2.charge_type) {
-              data2.charge_amount -= item2.amount;
-            }
-          }
-        }
-      }
-    }
-
-    res.json({
-      statusCode: 200,
-      totalCharges: charge,
-      Surcharge: surcharge,
-      message: "Read All Lease",
-    });
-  } catch (error) {
-    res.json({
-      statusCode: 500,
-      message: error.message,
-    });
-  }
-});
-
 router.get("/charges_payments/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
