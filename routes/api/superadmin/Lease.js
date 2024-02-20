@@ -6,12 +6,15 @@ var Cosigner = require("../../../modals/superadmin/Cosigner");
 var Charge = require("../../../modals/superadmin/Charge");
 var Unit = require("../../../modals/superadmin/Unit");
 var Rentals = require("../../../modals/superadmin/Rentals");
+var Notification = require("../../../modals/superadmin/Notification");
 var emailService = require("./emailService");
 const RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const crypto = require("crypto");
+const StaffMember = require("../../../modals/superadmin/StaffMember");
+const PropertyType = require("../../../modals/superadmin/PropertyType");
 
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
@@ -117,7 +120,6 @@ router.post("/leases", async (req, res) => {
         tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
         tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
         const pass = encrypt(tenantData.tenant_password);
-        console.log(pass);
         tenantData.tenant_password = pass;
         tenant = await Tenant.create(tenantData);
 
@@ -175,7 +177,6 @@ router.post("/leases", async (req, res) => {
           filteredCharge.entry.push(chargesData);
         }
 
-        console.log(charge);
         const newCharge = await Charge.create(filteredCharge);
         charge.push(newCharge);
       }
@@ -245,9 +246,28 @@ router.post("/leases", async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    // Notification When Assign Lease
+    const tenantTimestamp = Date.now();
+    const notificationData = {
+      notification_id: tenantTimestamp,
+      admin_id: lease.admin_id,
+      rental_id: lease.rental_id,
+      unit_id: lease.unit_id,
+      notification_title: "Lease Created",
+      notification_detail: "A new lease has been created.",
+      notification_read: [{ is_tenant_read: false }],
+      notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
+      notification_send_to: [{ tenant_id: tenant.tenant_id }], // Fill this array with users you want to send the notification to
+      createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      is_lease: true,
+    };
+
+    const notification = await Notification.create(notificationData);
+
     res.json({
       statusCode: 200,
-      data: { lease, tenant, cosigner, charge },
+      data: { lease, tenant, cosigner, charge, notification },
       message: "Add Lease Successfully",
     });
   } catch (error) {
@@ -536,8 +556,12 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
     const rental_id = data[0].rental_id;
 
     const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
+
     const rental_data = await Rentals.findOne({
       rental_id: rental_id,
+    });
+    const property_data = await PropertyType.findOne({
+      property_id: rental_data.property_id,
     });
 
     const rentalOwner_data = await RentalOwner.findOne({
@@ -545,15 +569,18 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
     });
 
     const unit_data = await Unit.findOne({ unit_id: unit_id });
+
+    const staff_data = await StaffMember.findOne({
+      staffmember_id: rental_data.staffmember_id,
+    });
     const charge = await Charge.findOne({
       lease_id: lease_id,
-      "entry.charge_type": "Last Month's Rent",
     });
 
     const filteredCharge = charge.entry.filter(
       (item) => item.charge_type === "Last Month's Rent"
     );
-    
+
     const object = {
       lease_id: data[0].lease_id,
       tenant_id: data[0].tenant_id,
@@ -567,12 +594,28 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
       tenant_lastName: tenant_data.tenant_lastName,
       tenant_email: tenant_data.tenant_email,
       rental_adress: rental_data.rental_adress,
+      rental_city: rental_data.rental_city,
+      rental_country: rental_data.rental_country,
+      rental_postcode: rental_data.rental_postcode,
+
+      staffmember_name: staff_data.staffmember_name,
+
+      propertysub_type: property_data.propertysub_type,
+
       rental_unit: unit_data.rental_unit,
+      rental_unit_adress: unit_data.rental_unit_adress,
+      rental_bed: unit_data.rental_bed,
+      rental_bath: unit_data.rental_bath,
+      rental_sqft: unit_data.rental_sqft,
+
       rentalOwner_firstName: rentalOwner_data.rentalOwner_firstName,
       rentalOwner_lastName: rentalOwner_data.rentalOwner_lastName,
-      charge_id: charge.charge_id,
-      amount: filteredCharge[0].amount,
-      date: filteredCharge[0].date,
+      rentalOwner_companyName: rentalOwner_data.rentalOwner_companyName,
+      rentalOwner_primaryEmail: rentalOwner_data.rentalOwner_primaryEmail,
+      rentalOwner_phoneNumber: rentalOwner_data.rentalOwner_phoneNumber,
+      charge_id: charge?.charge_id,
+      amount: filteredCharge[0]?.amount,
+      date: filteredCharge[0]?.date,
     };
 
     res.json({
@@ -592,7 +635,6 @@ router.put("/lease_moveout/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
     req.body["end_date"] = req.body.moveout_date;
-    console.log(req.body);
     const lease = await Lease.findOneAndUpdate(
       { lease_id },
       {
