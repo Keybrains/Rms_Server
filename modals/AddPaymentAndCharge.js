@@ -61,6 +61,9 @@ const paymentAndChargeSchema = new mongoose.Schema({
   tenant_id: {
     type: String,
   },
+  entryIndex: {
+    type: String,
+  },
   memo: String,
   charges_attachment :{ type: Array },
   date: {

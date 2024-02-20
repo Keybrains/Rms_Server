@@ -405,20 +405,20 @@ router.post("/new-sale", async (req, res) => {
       //payment: paymentDetails.paymentType,
       customer_vault_id: paymentDetails.customer_vault_id,
       billing_id: paymentDetails.billing_id,
-      address1: paymentDetails.rental_adress,
+      address1: paymentDetails.address1,
       amount: paymentDetails.amount,
       surcharge: paymentDetails.surcharge,
-      first_name: paymentDetails.tenant_firstName,
-      last_name: paymentDetails.tenant_lastName,
+      first_name: paymentDetails.first_name,
+      last_name: paymentDetails.last_name,
       email: paymentDetails.email_name,
       plan_id: planId,
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
     };
 
     const nmiResponse = await sendNmiRequest(nmiConfig, paymentDetails);
-
+    console.log("object",paymentDetails)
     // Save the payment details to MongoDB
-    // const nmiPayment = await AddPaymentAndCharge({
+    // const nmiPayment = await AddPaymentAndCharge({ 
     //   response: nmiResponse.response,
     //   responsetext: nmiResponse.responsetext,
     //   authcode: nmiResponse.authcode,
@@ -440,31 +440,31 @@ router.post("/new-sale", async (req, res) => {
     if (nmiResponse.response_code === "100") {
       // Payment was successful
       //nmiPayment.status = "Success";
-      const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
-        to: paymentDetails.email_name,
-        subject: "Payment Confirmation - 302 Properties",
-        html: `     
-          <p>Hello ${paymentDetails.tenant_firstName} ${paymentDetails.tenant_lastName},</p>
+      // const info = await transporter.sendMail({
+      //   from: '"302 Properties" <info@cloudpress.host>',
+      //   to: paymentDetails.email_name,
+      //   subject: "Payment Confirmation - 302 Properties",
+      //   html: `     
+      //     <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
     
-          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+      //     <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
     
-          <strong>Transaction Details:</strong>
-          <ul>
-            <li><strong>Property:</strong> ${paymentDetails.rental_adress}</li>
-            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
-            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
-            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
-          </ul>
+      //     <strong>Transaction Details:</strong>
+      //     <ul>
+      //       <li><strong>Property:</strong> ${paymentDetails.address1}</li>
+      //       <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+      //      <li><strong>Payment For:</strong> ${paymentDetails.surcharge}</li>
+      //       <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+      //       <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+      //     </ul>
     
-          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+      //     <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
     
-          <p>Thank you for choosing 302 Properties.</p>
+      //     <p>Thank you for choosing 302 Properties.</p>
     
-          <p>Best regards,<br>The 302 Properties Team</p>
-        `,
-      });
+      //     <p>Best regards,<br>The 302 Properties Team</p>
+      //   `,
+      // });
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
 
       //await nmiPayment.save();
@@ -818,31 +818,31 @@ await existingRecord.save();
 
     if (nmiResponse.response_code === "100") {
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
-      const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
-        to: paymentDetails.email_name,
-        subject: "Payment Confirmation - 302 Properties",
-        html: `     
-          <p>Hello ${paymentDetails.tenant_firstName} ${paymentDetails.tenant_lastName},</p>
+      // const info = await transporter.sendMail({
+      //   from: '"302 Properties" <info@cloudpress.host>',
+      //   to: paymentDetails.email_name,
+      //   subject: "Payment Confirmation - 302 Properties",
+      //   html: `     
+      //     <p>Hello ${paymentDetails.tenant_firstName} ${paymentDetails.tenant_lastName},</p>
     
-          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+      //     <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
     
-          <strong>Transaction Details:</strong>
-          <ul>
-            <li><strong>Property:</strong> ${paymentDetails.rental_adress}</li>
-            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
-            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
-            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
-          </ul>
+      //     <strong>Transaction Details:</strong>
+      //     <ul>
+      //       <li><strong>Property:</strong> ${paymentDetails.rental_adress}</li>
+      //       <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+      //       <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+      //       <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+      //       <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+      //     </ul>
     
-          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+      //     <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
     
-          <p>Thank you for choosing 302 Properties.</p>
+      //     <p>Thank you for choosing 302 Properties.</p>
     
-          <p>Best regards,<br>The 302 Properties Team</p>
-        `,
-      });
+      //     <p>Best regards,<br>The 302 Properties Team</p>
+      //   `,
+      // });
       return res.status(200).json({
         statusCode: 100,
         message: successMessage,
@@ -1155,31 +1155,31 @@ router.post("/sale", async (req, res) => {
     if (nmiResponse.response_code === "100") {
       // Payment was successful
       nmiPayment.status = "Success";
-      const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
-        to: paymentDetails.email_name,
-        subject: "Payment Confirmation - 302 Properties",
-        html: `     
-          <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
+      // const info = await transporter.sendMail({
+      //   from: '"302 Properties" <info@cloudpress.host>',
+      //   to: paymentDetails.email_name,
+      //   subject: "Payment Confirmation - 302 Properties",
+      //   html: `     
+      //     <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
     
-          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+      //     <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
     
-          <strong>Transaction Details:</strong>
-          <ul>
-            <li><strong>Property:</strong> ${paymentDetails.property}</li>
-            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
-            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
-            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
-          </ul>
+      //     <strong>Transaction Details:</strong>
+      //     <ul>
+      //       <li><strong>Property:</strong> ${paymentDetails.property}</li>
+      //       <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+      //       <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+      //       <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+      //       <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+      //     </ul>
     
-          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+      //     <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
     
-          <p>Thank you for choosing 302 Properties.</p>
+      //     <p>Thank you for choosing 302 Properties.</p>
     
-          <p>Best regards,<br>The 302 Properties Team</p>
-        `,
-      });
+      //     <p>Best regards,<br>The 302 Properties Team</p>
+      //   `,
+      // });
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
 
       await nmiPayment.save();
@@ -1484,31 +1484,31 @@ router.post("/update_sale/:id", async (req, res) => {
 
     if (nmiResponse.response_code === "100") {
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
-      const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
-        to: paymentDetails.email_name,
-        subject: "Payment Confirmation - 302 Properties",
-        html: `     
-          <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
+      // const info = await transporter.sendMail({
+      //   from: '"302 Properties" <info@cloudpress.host>',
+      //   to: paymentDetails.email_name,
+      //   subject: "Payment Confirmation - 302 Properties",
+      //   html: `     
+      //     <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
     
-          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+      //     <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
     
-          <strong>Transaction Details:</strong>
-          <ul>
-            <li><strong>Property:</strong> ${paymentDetails.property}</li>
-            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
-            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
-            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
-          </ul>
+      //     <strong>Transaction Details:</strong>
+      //     <ul>
+      //       <li><strong>Property:</strong> ${paymentDetails.property}</li>
+      //       <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+      //       <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+      //       <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+      //       <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+      //     </ul>
     
-          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+      //     <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
     
-          <p>Thank you for choosing 302 Properties.</p>
+      //     <p>Thank you for choosing 302 Properties.</p>
     
-          <p>Best regards,<br>The 302 Properties Team</p>
-        `,
-      });
+      //     <p>Best regards,<br>The 302 Properties Team</p>
+      //   `,
+      // });
       return res.status(200).json({
         statusCode: 100,
         message: successMessage,
@@ -1790,30 +1790,30 @@ router.post("/postnmipayments", async (req, res) => {
       message: "Add Payment Successfully",
     });
     if (paymentDetails.paymentType !== "Credit Card") {
-    const info = await transporter.sendMail({
-      from: '"302 Properties" <info@cloudpress.host>',
-      to: paymentDetails.email_name,
-      subject: "Payment Confirmation - 302 Properties",
-      html: `     
-        <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
+    // const info = await transporter.sendMail({
+    //   from: '"302 Properties" <info@cloudpress.host>',
+    //   to: paymentDetails.email_name,
+    //   subject: "Payment Confirmation - 302 Properties",
+    //   html: `     
+    //     <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
   
-        <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+    //     <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
   
-        <strong>Transaction Details:</strong>
-        <ul>
-          <li><strong>Property:</strong> ${paymentDetails.property}</li>
-          <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
-          <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
-          <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
-        </ul>
+    //     <strong>Transaction Details:</strong>
+    //     <ul>
+    //       <li><strong>Property:</strong> ${paymentDetails.property}</li>
+    //       <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
+    //       <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+    //       <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+    //     </ul>
   
-        <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+    //     <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
   
-        <p>Thank you for choosing 302 Properties.</p>
+    //     <p>Thank you for choosing 302 Properties.</p>
   
-        <p>Best regards,<br>The 302 Properties Team</p>
-      `,
-    });
+    //     <p>Best regards,<br>The 302 Properties Team</p>
+    //   `,
+    // });
     }
   } catch (error) {
     res.json({
@@ -2005,25 +2005,25 @@ router.post("/new-manual-refund/:id", async (req, res) => {
       });
 
       // Sending email
-      const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
-        to: refundDetails.email_name,
-        subject: "Refund Confirmation - 302 Properties",
-        html: `     
-          <p>Hello ${refundDetails.tenant_firstName} ${refundDetails.tenant_lastName},</p>
-          <p>We are pleased to inform you that your refund has been processed successfully.</p>
-          <strong>Transaction Details:</strong>
-          <ul>
-            <li><strong>Property:</strong> ${refundDetails.property}</li>
-            <li><strong>Refund For:</strong> ${refundDetails.account}</li>
-            <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
-            <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
-          </ul>
-          <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
-          <p>Best regards,<br>
-          The 302 Properties Team</p>
-        `,
-      });
+      // const info = await transporter.sendMail({
+      //   from: '"302 Properties" <info@cloudpress.host>',
+      //   to: refundDetails.email_name,
+      //   subject: "Refund Confirmation - 302 Properties",
+      //   html: `     
+      //     <p>Hello ${refundDetails.tenant_firstName} ${refundDetails.tenant_lastName},</p>
+      //     <p>We are pleased to inform you that your refund has been processed successfully.</p>
+      //     <strong>Transaction Details:</strong>
+      //     <ul>
+      //       <li><strong>Property:</strong> ${refundDetails.property}</li>
+      //       <li><strong>Refund For:</strong> ${refundDetails.account}</li>
+      //       <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
+      //       <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
+      //     </ul>
+      //     <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+      //     <p>Best regards,<br>
+      //     The 302 Properties Team</p>
+      //   `,
+      // });
     } else {
       res.status(400).json({
         statusCode: 400,
@@ -2035,7 +2035,6 @@ router.post("/new-manual-refund/:id", async (req, res) => {
     res.status(500).send(error);
   }
 });
-
 
 router.post("/new-refund", async (req, res) => {
   try {
@@ -2117,30 +2116,30 @@ router.post("/new-refund", async (req, res) => {
       }
       const successMessage = `Refund processed successfully! Transaction ID: ${nmiResponse.transactionid}`;
      
-      const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
-        to: refundDetails.email_name,
-        subject: "Refund Confirmation - 302 Properties",
-        html: `     
-        <p>Hello ${refundDetails.tenant_firstName} ${refundDetails.tenant_lastName},</p>
+      // const info = await transporter.sendMail({
+      //   from: '"302 Properties" <info@cloudpress.host>',
+      //   to: refundDetails.email_name,
+      //   subject: "Refund Confirmation - 302 Properties",
+      //   html: `     
+      //   <p>Hello ${refundDetails.tenant_firstName} ${refundDetails.tenant_lastName},</p>
   
-        <p>We are pleased to inform you that your refund has been processed successfully.</p>
+      //   <p>We are pleased to inform you that your refund has been processed successfully.</p>
   
-        <strong>Transaction Details:</strong>
-        <ul>
-          <li><strong>Property:</strong> ${refundDetails.rental_adress}</li>
-          <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-          <li><strong>Refund For:</strong> ${refundDetails.account}</li>
-          <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
-          <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
-        </ul>
+      //   <strong>Transaction Details:</strong>
+      //   <ul>
+      //     <li><strong>Property:</strong> ${refundDetails.rental_adress}</li>
+      //     <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+      //     <li><strong>Refund For:</strong> ${refundDetails.account}</li>
+      //     <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
+      //     <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
+      //   </ul>
   
-        <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+      //   <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
   
-        <p>Best regards,<br>
-        The 302 Properties Team</p>
-      `,
-      });
+      //   <p>Best regards,<br>
+      //   The 302 Properties Team</p>
+      // `,
+      // });
       return sendResponse(res, successMessage, 200);
     } else if (nmiResponse.response_code === "300") {
       // Refund amount exceeds the transaction balance
@@ -2200,29 +2199,29 @@ router.post("/manual-refund/:id", async (req, res) => {
           statusCode: 200,
           message: "Refund added successfully",
         });
-        const info = await transporter.sendMail({
-          from: '"302 Properties" <info@cloudpress.host>',
-          to: refundDetails.email_name,
-          subject: "Refund Confirmation - 302 Properties",
-          html: `     
-        <p>Hello ${refundDetails.first_name} ${refundDetails.last_name},</p>
+      //   const info = await transporter.sendMail({
+      //     from: '"302 Properties" <info@cloudpress.host>',
+      //     to: refundDetails.email_name,
+      //     subject: "Refund Confirmation - 302 Properties",
+      //     html: `     
+      //   <p>Hello ${refundDetails.first_name} ${refundDetails.last_name},</p>
   
-        <p>We are pleased to inform you that your refund has been processed successfully.</p>
+      //   <p>We are pleased to inform you that your refund has been processed successfully.</p>
   
-        <strong>Transaction Details:</strong>
-        <ul>
-          <li><strong>Property:</strong> ${refundDetails.property}</li>
-          <li><strong>Refund For:</strong> ${refundDetails.account}</li>
-          <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
-          <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
-        </ul>
+      //   <strong>Transaction Details:</strong>
+      //   <ul>
+      //     <li><strong>Property:</strong> ${refundDetails.property}</li>
+      //     <li><strong>Refund For:</strong> ${refundDetails.account}</li>
+      //     <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
+      //     <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
+      //   </ul>
   
-        <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+      //   <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
   
-        <p>Best regards,<br>
-        The 302 Properties Team</p>
-      `,
-        });
+      //   <p>Best regards,<br>
+      //   The 302 Properties Team</p>
+      // `,
+      //   });
       } else {
         res.status(500).json({
           statusCode: 500,
@@ -2291,30 +2290,30 @@ router.post("/refund", async (req, res) => {
 
       const successMessage = `Refund processed successfully! Transaction ID: ${nmiResponse.transactionid}`;
       await nmiPayment.save();
-      const info = await transporter.sendMail({
-        from: '"302 Properties" <info@cloudpress.host>',
-        to: refundDetails.email_name,
-        subject: "Refund Confirmation - 302 Properties",
-        html: `     
-        <p>Hello ${refundDetails.first_name} ${refundDetails.last_name},</p>
+      // const info = await transporter.sendMail({
+      //   from: '"302 Properties" <info@cloudpress.host>',
+      //   to: refundDetails.email_name,
+      //   subject: "Refund Confirmation - 302 Properties",
+      //   html: `     
+      //   <p>Hello ${refundDetails.first_name} ${refundDetails.last_name},</p>
   
-        <p>We are pleased to inform you that your refund has been processed successfully.</p>
+      //   <p>We are pleased to inform you that your refund has been processed successfully.</p>
   
-        <strong>Transaction Details:</strong>
-        <ul>
-          <li><strong>Property:</strong> ${refundDetails.property}</li>
-          <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-          <li><strong>Refund For:</strong> ${refundDetails.account}</li>
-          <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
-          <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
-        </ul>
+      //   <strong>Transaction Details:</strong>
+      //   <ul>
+      //     <li><strong>Property:</strong> ${refundDetails.property}</li>
+      //     <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+      //     <li><strong>Refund For:</strong> ${refundDetails.account}</li>
+      //     <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
+      //     <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
+      //   </ul>
   
-        <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+      //   <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
   
-        <p>Best regards,<br>
-        The 302 Properties Team</p>
-      `,
-      });
+      //   <p>Best regards,<br>
+      //   The 302 Properties Team</p>
+      // `,
+      // });
       return sendResponse(res, successMessage, 200);
     } else if (nmiResponse.response_code === "300") {
       // Refund amount exceeds the transaction balance
@@ -2825,27 +2824,27 @@ router.post("/create-customer-vault", async (req, res) => {
         const parsedResponse = querystring.parse(response.data);
         if (parsedResponse.response_code == 100) {
           // Handle successful customer creation
-          const info = await transporter.sendMail({
-            from: '"302 Properties" <info@cloudpress.host>',
-            to: req.body.email,
-            subject: "Cusromer Vault - 302 Properties",
-            html: `     
-            <p>Hello ${req.body.first_name} ${req.body.last_name},</p>
+          // const info = await transporter.sendMail({
+          //   from: '"302 Properties" <info@cloudpress.host>',
+          //   to: req.body.email,
+          //   subject: "Cusromer Vault - 302 Properties",
+          //   html: `     
+          //   <p>Hello ${req.body.first_name} ${req.body.last_name},</p>
             
-            <p>Thank you for sharing your card details! We are delighted to confirm that your customer vault has been successfully created.</p>
+          //   <p>Thank you for sharing your card details! We are delighted to confirm that your customer vault has been successfully created.</p>
         
              
-                <li><strong>Customer Vault Id:</strong> ${parsedResponse.customer_vault_id}</li>
-                <li><strong>Billing Id:</strong> ${req.body.billing_id}</li>
+          //       <li><strong>Customer Vault Id:</strong> ${parsedResponse.customer_vault_id}</li>
+          //       <li><strong>Billing Id:</strong> ${req.body.billing_id}</li>
              
         
-                <p>If you have any questions or concerns regarding your vault, please feel free to contact our customer support.</p>
+          //       <p>If you have any questions or concerns regarding your vault, please feel free to contact our customer support.</p>
                 
-                <p>Thank you for choosing 302 Properties.</p>
+          //       <p>Thank you for choosing 302 Properties.</p>
                 
-                <p>Best regards,<br>The 302 Properties Team</p>
-                `,
-              });
+          //       <p>Best regards,<br>The 302 Properties Team</p>
+          //       `,
+          //     });
               sendResponse(res, parsedResponse);
             } else {
           // Handle customer creation failure
