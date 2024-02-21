@@ -15,9 +15,11 @@ const leasesSchema = new Schema({
 
   entry: [
     {
+      entry_id: { type: String },
       date: { type: String },
       charge_type: { type: String },
       account: { type: String },
+      rent_cycle: { type: String },
       amount: { type: Number },
     },
   ],
