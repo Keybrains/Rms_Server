@@ -53,15 +53,17 @@ router.get("/charges/:lease_id", async (req, res) => {
         $sort: { createdAt: -1 },
       },
     ]);
+    console.log(payment[0].entry);
 
     var charge = await Charge.aggregate([
       {
-        $match: { lease_id: lease_id, is_paid: false },
+        $match: { lease_id: lease_id },
       },
       {
         $sort: { createdAt: -1 },
       },
     ]);
+    console.log(charge);
 
     for (const data of charge) {
       for (const data2 of data.entry) {

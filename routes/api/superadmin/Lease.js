@@ -101,11 +101,13 @@ router.post("/leases", async (req, res) => {
       tenant_id: tenantData.tenant_id,
     });
 
+    //tenant
     if (!existingTenant) {
       const existingTenants = await Tenant.findOne({
         admin_id: tenantData.admin_id,
         tenant_phoneNumber: tenantData.tenant_phoneNumber,
       });
+
       if (existingTenants) {
         return res.status(201).json({
           statusCode: 201,
@@ -119,127 +121,76 @@ router.post("/leases", async (req, res) => {
         const pass = encrypt(tenantData.tenant_password);
         console.log(pass);
         tenantData.tenant_password = pass;
+
         tenant = await Tenant.create(tenantData);
-
-        const leaseTimestamp = Date.now();
-        leaseData.lease_id = `${leaseTimestamp}`;
-        leaseData.tenant_id = tenant.tenant_id;
-        leaseData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        leaseData.entry = chargeData;
-        lease = await Lease.create(leaseData);
-
-        const getRentalsData = await Rentals.findOne({
-          rental_id: lease.rental_id,
-        });
-
-        if (!getRentalsData) {
-          return res.status(200).json({
-            statusCode: 202,
-            message: "Rentals data not found for the provided rental_id",
-          });
-        }
-
-        await Rentals.updateOne(
-          { rental_id: lease.rental_id },
-          { $set: { is_rent_on: true } }
-        );
-
-        if (cosignerData) {
-          const cosignerTimestamp = Date.now();
-          cosignerData.cosigner_id = `${cosignerTimestamp}`;
-          cosignerData.tenant_id = tenant.tenant_id;
-          cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-          cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-          cosigner = await Cosigner.create(cosignerData);
-        }
-
-        const chargeTimestamp = Date.now();
-        const createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-        const filteredCharge = {
-          charge_id: `${chargeTimestamp}`,
-          admin_id: lease.admin_id,
-          tenant_id: lease.tenant_id,
-          lease_id: lease.lease_id,
-          is_leaseAdded: true,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-          entry: [],
-        };
-
-        for (const chargesData of chargeData) {
-          filteredCharge.entry.push(chargesData);
-        }
-
-        console.log(charge);
-        const newCharge = await Charge.create(filteredCharge);
-        charge.push(newCharge);
       }
     } else {
       tenant = existingTenant;
-      const leaseTimestamp = Date.now();
-      leaseData.lease_id = `${leaseTimestamp}`;
-      leaseData.tenant_id = tenant.tenant_id;
-      leaseData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-      leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-      leaseData.entry = chargeData;
-      lease = await Lease.create(leaseData);
-
-      const getRentalsData = await Rentals.findOne({
-        rental_id: lease.rental_id,
-      });
-
-      if (!getRentalsData) {
-        // Handle case when Rentals data is not found
-        return res.status(200).json({
-          statusCode: 202,
-          message: "Rentals data not found for the provided rental_id",
-        });
-      }
-
-      await Rentals.updateOne(
-        { rental_id: lease.rental_id },
-        { $set: { is_rent_on: true } }
-      );
-
-      if (cosignerData) {
-        const cosignerTimestamp = Date.now();
-        cosignerData.cosigner_id = `${cosignerTimestamp}`;
-        cosignerData.tenant_id = tenant.tenant_id;
-        cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-        cosigner = await Cosigner.create(cosignerData);
-      }
-
-      const chargeTimestamp = Date.now();
-      const createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-      const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-      const filteredCharge = {
-        charge_id: `${chargeTimestamp}`,
-        admin_id: lease.admin_id,
-        tenant_id: lease.tenant_id,
-        lease_id: lease.lease_id,
-        is_leaseAdded: true,
-        createdAt: createdAt,
-        updatedAt: updatedAt,
-        total_amount: 0,
-        entry: [],
-      };
-
-      for (let i = 0; i < chargeData.length; i++) {
-        const chargesData = chargeData[i];
-        filteredCharge.total_amount += parseInt(chargesData.amount);
-        chargesData.entry_id = `${chargeTimestamp}-${i}`;
-        filteredCharge.entry.push(chargesData);
-      }
-
-      charge = await Charge.create(filteredCharge);
     }
+
+    //lease
+    const leaseTimestamp = Date.now();
+    leaseData.lease_id = `${leaseTimestamp}`;
+    leaseData.tenant_id = tenant.tenant_id;
+    leaseData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    leaseData.entry = chargeData;
+    lease = await Lease.create(leaseData);
+
+    //update rental
+    const getRentalsData = await Rentals.findOne({
+      rental_id: lease.rental_id,
+    });
+
+    if (!getRentalsData) {
+      // Handle case when Rentals data is not found
+      return res.status(200).json({
+        statusCode: 202,
+        message: "Rentals data not found for the provided rental_id",
+      });
+    }
+
+    await Rentals.updateOne(
+      { rental_id: lease.rental_id },
+      { $set: { is_rent_on: true } }
+    );
+
+    //cosigner
+    if (cosignerData) {
+      const cosignerTimestamp = Date.now();
+      cosignerData.cosigner_id = `${cosignerTimestamp}`;
+      cosignerData.tenant_id = tenant.tenant_id;
+      cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+      cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+      cosigner = await Cosigner.create(cosignerData);
+    }
+
+    //cahrges
+    const chargeTimestamp = Date.now();
+    const createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const filteredCharge = {
+      charge_id: `${chargeTimestamp}`,
+      admin_id: lease.admin_id,
+      tenant_id: lease.tenant_id,
+      lease_id: lease.lease_id,
+      is_leaseAdded: true,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      total_amount: 0,
+      entry: [],
+    };
+
+    for (let i = 0; i < chargeData.length; i++) {
+      const chargesData = chargeData[i];
+      filteredCharge.total_amount += parseInt(chargesData.amount);
+      chargesData.entry_id = `${chargeTimestamp}-${i}`;
+      filteredCharge.entry.push(chargesData);
+    }
+
+    charge = await Charge.create(filteredCharge);
 
     await session.commitTransaction();
     session.endSession();
@@ -610,7 +561,7 @@ router.get("/get_lease/:lease_id", async (req, res) => {
 
     const password = decrypt(tenant_data.tenant_password);
     tenant_data.tenant_password = password;
-    
+
     const rental_data = await Rentals.findOne({
       rental_id: rental_id,
     });
@@ -686,33 +637,24 @@ router.put("/lease_moveout/:lease_id", async (req, res) => {
   }
 });
 
-router.get("/tenants/:lease_id", async (req, res) => {
+router.get("/lease_tenant/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
 
     var data = await Lease.findOne({ lease_id });
-    const leases = await Lease.find({
-      rental_id: data.rental_id,
-      unit_id: data.unit_id,
-    });
 
-    const tenant_data = [];
-    for (const lease of leases) {
-      const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
-      tenant_data.push(tenant);
-    }
+    const tenant = await Tenant.findOne({ tenant_id: data.tenant_id });
 
-    const uniqueTenantData = {};
-    tenant_data.forEach((item) => {
-      uniqueTenantData[item.tenant_id] = item;
-    });
-    
-    const filteredData = Object.values(uniqueTenantData);
-
+    const object = {
+      tenant_id: tenant.tenant_id,
+      admin_id: tenant.admin_id,
+      tenant_firstName: tenant.tenant_firstName,
+      tenant_lastName: tenant.tenant_lastName,
+    };
 
     res.json({
       statusCode: 200,
-      data: filteredData,
+      data: object,
       message: "Read All Request",
     });
   } catch (error) {
