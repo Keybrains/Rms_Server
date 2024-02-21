@@ -119,7 +119,6 @@ router.post("/leases", async (req, res) => {
         tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
         tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
         const pass = encrypt(tenantData.tenant_password);
-        console.log(pass);
         tenantData.tenant_password = pass;
 
         tenant = await Tenant.create(tenantData);
@@ -134,7 +133,10 @@ router.post("/leases", async (req, res) => {
     leaseData.tenant_id = tenant.tenant_id;
     leaseData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
     leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-    leaseData.entry = chargeData;
+    leaseData.entry = chargeData.entry;
+    for (let i = 0; i < leaseData.entry.length; i++) {
+      leaseData.entry[i].entry_id = `${leaseTimestamp}-${i}`;
+    }
     lease = await Lease.create(leaseData);
 
     //update rental
@@ -172,25 +174,156 @@ router.post("/leases", async (req, res) => {
     const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
     const filteredCharge = {
+      ...chargeData,
       charge_id: `${chargeTimestamp}`,
-      admin_id: lease.admin_id,
       tenant_id: lease.tenant_id,
       lease_id: lease.lease_id,
-      is_leaseAdded: true,
       createdAt: createdAt,
       updatedAt: updatedAt,
       total_amount: 0,
-      entry: [],
     };
 
-    for (let i = 0; i < chargeData.length; i++) {
-      const chargesData = chargeData[i];
+    for (let i = 0; i < filteredCharge.entry.length; i++) {
+      const chargesData = filteredCharge.entry[i];
       filteredCharge.total_amount += parseInt(chargesData.amount);
-      chargesData.entry_id = `${chargeTimestamp}-${i}`;
-      filteredCharge.entry.push(chargesData);
+      chargesData.entry_id = `${leaseTimestamp}-${i}`;
     }
 
     charge = await Charge.create(filteredCharge);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      statusCode: 200,
+      data: { lease, tenant, cosigner, charge },
+      message: "Add Lease Successfully",
+    });
+  } catch (error) {
+    try {
+      await session.abortTransaction();
+    } catch (abortError) {
+      console.error("Error aborting transaction:", abortError);
+    } finally {
+      session.endSession();
+    }
+
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/leases/:lease_id", async (req, res) => {
+  const { lease_id } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  let lease,
+    tenant,
+    cosigner,
+    charge = [];
+
+  try {
+    const { leaseData, tenantData, cosignerData, chargeData } = req.body;
+
+    const existingTenant = await Tenant.findOne({
+      admin_id: tenantData.admin_id,
+      tenant_id: tenantData.tenant_id,
+    });
+
+    //tenant
+    if (!existingTenant) {
+      const existingTenants = await Tenant.findOne({
+        admin_id: tenantData.admin_id,
+        tenant_phoneNumber: tenantData.tenant_phoneNumber,
+      });
+
+      if (existingTenants) {
+        return res.status(201).json({
+          statusCode: 201,
+          message: `${tenantData.tenant_phoneNumber} Phone Number Already Existing`,
+        });
+      } else {
+        const tenantTimestamp = Date.now();
+        tenantData.tenant_id = `${tenantTimestamp}`;
+        tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+        tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+        const pass = encrypt(tenantData.tenant_password);
+        tenantData.tenant_password = pass;
+
+        tenant = await Tenant.create(tenantData);
+      }
+    } else {
+      const pass = encrypt(tenantData.tenant_password);
+      tenantData.tenant_password = pass;
+      tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+      tenant = await Tenant.findOneAndUpdate(
+        { tenant_id: tenantData.tenant_id },
+        { $set: tenantData },
+        { new: true }
+      );
+    }
+
+    //lease
+    leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    leaseData.entry = chargeData.entry;
+    for (let i = 0; i < leaseData.entry.length; i++) {
+      leaseData.entry[i].entry_id = `${leaseTimestamp}-${i}`;
+    }
+
+    const previousLease = await Lease.findOne({ lease_id });
+
+    lease = await Lease.findOneAndUpdate(
+      { lease_id: leaseData.lease_id },
+      { $set: leaseData },
+      { new: true }
+    );
+
+    if (previousLease.rental_id !== lease.rental_id) {
+      //update rental
+      const getRentalsData = await Rentals.findOne({
+        rental_id: lease.rental_id,
+      });
+
+      if (!getRentalsData) {
+        // Handle case when Rentals data is not found
+        return res.status(200).json({
+          statusCode: 202,
+          message: "Rentals data not found for the provided rental_id",
+        });
+      }
+
+      await Rentals.updateOne(
+        { rental_id: lease.rental_id },
+        { $set: { is_rent_on: true } }
+      );
+
+      const rentalFind = await Lease.findOne({
+        rental_id: previousLease.rental_id,
+      });
+
+      if (!rentalFind) {
+        await Rentals.updateOne(
+          { rental_id: previousLease.rental_id },
+          { $set: { is_rent_on: false } }
+        );
+      }
+    }
+
+    //cosigner
+    if (cosignerData) {
+      cosignerData.tenant_id = tenant.tenant_id;
+      cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+      cosigner = await Cosigner.findOneAndUpdate(
+        { cosigner_id: cosignerData.cosigner_id },
+        { $set: cosignerData },
+        { new: true }
+      );
+    }
 
     await session.commitTransaction();
     session.endSession();
@@ -571,15 +704,19 @@ router.get("/get_lease/:lease_id", async (req, res) => {
     });
 
     const unit_data = await Unit.findOne({ unit_id: unit_id });
+
     const rec_charge_data = data[0].entry.filter(
       (item) => item.charge_type === "Recurring Charge"
     );
+
     const one_charge_data = data[0].entry.filter(
       (item) => item.charge_type === "One Time Charge"
     );
+
     const rent_charge_data = data[0].entry.filter(
       (item) => item.charge_type === "Rent"
     );
+
     const Security_charge_data = data[0].entry.filter(
       (item) => item.charge_type === "Security Deposite"
     );
