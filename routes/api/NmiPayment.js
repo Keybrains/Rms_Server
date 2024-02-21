@@ -456,7 +456,6 @@ router.post("/new-sale", async (req, res) => {
           <ul>
             <li><strong>Property:</strong> ${paymentDetails.address1}</li>
             <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-           <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
             <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
             <li><strong>Surcharge:</strong> $ ${paymentDetails.surcharge}</li>
             <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
@@ -835,8 +834,7 @@ await existingRecord.save();
           <ul>
             <li><strong>Property:</strong> ${paymentDetails.rental_adress}</li>
             <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-            <li><strong>Payment For:</strong> ${paymentDetails.account}</li>
-            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+            <li><strong>Amount Paid:</strong> $ ${paymentDetails.total_amount}</li>
             <li><strong>Surcharge:</strong> $ ${paymentDetails.surcharge}</li>
             <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
           </ul>
@@ -2019,7 +2017,7 @@ router.post("/new-manual-refund/:id", async (req, res) => {
           <p>We are pleased to inform you that your refund has been processed successfully.</p>
           <strong>Transaction Details:</strong>
           <ul>
-            <li><strong>Property:</strong> ${refundDetails.rental_adress}</li>
+            <li><strong>Property:</strong> ${refundDetails.rental_adresss}</li>
             <li><strong>Refund For:</strong> ${refundDetails.account}</li>
             <li><strong>Amount Refunded:</strong> $ ${refundDetails.amount}</li>
             <li><strong>Refund Date:</strong> ${refundDetails.date}</li>
