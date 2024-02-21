@@ -6,13 +6,14 @@ const notificationSchema = new Schema({
   notification_id: { type: String },
   unit_id: { type: String },
   rental_id: { type: String },
+  tenant_id: { type: String },
   notification_title: { type: String },
   notification_detail: { type: String },
 
   notification_type: { type: Object },
   notification_send_to: { type: Array },
 
-  notification_read: { type: Array },
+  notification_read: { type: Object },
 
   is_rental: { type: Boolean, default: false },
   is_lease: { type: Boolean, default: false },

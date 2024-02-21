@@ -9,6 +9,7 @@ const {
   hashCompare,
 } = require("../../../authentication");
 const Rentals = require("../../../modals/superadmin/Rentals");
+const WorkOrder = require("../../../modals/superadmin/WorkOrder");
 const Unit = require("../../../modals/superadmin/Unit");
 const Leasing = require("../../../modals/superadmin/Leasing");
 const RentalOwner = require("../../../modals/superadmin/RentalOwner");
@@ -172,6 +173,33 @@ router.post("/getByAdmin", async (req, res) => {
 });
 
 // ==========================  User  ==================================================================
+
+router.get("/count/:staffmember_id/:admin_id", async (req, res) => {
+  try {
+    const staffmember_id = req.params.staffmember_id;
+    const admin_id = req.params.admin_id;
+    const property_staffMember = await Rentals.find({
+      staffmember_id: staffmember_id,
+      admin_id: admin_id,
+    });
+    const workorder_staffMember = await WorkOrder.find({
+      staffmember_id: staffmember_id,
+      admin_id: admin_id,
+    });
+
+    res.json({
+      property_staffMember: property_staffMember.length,
+      workorder_staffMember: workorder_staffMember.length,
+      statusCode: 200,
+      message: "Read StaffMember count",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 // StaffMember Login
 router.post("/login", async (req, res) => {

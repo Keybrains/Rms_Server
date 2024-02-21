@@ -159,16 +159,16 @@ router.post("/rentals", async (req, res) => {
     session.endSession();
 
     // Notification When Assign Lease
-    const tenantTimestamp = Date.now();
+    const notificationTimestamp = Date.now();
     const notificationData = {
-      notification_id: tenantTimestamp,
+      notification_id: notificationTimestamp,
       admin_id: rentalOwnerData.admin_id,
       rental_id: rentalData.rental_id,
       unit_id: units.unit_id,
       notification_title: "Property Created",
       notification_detail:
         "A new property has been created and assinged staff-member",
-      notification_read: [{ is_staffmember_read: false }],
+      notification_read: { is_staffmember_read: false },
       notification_type: {
         type: "Create Property",
         staffmember_id: rental.staffmember_id,
@@ -181,7 +181,6 @@ router.post("/rentals", async (req, res) => {
     };
 
     const notification = await Notification.create(notificationData);
-
 
     res.json({
       statusCode: 200,
