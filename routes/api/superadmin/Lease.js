@@ -6,12 +6,15 @@ var Cosigner = require("../../../modals/superadmin/Cosigner");
 var Charge = require("../../../modals/superadmin/Charge");
 var Unit = require("../../../modals/superadmin/Unit");
 var Rentals = require("../../../modals/superadmin/Rentals");
+var Notification = require("../../../modals/superadmin/Notification");
 var emailService = require("./emailService");
 const RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const crypto = require("crypto");
+const StaffMember = require("../../../modals/superadmin/StaffMember");
+const PropertyType = require("../../../modals/superadmin/PropertyType");
 
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
@@ -83,6 +86,207 @@ router.get("/lease/get/:admin_id", async (req, res) => {
 });
 
 // ============== User ==================================
+
+// router.post("/leases", async (req, res) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+
+//   let lease,
+//     tenant,
+//     cosigner,
+//     charge = [];
+
+//   try {
+//     const { leaseData, tenantData, cosignerData, chargeData } = req.body;
+
+//     const existingTenant = await Tenant.findOne({
+//       admin_id: tenantData.admin_id,
+//       tenant_id: tenantData.tenant_id,
+//     });
+
+//     if (!existingTenant) {
+//       const existingTenants = await Tenant.findOne({
+//         admin_id: tenantData.admin_id,
+//         tenant_phoneNumber: tenantData.tenant_phoneNumber,
+//       });
+//       if (existingTenants) {
+//         return res.status(201).json({
+//           statusCode: 201,
+//           message: `${tenantData.tenant_phoneNumber} Phone Number Already Existing`,
+//         });
+//       } else {
+//         const tenantTimestamp = Date.now();
+//         tenantData.tenant_id = `${tenantTimestamp}`;
+//         tenantData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//         tenantData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//         const pass = encrypt(tenantData.tenant_password);
+//         tenantData.tenant_password = pass;
+//         tenant = await Tenant.create(tenantData);
+
+//         const leaseTimestamp = Date.now();
+//         leaseData.lease_id = `${leaseTimestamp}`;
+//         leaseData.tenant_id = tenant.tenant_id;
+//         leaseData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//         leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//         leaseData.entry = chargeData;
+//         lease = await Lease.create(leaseData);
+
+//         const getRentalsData = await Rentals.findOne({
+//           rental_id: lease.rental_id,
+//         });
+
+//         if (!getRentalsData) {
+//           return res.status(200).json({
+//             statusCode: 202,
+//             message: "Rentals data not found for the provided rental_id",
+//           });
+//         }
+
+//         await Rentals.updateOne(
+//           { rental_id: lease.rental_id },
+//           { $set: { is_rent_on: true } }
+//         );
+
+//         if (cosignerData) {
+//           const cosignerTimestamp = Date.now();
+//           cosignerData.cosigner_id = `${cosignerTimestamp}`;
+//           cosignerData.tenant_id = tenant.tenant_id;
+//           cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//           cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+//           cosigner = await Cosigner.create(cosignerData);
+//         }
+
+//         const chargeTimestamp = Date.now();
+//         const createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//         const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+//         const filteredCharge = {
+//           charge_id: `${chargeTimestamp}`,
+//           admin_id: lease.admin_id,
+//           tenant_id: lease.tenant_id,
+//           lease_id: lease.lease_id,
+//           is_leaseAdded: true,
+//           createdAt: createdAt,
+//           updatedAt: updatedAt,
+//           entry: [],
+//         };
+
+//         for (const chargesData of chargeData) {
+//           filteredCharge.entry.push(chargesData);
+//         }
+
+//         const newCharge = await Charge.create(filteredCharge);
+//         charge.push(newCharge);
+//       }
+//     } else {
+//       tenant = existingTenant;
+//       const leaseTimestamp = Date.now();
+//       leaseData.lease_id = `${leaseTimestamp}`;
+//       leaseData.tenant_id = tenant.tenant_id;
+//       leaseData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//       leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//       leaseData.entry = chargeData;
+//       lease = await Lease.create(leaseData);
+
+//       const getRentalsData = await Rentals.findOne({
+//         rental_id: lease.rental_id,
+//       });
+
+//       if (!getRentalsData) {
+//         // Handle case when Rentals data is not found
+//         return res.status(200).json({
+//           statusCode: 202,
+//           message: "Rentals data not found for the provided rental_id",
+//         });
+//       }
+
+//       await Rentals.updateOne(
+//         { rental_id: lease.rental_id },
+//         { $set: { is_rent_on: true } }
+//       );
+
+//       if (cosignerData) {
+//         const cosignerTimestamp = Date.now();
+//         cosignerData.cosigner_id = `${cosignerTimestamp}`;
+//         cosignerData.tenant_id = tenant.tenant_id;
+//         cosignerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//         cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+//         cosigner = await Cosigner.create(cosignerData);
+//       }
+
+//       const chargeTimestamp = Date.now();
+//       const createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+//       const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+
+//       const filteredCharge = {
+//         charge_id: `${chargeTimestamp}`,
+//         admin_id: lease.admin_id,
+//         tenant_id: lease.tenant_id,
+//         lease_id: lease.lease_id,
+//         is_leaseAdded: true,
+//         createdAt: createdAt,
+//         updatedAt: updatedAt,
+//         total_amount: 0,
+//         entry: [],
+//       };
+
+//       for (let i = 0; i < chargeData.length; i++) {
+//         const chargesData = chargeData[i];
+//         filteredCharge.total_amount += parseInt(chargesData.amount);
+//         chargesData.entry_id = `${chargeTimestamp}-${i}`;
+//         filteredCharge.entry.push(chargesData);
+//       }
+
+//       charge = await Charge.create(filteredCharge);
+//     }
+
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     // Notification When Assign Lease
+//     const notificationTimestamp = Date.now();
+//     const notificationData = {
+//       notification_id: notificationTimestamp,
+//       admin_id: lease.admin_id,
+//       rental_id: lease.rental_id,
+//       unit_id: lease.unit_id,
+//       notification_title: "Lease Created",
+//       notification_detail: "A new lease has been created.",
+//       notification_read: { is_tenant_read: false, is_staffmember_read: false },
+//       notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
+//       notification_send_to: [
+//         { tenant_id: tenant.tenant_id, staffmember_id: getRentalsData[0].staffmember_id },
+//       ], // Fill this array with users you want to send the notification to
+//       createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+//       updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+//       is_lease: true,
+//     };
+
+//     const notification = await Notification.create(notificationData);
+
+//     res.json({
+//       statusCode: 200,
+//       data: { lease, tenant, cosigner, charge, notification },
+//       message: "Add Lease Successfully",
+//     });
+//   } catch (error) {
+//     try {
+//       await session.abortTransaction();
+//     } catch (abortError) {
+//       console.error("Error aborting transaction:", abortError);
+//     } finally {
+//       session.endSession();
+//     }
+
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+
 
 router.post("/leases", async (req, res) => {
   const session = await mongoose.startSession();
@@ -295,10 +499,10 @@ router.put("/leases/:lease_id", async (req, res) => {
         });
       }
 
-      await Rentals.updateOne(
-        { rental_id: lease.rental_id },
-        { $set: { is_rent_on: true } }
-      );
+    await Rentals.updateOne(
+      { rental_id: lease.rental_id },
+      { $set: { is_rent_on: true } }
+    );
 
       const rentalFind = await Lease.findOne({
         rental_id: previousLease.rental_id,
@@ -336,6 +540,28 @@ router.put("/leases/:lease_id", async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+
+      // Notification When Assign Lease
+      const notificationTimestamp = Date.now();
+      const notificationData = {
+        notification_id: notificationTimestamp,
+        admin_id: lease.admin_id,
+        rental_id: lease.rental_id,
+        unit_id: lease.unit_id,
+        notification_title: "Lease Created",
+        notification_detail: "A new lease has been created.",
+        notification_read: { is_tenant_read: false, is_staffmember_read: false },
+        notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
+        notification_send_to: [
+          { tenant_id: tenant.tenant_id, staffmember_id: getRentalsData.staffmember_id },
+        ], // Fill this array with users you want to send the notification to
+        createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+        updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+        is_lease: true,
+      };
+  
+      const notification = await Notification.create(notificationData);
 
     res.json({
       statusCode: 200,
@@ -559,9 +785,7 @@ router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
   try {
     const { rental_id, unit_id } = req.params;
     const leases = await Lease.find({ rental_id, unit_id });
-
     const tenantData = [];
-
     for (const lease of leases) {
       const tenant = await Tenant.findOne({
         tenant_id: lease.tenant_id,
@@ -570,9 +794,16 @@ router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
       tenantData.push(tenant);
     }
 
+    const uniqueTenantData = {};
+    tenantData.forEach((item) => {
+      uniqueTenantData[item.tenant_id] = item;
+    });
+
+    const filteredData = Object.values(uniqueTenantData);
+
     res.json({
       statusCode: 200,
-      data: tenantData,
+      data: filteredData,
       message: "Data retrieved successfully",
     });
   } catch (error) {
@@ -639,8 +870,12 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
     const rental_id = data[0].rental_id;
 
     const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
+
     const rental_data = await Rentals.findOne({
       rental_id: rental_id,
+    });
+    const property_data = await PropertyType.findOne({
+      property_id: rental_data.property_id,
     });
 
     const rentalOwner_data = await RentalOwner.findOne({
@@ -758,7 +993,6 @@ router.put("/lease_moveout/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
     req.body["end_date"] = req.body.moveout_date;
-    console.log(req.body);
     const lease = await Lease.findOneAndUpdate(
       { lease_id },
       {

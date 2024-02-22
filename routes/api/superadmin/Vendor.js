@@ -24,6 +24,106 @@ const decrypt = (text) => {
   return decrypted;
 };
 
+
+// ===================  Super Admin===========================================
+
+router.get("/vendor/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+
+    var data = await Vendor.aggregate([
+      {
+        $match: { admin_id: admin_id }, // Filter by user_id
+      },
+      {
+        $sort: { createdAt: -1 }, // Filter by user_id
+      },
+    ]);
+
+    // Fetch client and property information for each item in data
+    for (let i = 0; i < data.length; i++) {
+      const admin_id = data[i].admin_id;
+
+      // Fetch property information
+      const admin = await AdminRegister.findOne({ admin_id: admin_id });
+
+      // Attach client and property information to the data item
+      data[i].admin = admin;
+    }
+
+    const count = data.length;
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      count: count,
+      message: "Read All Vendor",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.post("/search", async (req, res) => {
+  try {
+    const searchValue = req.body.search;
+    const adminId = req.body.admin_id;
+
+    let query = {
+      admin_id: adminId,
+    };
+
+    if (searchValue) {
+      query.$or = [
+        { vendor_name: { $regex: new RegExp(searchValue, "i") } },
+        { vendor_email: { $regex: new RegExp(searchValue, "i") } },
+        {
+          vendor_phoneNumber: !isNaN(searchValue)
+            ? Number(searchValue)
+            : null,
+        },
+      ];
+    }
+
+    const data = await Vendor.find(query);
+
+    const promises = data.map((vendorData) => {
+      return AdminRegister.findOne({ admin_id: vendorData.admin_id });
+    });
+
+    const adminDataArray = await Promise.all(promises);
+
+    const updatedData = data.map((vendorData, index) => {
+      return {
+        ...vendorData._doc,
+        admin_data: adminDataArray[index],
+      };
+    });
+
+    const dataCount = updatedData.length;
+
+    res.json({
+      statusCode: 200,
+      data: updatedData,
+      count: dataCount,
+      message: "Search successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
+
+
+// ===========================================================================
+
 // Vendor Login
 router.post("/login", async (req, res) => {
   try {

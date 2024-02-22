@@ -13,10 +13,11 @@ const Tenant = require("../../../modals/superadmin/Tenant");
 const Unit = require("../../../modals/superadmin/Unit");
 const Lease = require("../../../modals/superadmin/Leasing");
 const Rentals = require("../../../modals/superadmin/Rentals");
-const Admin_Register = require("../../../modals/superadmin/Admin_Register");
+var emailService = require("./emailService");
 
 const crypto = require("crypto");
 const Plans = require("../../../modals/superadmin/Plans");
+const Vendor = require("../../../modals/superadmin/Vendor");
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
   let encrypted = cipher.update(text, "utf-8", "hex");
@@ -71,11 +72,11 @@ const decrypt = (text) => {
 
 router.post("/register", async (req, res) => {
   try {
-    const user = await AdminRegister.findOne({
+    const admin = await AdminRegister.findOne({
       email: req.body.email,
       isAdmin_delete: false,
     });
-    if (user) {
+    if (admin) {
       return res
         .status(401)
         .send({ statusCode: 401, message: "Email already in use" });
@@ -92,15 +93,26 @@ router.post("/register", async (req, res) => {
         .send({ statusCode: 402, message: "CompanyName already in use" });
     }
 
-    let hashConvert = encrypt(req.body.password);
-    req.body.password = hashConvert;
-
     const timestamp = Date.now();
     const uniqueId = `${timestamp}`;
 
     req.body["admin_id"] = uniqueId;
     req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const subject = "Admin Login Credentials";
+    const text = `
+      <p>Hello,</p>
+      <p>Here are your credentials for Admin login:</p>
+      <p>Email: ${req.body.email}</p>
+      <p>Password: ${req.body.password}</p>
+      <p>Login URL: https://302-properties.vercel.app/auth/auth/login</p>
+    `;
+
+    await emailService.sendWelcomeEmail(req.body.email, subject, text);
+
+    let hashConvert = encrypt(req.body.password);
+    req.body.password = hashConvert;
 
     const data = await AdminRegister.create(req.body);
 
@@ -475,6 +487,7 @@ router.get("/admin_count/:admin_id", async (req, res) => {
     const lease = (await Lease.find({ admin_id: admin_id })).length;
     const rentals_properties = (await Rentals.find({ admin_id: admin_id }))
       .length;
+    const vendor = (await Vendor.find({ admin_id: admin_id })).length;
 
     res.status(200).json({
       statusCode: 200,
@@ -485,6 +498,7 @@ router.get("/admin_count/:admin_id", async (req, res) => {
       tenant: tenant,
       unit: unit,
       lease: lease,
+      vendor: vendor,
       message: "Count get successfully",
     });
   } catch (error) {

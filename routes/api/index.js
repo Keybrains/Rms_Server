@@ -22,52 +22,6 @@ router.get("/", function (req, res, next) {
   res.render("index", { title: "Express" });
 });
 
-// router.get("/test", async (req, res) => {
-//   try {
-//     // Launch a headful browser
-//     const browser = await puppeteer.launch({ headless: false,defaultViewport: null,args: ['--start-maximized']  });
-
-//     // Open a new page
-//     const page = await browser.newPage();
-
-//     // Navigate to the login page
-//     await page.goto("http://localhost:3000/auth/login");
-// //     await puppeteer.launch({
-// //       headless: false,
-// //       defaultViewport: null,
-
-// // });
-//     // Wait for the login form to appear
-//     await page.waitForSelector('input[name="email"]');
-
-//     // Fill in email and password fields with a 2-second delay between each action
-//     await page.type('input[name="email"]', 'shivam@gmail.com');
-//     await delay(2000);
-//     await page.type('input[name="password"]', 'Shivam@123');
-//     await delay(2000);
-
-//     // Click on the login button
-//     await page.click('button[type="submit"]');
-//     await delay(2000);
-
-//     // Wait for the login process to complete (you might need to adjust the selector)
-//     await page.waitForNavigation();
-//     await delay(2000);
-
-//     // Maximize the browser window
-
-//     // Close the browser after 5 seconds (just for demonstration)
-//     // setTimeout(async () => {
-//     //   await browser.close();
-//     // }, 5000);
-
-//     res.send("Login successful.");
-//   } catch (error) {
-//     console.error("Error occurred:", error);
-//     res.status(500).send("An error occurred while logging in.");
-//   }
-// });
-
 router.get("/test/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
@@ -94,6 +48,11 @@ router.get("/test/:admin_id", async (req, res) => {
 
     // Open a new page
     const page = await browser.newPage();
+
+    const pages = await browser.pages();
+    if (pages.length > 1) {
+      await pages[0].close();
+    }
 
     // Navigate to the login page
     await page.goto("http://localhost:3000/auth/login");
@@ -126,12 +85,6 @@ router.get("/test/:admin_id", async (req, res) => {
     res.status(500).send("An error occurred while logging in.");
   }
 });
-
-// Function to hash a password
-async function hashPassword(password) {
-  const saltRounds = 10; // Recommended number of salt rounds
-  return bcrypt.hash(password, saltRounds);
-}
 
 function delay(time) {
   return new Promise(function (resolve) {

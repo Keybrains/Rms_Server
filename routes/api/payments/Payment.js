@@ -72,24 +72,24 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
     ];
 
     const sortedDates = data.sort(
-      (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
 
-    var amount = 0;
+    var total_amount = 0;
     for (const item of sortedDates) {
       if (item.type === "payment") {
         amount -= item.total_amount;
       } else if (item.type === "charge") {
         amount += item.total_amount;
       }
-      item.balance = amount;
+      item.balance = total_amount;
     }
 
     res.json({
       statusCode: 200,
       data: sortedDates.reverse(),
-      totalAmount: amount,
-      message: "Read All Lease",
+      totalBalance: total_amount,
+      message: "Read All Charges",
     });
   } catch (error) {
     res.json({
@@ -121,24 +121,24 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
     ];
 
     const sortedDates = data.sort(
-      (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
 
-    var amount = 0;
+    var total_amount = 0;
     for (const item of sortedDates) {
       if (item.type === "payment") {
-        amount -= item.amount;
+        total_amount -= item.total_amount;
       } else if (item.type === "charge") {
-        amount += item.amount;
+        total_amount += item.total_amount;
       }
-      item.balance = amount;
+      item.balance = total_amount;
     }
 
     res.json({
       statusCode: 200,
       data: sortedDates.reverse(),
-      totalAmount: amount,
-      message: "Read All Lease",
+      totalBalance: total_amount,
+      message: "Read All Tenant-Financial Blance",
     });
   } catch (error) {
     res.json({

@@ -9,6 +9,7 @@ const Tenant = require("../../../modals/superadmin/Tenant");
 const StaffMember = require("../../../modals/superadmin/StaffMember");
 const Vendor = require("../../../modals/superadmin/Vendor");
 const Lease = require("../../../modals/superadmin/Leasing");
+const Notification = require("../../../modals/superadmin/Notification");
 
 router.post("/work-order", async (req, res) => {
   try {
@@ -32,9 +33,60 @@ router.post("/work-order", async (req, res) => {
       parts.push(newpart);
     }
 
+    const notificationTimestamp = Date.now();
+    const notificationData = {
+      notification_id: notificationTimestamp,
+      admin_id: workOrder.admin_id,
+      rental_id: workOrder.rental_id,
+      unit_id: workOrder.unit_id,
+      notification_title: "Workorder Created",
+      notification_detail: "A new Workorder has been created and assinged",
+
+      notification_type: {
+        type: "Create Workorder",
+        workorder_id: workOrder.workOrder_id,
+      },
+
+      // -----------
+      tenant_id: workOrder.tenant_id ? workOrder.tenant_id : "",
+
+      // -----------
+      notification_read: workOrder.tenant_id
+        ? {
+            is_staffmember_read: false,
+            is_tenant_read: false,
+            is_vendor_read: false,
+          }
+        : {
+            is_staffmember_read: false,
+            is_vendor_read: false,
+          },
+
+      // ----------
+      notification_send_to: workOrder.tenant_id
+        ? [
+            {
+              tenant_id: workOrder.tenant_id,
+              staffmember_id: workOrder.staffmember_id,
+              vendor_id: workOrder.vendor_id,
+            },
+          ]
+        : [
+            {
+              tenant_id: "",
+              staffmember_id: workOrder.staffmember_id,
+              vendor_id: workOrder.vendor_id,
+            },
+          ],
+      createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      is_workorder: true,
+    };
+    const notification = await Notification.create(notificationData);
+
     res.json({
       statusCode: 200,
-      data: { workOrder, parts },
+      data: { workOrder, parts, notification },
       message: "Add Umit Successfully",
     });
   } catch (error) {

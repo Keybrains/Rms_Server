@@ -10,6 +10,7 @@ const Tenants = require("../../../modals/superadmin/Tenant");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
+const Notification = require("../../../modals/superadmin/Notification");
 
 // ============== Super Admin ==================================
 
@@ -157,9 +158,33 @@ router.post("/rentals", async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    // Notification When Assign Lease
+    const notificationTimestamp = Date.now();
+    const notificationData = {
+      notification_id: notificationTimestamp,
+      admin_id: rentalOwnerData.admin_id,
+      rental_id: rentalData.rental_id,
+      unit_id: units.unit_id,
+      notification_title: "Property Created",
+      notification_detail:
+        "A new property has been created and assinged staff-member",
+      notification_read: { is_staffmember_read: false },
+      notification_type: {
+        type: "Create Property",
+        staffmember_id: rental.staffmember_id,
+      },
+
+      notification_send_to: [{ staffmember_id: rental.staffmember_id }],
+      createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      is_rental: true,
+    };
+
+    const notification = await Notification.create(notificationData);
+
     res.json({
       statusCode: 200,
-      data: { rentalOwner, rental, units },
+      data: { rentalOwner, rental, units, notification },
       message: "Add Rental Successfully",
     });
   } catch (error) {

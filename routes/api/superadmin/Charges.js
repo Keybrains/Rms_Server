@@ -165,31 +165,107 @@ router.get("/charge/:charge_id", async (req, res) => {
 router.put("/charge/:charge_id", async (req, res) => {
   try {
     const { charge_id } = req.params;
+    const allEntery = req.body.entry;
 
-    // Ensure that updatedAt field is set
     req.body.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-    const result = await Charge.findOneAndUpdate(
+    const updatedCharge = await Charge.findOneAndUpdate(
       { charge_id: charge_id },
       { $set: req.body },
       { new: true }
     );
 
-    if (result) {
-      res.json({
-        statusCode: 200,
-        data: result,
-        message: "Charge Updated Successfully",
-      });
-    } else {
-      res.status(202).json({
-        statusCode: 202,
-        message: "Vendor not found",
+    if (!updatedCharge) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Charge not found",
       });
     }
+
+    const updatedEntries = [];
+    for (const entry of allEntery) {
+      const entry_id = entry.entry_id;
+      const updatedEntry = await Charge.findOneAndUpdate(
+        { "entry.entry_id": entry_id },
+        { $set: { "entry.$": entry } },
+        { new: true }
+      );
+      updatedEntries.push(updatedEntry);
+    }
+
+    res.json({
+      statusCode: 200,
+      data: { charge: updatedCharge, entries: updatedEntries },
+      message: "Charge and entries updated successfully",
+    });
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       statusCode: 500,
-      message: err.message,
+      message: "Server Error",
+    });
+  }
+});
+
+router.get("/charges/:lease_id", async (req, res) => {
+  try {
+    const lease_id = req.params.lease_id;
+
+    const lease_data = await Leasing.findOne({ lease_id });
+    const surcharge = await Surcharge.findOne({
+      admin_id: lease_data.admin_id,
+    });
+
+    var payment = await Payment.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    var charge = await Charge.aggregate([
+      {
+        $match: { lease_id: lease_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    // Initialize an object to store total payment amount for each payment type
+    const totalPayments = {};
+    // console.log(charge, payment);
+    for (const data of charge) {
+      for (const data2 of data.entry) {
+        data2.charge_amount = data2.amount;
+        for (const item of payment) {
+          for (const item2 of item.entry) {
+            if (data2.account === item2.account) {
+              data2.charge_amount -= item2.amount;
+            }
+          }
+        }
+
+        // Add or update the total payment amount for each payment type
+        if (totalPayments[data2.account]) {
+          totalPayments[data2.account] += data2.charge_amount;
+        } else {
+          totalPayments[data2.account] = data2.charge_amount;
+        }
+      }
+    }
+
+    res.json({
+      statusCode: 200,
+      totalCharges: charge,
+      Surcharge: surcharge,
+      message: "Read All Chrges",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
     });
   }
 });
