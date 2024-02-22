@@ -282,14 +282,13 @@ router.put("/leases/:lease_id", async (req, res) => {
       { new: true }
     );
 
+    //rental
     if (previousLease.rental_id !== lease.rental_id) {
-      //update rental
       const getRentalsData = await Rentals.findOne({
         rental_id: lease.rental_id,
       });
 
       if (!getRentalsData) {
-        // Handle case when Rentals data is not found
         return res.status(200).json({
           statusCode: 202,
           message: "Rentals data not found for the provided rental_id",
@@ -325,13 +324,23 @@ router.put("/leases/:lease_id", async (req, res) => {
       );
     }
 
+    //cahrges
+    for (const entry of leaseData.entry) {
+      const newCharge = await Lease.findOneAndUpdate(
+        { "entry.entry_id": entry.entry_id },
+        { $set: { entry: entry } },
+        { new: true }
+      );
+      charge.push(newCharge);
+    }
+
     await session.commitTransaction();
     session.endSession();
 
     res.json({
       statusCode: 200,
       data: { lease, tenant, cosigner, charge },
-      message: "Add Lease Successfully",
+      message: "Lease Updated Successfully",
     });
   } catch (error) {
     try {
@@ -353,10 +362,11 @@ router.put("/leases/:lease_id", async (req, res) => {
 router.post("/check_lease", async (req, res) => {
   try {
     // Extract start_date and end_date from the request body
-    const { tenant_id, rental_id, unit_id, start_date, end_date } = req.body;
+    const { lease_id, tenant_id, rental_id, unit_id, start_date, end_date } = req.body;
 
     // Find existing lease in the database
     let findPlanName = await Lease.findOne({
+      lease_id: lease_id,
       tenant_id: tenant_id,
       rental_id: rental_id,
       unit_id: unit_id,
