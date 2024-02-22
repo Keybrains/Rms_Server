@@ -443,31 +443,31 @@ router.post("/new-sale", async (req, res) => {
     if (nmiResponse.response_code === "100") {
       // Payment was successful
       //nmiPayment.status = "Success";
-      // const info = await transporter.sendMail({
-      //   from: '"302 Properties" <info@cloudpress.host>',
-      //   to: paymentDetails.email_name,
-      //   subject: "Payment Confirmation - 302 Properties",
-      //   html: `     
-      //     <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
+      const info = await transporter.sendMail({
+        from: '"302 Properties" <info@cloudpress.host>',
+        to: paymentDetails.email_name,
+        subject: "Payment Confirmation - 302 Properties",
+        html: `     
+          <p>Hello ${paymentDetails.first_name} ${paymentDetails.last_name},</p>
     
-      //     <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+          <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
     
-      //     <strong>Transaction Details:</strong>
-      //     <ul>
-      //       <li><strong>Property:</strong> ${paymentDetails.address1}</li>
-      //       <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
-      //       <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
-      //       <li><strong>Surcharge:</strong> $ ${paymentDetails.surcharge}</li>
-      //       <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
-      //     </ul>
+          <strong>Transaction Details:</strong>
+          <ul>
+            <li><strong>Property:</strong> ${paymentDetails.address1}</li>
+            <li><strong>Transaction ID:</strong> ${nmiResponse.transactionid}</li>
+            <li><strong>Amount Paid:</strong> $ ${paymentDetails.amount}</li>
+            <li><strong>Surcharge:</strong> $ ${paymentDetails.surcharge}</li>
+            <li><strong>Payment Date:</strong> ${paymentDetails.date}</li>
+          </ul>
     
-      //     <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+          <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
     
-      //     <p>Thank you for choosing 302 Properties.</p>
+          <p>Thank you for choosing 302 Properties.</p>
     
-      //     <p>Best regards,<br>The 302 Properties Team</p>
-      //   `,
-      // });
+          <p>Best regards,<br>The 302 Properties Team</p>
+        `,
+      });
       const successMessage = `Plan purchased successfully! Transaction ID: ${nmiResponse.transactionid}`;
 
       //await nmiPayment.save();
