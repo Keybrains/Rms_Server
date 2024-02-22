@@ -287,7 +287,6 @@ router.get("/lease/get/:admin_id", async (req, res) => {
 //   }
 // });
 
-
 router.post("/leases", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -499,10 +498,10 @@ router.put("/leases/:lease_id", async (req, res) => {
         });
       }
 
-    await Rentals.updateOne(
-      { rental_id: lease.rental_id },
-      { $set: { is_rent_on: true } }
-    );
+      await Rentals.updateOne(
+        { rental_id: lease.rental_id },
+        { $set: { is_rent_on: true } }
+      );
 
       const rentalFind = await Lease.findOne({
         rental_id: previousLease.rental_id,
@@ -541,27 +540,29 @@ router.put("/leases/:lease_id", async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    // Notification When Assign Lease
+    const notificationTimestamp = Date.now();
+    const notificationData = {
+      notification_id: notificationTimestamp,
+      admin_id: lease.admin_id,
+      rental_id: lease.rental_id,
+      unit_id: lease.unit_id,
+      notification_title: "Lease Created",
+      notification_detail: "A new lease has been created.",
+      notification_read: { is_tenant_read: false, is_staffmember_read: false },
+      notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
+      notification_send_to: [
+        {
+          tenant_id: tenant.tenant_id,
+          staffmember_id: getRentalsData.staffmember_id,
+        },
+      ], // Fill this array with users you want to send the notification to
+      createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+      is_lease: true,
+    };
 
-      // Notification When Assign Lease
-      const notificationTimestamp = Date.now();
-      const notificationData = {
-        notification_id: notificationTimestamp,
-        admin_id: lease.admin_id,
-        rental_id: lease.rental_id,
-        unit_id: lease.unit_id,
-        notification_title: "Lease Created",
-        notification_detail: "A new lease has been created.",
-        notification_read: { is_tenant_read: false, is_staffmember_read: false },
-        notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
-        notification_send_to: [
-          { tenant_id: tenant.tenant_id, staffmember_id: getRentalsData.staffmember_id },
-        ], // Fill this array with users you want to send the notification to
-        createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-        updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-        is_lease: true,
-      };
-  
-      const notification = await Notification.create(notificationData);
+    const notification = await Notification.create(notificationData);
 
     res.json({
       statusCode: 200,
@@ -588,55 +589,101 @@ router.put("/leases/:lease_id", async (req, res) => {
 router.post("/check_lease", async (req, res) => {
   try {
     // Extract start_date and end_date from the request body
-    const { lease_id, tenant_id, rental_id, unit_id, start_date, end_date } = req.body;
+    const { lease_id, tenant_id, rental_id, unit_id, start_date, end_date } =
+      req.body;
 
     // Find existing lease in the database
-    let findPlanName = await Lease.findOne({
-      lease_id: lease_id,
+    let leasesTOCheck = await Lease.find({
       tenant_id: tenant_id,
       rental_id: rental_id,
       unit_id: unit_id,
     });
 
-    if (findPlanName) {
-      // Check for date overlap with existing lease
-      const existingStartDate = moment(findPlanName.start_date);
-      const existingEndDate = moment(findPlanName.end_date);
-      const newStartDate = moment(start_date);
-      const newEndDate = moment(end_date);
+    if (!lease_id && leasesTOCheck) {
+      for (const lease of leasesTOCheck) {
+        const existingStartDate = moment(lease.start_date);
+        const existingEndDate = moment(lease.end_date);
+        const newStartDate = moment(start_date);
+        const newEndDate = moment(end_date);
 
-      if (
-        (newStartDate.isSameOrAfter(existingStartDate) &&
-          newStartDate.isBefore(existingEndDate)) ||
-        (newEndDate.isAfter(existingStartDate) &&
-          newEndDate.isSameOrBefore(existingEndDate))
-      ) {
-        // Date range overlaps with existing lease
-        return res.json({
-          statusCode: 201,
-          message:
-            "Please select another date range. Overlapping with existing lease.",
-        });
-      }
+        if (
+          (newStartDate.isSameOrAfter(existingStartDate) &&
+            newStartDate.isBefore(existingEndDate)) ||
+          (newEndDate.isAfter(existingStartDate) &&
+            newEndDate.isSameOrBefore(existingEndDate))
+        ) {
+          // Date range overlaps with existing lease
+          return res.json({
+            statusCode: 201,
+            message:
+              "Please select another date range. Overlapping with existing lease.",
+          });
+        }
 
-      // Check if the provided date range is entirely before or after the existing lease
-      if (
-        newEndDate.isBefore(existingStartDate) ||
-        newStartDate.isAfter(existingEndDate)
-      ) {
-        // Date range is entirely before or after existing lease
-        return res.json({
-          statusCode: 200,
-          message: "Date range is available.",
-        });
-      } else {
-        // Date range overlaps with existing lease
-        return res.json({
-          statusCode: 400,
-          message:
-            "Please select another date range. Overlapping with existing lease.",
-        });
+        if (
+          newEndDate.isBefore(existingStartDate) ||
+          newStartDate.isAfter(existingEndDate)
+        ) {
+          // Date range is entirely before or after existing lease
+          return res.json({
+            statusCode: 200,
+            message: "Date range is available.",
+          });
+        } else {
+          // Date range overlaps with existing lease
+          return res.json({
+            statusCode: 400,
+            message:
+              "Please select another date range. Overlapping with existing lease.",
+          });
+        }
       }
+    } else if (leasesTOCheck) {
+      for (const lease of leasesTOCheck) {
+        if (lease.lease_id !== lease_id) {
+          const existingStartDate = moment(lease.start_date);
+          const existingEndDate = moment(lease.end_date);
+          const newStartDate = moment(start_date);
+          const newEndDate = moment(end_date);
+
+          if (
+            (newStartDate.isSameOrAfter(existingStartDate) &&
+              newStartDate.isBefore(existingEndDate)) ||
+            (newEndDate.isAfter(existingStartDate) &&
+              newEndDate.isSameOrBefore(existingEndDate))
+          ) {
+            // Date range overlaps with existing lease
+            return res.json({
+              statusCode: 201,
+              message:
+                "Please select another date range. Overlapping with existing lease.",
+            });
+          }
+
+          if (
+            newEndDate.isBefore(existingStartDate) ||
+            newStartDate.isAfter(existingEndDate)
+          ) {
+            // Date range is entirely before or after existing lease
+            return res.json({
+              statusCode: 200,
+              message: "Date range is available.",
+            });
+          } else {
+            // Date range overlaps with existing lease
+            return res.json({
+              statusCode: 400,
+              message:
+                "Please select another date range. Overlapping with existing lease.",
+            });
+          }
+        }
+      }
+    } else {
+      return res.json({
+        statusCode: 200,
+        message: "Date range is available.",
+      });
     }
 
     // If no existing lease, send success response
