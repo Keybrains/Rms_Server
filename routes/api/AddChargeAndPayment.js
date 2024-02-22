@@ -4,6 +4,21 @@ var ObjectId = require("mongodb").ObjectId;
 var AddPaymentAndCharge = require("../../modals/AddPaymentAndCharge");
 var Surcharge = require("../../modals/Payment/Surcharge");
 var PropertyExpense = require("../../modals/PropertyExpense");
+const nodemailer = require("nodemailer");
+const { createTransport } = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.sparkpostmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "SMTP_Injection",
+    pass: "3a634e154f87fb51dfd179b5d5ff6d771bf03240",
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
 
 router.post("/payment_charge", async (req, res) => {
   try {
@@ -18,11 +33,38 @@ router.post("/payment_charge", async (req, res) => {
     if (!existingRecord) {
       // If the record does not exist, create a new one
       const newData = await AddPaymentAndCharge.create(req.body);
+      console.log(newData)
       res.json({
         statusCode: 200,
         data: newData,
         message: "Add payment Successfully",
       });
+      if (req.body.unit[0].paymentAndCharges.payment_type !== "Credit Card") {
+        const info = await transporter.sendMail({
+          from: '"302 Properties" <info@cloudpress.host>',
+          to: req.body.unit[0].paymentAndCharges.email_name,
+          subject: "Payment Confirmation - 302 Properties",
+          html: `     
+            <p>Hello ${req.body.unit[0].paymentAndCharges.tenant_firstName} ${req.body.unit[0].paymentAndCharges.tenant_lastName},</p>
+      
+            <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+      
+            <strong>Transaction Details:</strong>
+            <ul>
+              <li><strong>Property:</strong> ${req.body.unit[0].paymentAndCharges.rental_adress}</li>
+              <li><strong>Amount Paid:</strong> $ ${req.body.unit[0].paymentAndCharges.total_amount}</li>
+              <li><strong>Payment Date:</strong> ${req.body.unit[0].paymentAndCharges.date}</li>
+            </ul>
+      
+            <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+      
+            <p>Thank you for choosing 302 Properties.</p>
+      
+            <p>Best regards,<br>The 302 Properties Team</p>
+          `,
+        });
+        }
+    
     } else {
       if (unit && unit.length > 0) {
         // Find the existing unit by unit and unit_id
@@ -49,16 +91,41 @@ router.post("/payment_charge", async (req, res) => {
           data: newRecord,
           message: "Add payment Successfully",
         });
-        return; // Return to prevent the code below from executing
+        return; 
       }
 
       const updatedData = await existingRecord.save();
-
+      console.log("updated data==========",req.body.unit[0].paymentAndCharges) 
       res.json({
         statusCode: 200,
         data: updatedData,
         message: "Update payment Successfully",
       });
+      if (req.body.unit[0].paymentAndCharges.payment_type !== "Credit Card") {
+        const info = await transporter.sendMail({
+          from: '"302 Properties" <info@cloudpress.host>',
+          to: req.body.unit[0].paymentAndCharges.email_name,
+          subject: "Payment Confirmation - 302 Properties",
+          html: `     
+            <p>Hello ${req.body.unit[0].paymentAndCharges.tenant_firstName} ${req.body.unit[0].paymentAndCharges.tenant_lastName},</p>
+      
+            <p>Thank you for your payment! We are delighted to confirm that your payment has been successfully processed.</p>
+      
+            <strong>Transaction Details:</strong>
+            <ul>
+              <li><strong>Property:</strong> ${req.body.unit[0].paymentAndCharges.rental_adress}</li>
+              <li><strong>Amount Paid:</strong> $ ${req.body.unit[0].paymentAndCharges.total_amount}</li>
+              <li><strong>Payment Date:</strong> ${req.body.unit[0].paymentAndCharges.date}</li>
+            </ul>
+      
+            <p>If you have any questions or concerns regarding your payment, please feel free to contact our customer support.</p>
+      
+            <p>Thank you for choosing 302 Properties.</p>
+      
+            <p>Best regards,<br>The 302 Properties Team</p>
+          `,
+        });
+        }
     }
   } catch (error) {
     res.json({
@@ -108,6 +175,9 @@ router.get("/financial", async (req, res) => {
   try {
     const { rental_adress, property_id,  tenant_id } = req.query;
 
+    const surCharge = await Surcharge.findOne({}, "surcharge_percent");
+    const surcharge_percent = surCharge.get("surcharge_percent");
+
     const data = await AddPaymentAndCharge.aggregate([
       {
         $match: {
@@ -118,6 +188,11 @@ router.get("/financial", async (req, res) => {
       {
         $unwind: "$unit",
       },
+      // {
+      //   $match: {
+      //     "unit.unit": unit,
+      //   },
+      // },
       {
         $addFields: {
           "unit.paymentAndCharges": {
@@ -146,7 +221,38 @@ router.get("/financial", async (req, res) => {
                 $mergeObjects: [
                   "$$charge",
                   {
-                    Total: 0, // Initialize Total to 0
+                    Total: 0, 
+                    total_surcharge: { $sum: ["$$charge.amount", { $multiply: ["$$charge.amount", surcharge_percent / 100] }] }
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          "unit.paymentAndCharges": {
+            $map: {
+              input: "$unit.paymentAndCharges",
+              as: "charge",
+              in: {
+                $mergeObjects: [
+                  "$$charge",
+                  {
+                    Balance: {
+                      $cond: {
+                        // if: { $eq: ["$$charge.payment_type", "Credit Card"] },
+                        if: {
+                          $and: [
+                            { $eq: ["$$charge.payment_type", "Credit Card"] },
+                            { $eq: ["$$charge.status", "Success"] }
+                          ]
+                        },
+                        then: "$$charge.total_surcharge",
+                        else: "$$charge.amount"
+                      }
+                    }
                   },
                 ],
               },
@@ -169,15 +275,15 @@ router.get("/financial", async (req, res) => {
                         branches: [
                           {
                             case: { $eq: ["$$charge.type", "Payment"] },
-                            then: { $multiply: ["$$charge.amount", -1] },
+                            then: { $multiply: ["$$charge.Balance", -1] },
                           },
                           {
                             case: { $eq: ["$$charge.type", "Charge"] },
-                            then: "$$charge.amount",
+                            then: "$$charge.Balance",
                           },
                           {
                             case: { $eq: ["$$charge.type", "Refund"] },
-                            then: "$$charge.amount",
+                            then: "$$charge.Balance",
                           },
                         ],
                         default: 0,
@@ -262,12 +368,8 @@ router.get("/financial_unit", async (req, res) => {
   try {
     const { rental_adress, property_id, unit, tenant_id } = req.query;
 
-    const surCharge = await Surcharge.findOne(
-      {},
-      "surcharge_percent"
-    );
-
-    const surcharge_percent = surCharge.get("surcharge_percent")
+    const surCharge = await Surcharge.findOne({}, "surcharge_percent");
+    const surcharge_percent = surCharge.get("surcharge_percent");
 
     const data = await AddPaymentAndCharge.aggregate([
       {
@@ -313,6 +415,37 @@ router.get("/financial_unit", async (req, res) => {
                   "$$charge",
                   {
                     Total: 0, 
+                    total_surcharge: { $sum: ["$$charge.amount", { $multiply: ["$$charge.amount", surcharge_percent / 100] }] }
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          "unit.paymentAndCharges": {
+            $map: {
+              input: "$unit.paymentAndCharges",
+              as: "charge",
+              in: {
+                $mergeObjects: [
+                  "$$charge",
+                  {
+                    Balance: {
+                      $cond: {
+                        // if: { $eq: ["$$charge.payment_type", "Credit Card"] },
+                        if: {
+                          $and: [
+                            { $eq: ["$$charge.payment_type", "Credit Card"] },
+                            { $eq: ["$$charge.status", "Success"] }
+                          ]
+                        },
+                        then: "$$charge.total_surcharge",
+                        else: "$$charge.amount"
+                      }
+                    }
                   },
                 ],
               },
@@ -335,15 +468,15 @@ router.get("/financial_unit", async (req, res) => {
                         branches: [
                           {
                             case: { $eq: ["$$charge.type", "Payment"] },
-                            then: { $multiply: ["$$charge.amount", -1] },
+                            then: { $multiply: ["$$charge.Balance", -1] },
                           },
                           {
                             case: { $eq: ["$$charge.type", "Charge"] },
-                            then: "$$charge.amount",
+                            then: "$$charge.Balance",
                           },
                           {
                             case: { $eq: ["$$charge.type", "Refund"] },
-                            then: "$$charge.amount",
+                            then: "$$charge.Balance",
                           },
                         ],
                         default: 0,
@@ -423,6 +556,7 @@ router.get("/financial_unit", async (req, res) => {
     });
   }
 });
+
 
 //delete charge api
 router.delete("/delete_entry/:entryId", async (req, res) => {
