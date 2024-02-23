@@ -19,7 +19,6 @@ router.post("/plans", async (req, res) => {
         req.body.is_annual_discount = true;
       }
 
-
       var data = await Plans.create(req.body);
       res.json({
         statusCode: 200,

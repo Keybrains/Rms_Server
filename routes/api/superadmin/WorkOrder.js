@@ -421,7 +421,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
 
-    var data = await Lease.aggregate([
+    var data = await WorkOrder.aggregate([
       {
         $match: { tenant_id: tenant_id }, // Filter by user_id
       },
@@ -449,10 +449,15 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
         rental_id: rental_id,
         unit_id: unit_id,
       });
+
+      const staffmember_data = await StaffMember.findOne({
+        staffmember_id: workorder_data.staffmember_id,
+      });
       if (workorder_data) {
         const unit_data = await Unit.findOne({
           unit_id: unit_id,
         });
+
         const rental_data = await Rentals.findOne({
           rental_id: rental_id,
         });
@@ -469,6 +474,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
           unit_id: unit_data.unit_id,
           rental_adress: rental_data.rental_adress,
           rental_unit: unit_data.rental_unit,
+          staffmember_name: staffmember_data.staffmember_name,
         });
       }
     }
