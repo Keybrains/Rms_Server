@@ -429,7 +429,7 @@ router.put("/leases/:lease_id", async (req, res) => {
     charge = [];
 
   try {
-    const { leaseData, tenantData, cosignerData, chargeData } = req.body;
+    const { leaseData, tenantData, cosignerData } = req.body;
 
     const existingTenant = await Tenant.findOne({
       admin_id: tenantData.admin_id,
@@ -472,11 +472,7 @@ router.put("/leases/:lease_id", async (req, res) => {
 
     //lease
     leaseData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-    leaseData.entry = chargeData.entry;
-    for (let i = 0; i < leaseData.entry.length; i++) {
-      leaseData.entry[i].entry_id = `${leaseTimestamp}-${i}`;
-    }
-
+    // leaseData.entry = chargeData.entry;
     const previousLease = await Lease.findOne({ lease_id });
 
     lease = await Lease.findOneAndUpdate(
@@ -528,41 +524,49 @@ router.put("/leases/:lease_id", async (req, res) => {
     }
 
     //cahrges
-    for (const entry of leaseData.entry) {
-      const newCharge = await Lease.findOneAndUpdate(
-        { "entry.entry_id": entry.entry_id },
-        { $set: { entry: entry } },
-        { new: true }
-      );
-      charge.push(newCharge);
-    }
+    for (let i = 0; i < leaseData.entry.length; i++) {
+      const entry = leaseData.entry[i];
+      if (!entry.entry_id) {
+        console.log(entry);
+        entry.entry_id = `${lease_id}-${i}`;
+        const newCharge = await Lease.create({ entry }); // Create a new document with the entry
+        charge.push(newCharge);
+      } else {
+        const newCharge = await Lease.findOneAndUpdate(
+          { "entry.entry_id": entry.entry_id },
+          { $set: { "entry.$": entry } },
+          { new: true }
+        );
+        charge.push(newCharge);
+      }
+    }    
 
     await session.commitTransaction();
     session.endSession();
 
     // Notification When Assign Lease
-    const notificationTimestamp = Date.now();
-    const notificationData = {
-      notification_id: notificationTimestamp,
-      admin_id: lease.admin_id,
-      rental_id: lease.rental_id,
-      unit_id: lease.unit_id,
-      notification_title: "Lease Created",
-      notification_detail: "A new lease has been created.",
-      notification_read: { is_tenant_read: false, is_staffmember_read: false },
-      notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
-      notification_send_to: [
-        {
-          tenant_id: tenant.tenant_id,
-          staffmember_id: getRentalsData.staffmember_id,
-        },
-      ], // Fill this array with users you want to send the notification to
-      createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-      updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-      is_lease: true,
-    };
+    // const notificationTimestamp = Date.now();
+    // const notificationData = {
+    //   notification_id: notificationTimestamp,
+    //   admin_id: lease.admin_id,
+    //   rental_id: lease.rental_id,
+    //   unit_id: lease.unit_id,
+    //   notification_title: "Lease Created",
+    //   notification_detail: "A new lease has been created.",
+    //   notification_read: { is_tenant_read: false, is_staffmember_read: false },
+    //   notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
+    //   notification_send_to: [
+    //     {
+    //       tenant_id: tenant.tenant_id,
+    //       staffmember_id: getRentalsData.staffmember_id,
+    //     },
+    //   ], // Fill this array with users you want to send the notification to
+    //   createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+    //   updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+    //   is_lease: true,
+    // };
 
-    const notification = await Notification.create(notificationData);
+    // const notification = await Notification.create(notificationData);
 
     res.json({
       statusCode: 200,
@@ -588,11 +592,9 @@ router.put("/leases/:lease_id", async (req, res) => {
 // Check Lease (same Rental Assign or not from start_date and end_date )
 router.post("/check_lease", async (req, res) => {
   try {
-    // Extract start_date and end_date from the request body
     const { lease_id, tenant_id, rental_id, unit_id, start_date, end_date } =
       req.body;
 
-    // Find existing lease in the database
     let leasesTOCheck = await Lease.find({
       tenant_id: tenant_id,
       rental_id: rental_id,
@@ -612,25 +614,24 @@ router.post("/check_lease", async (req, res) => {
           (newEndDate.isAfter(existingStartDate) &&
             newEndDate.isSameOrBefore(existingEndDate))
         ) {
-          // Date range overlaps with existing lease
           return res.json({
             statusCode: 201,
             message:
               "Please select another date range. Overlapping with existing lease.",
           });
         }
+      }
+
+      for (const lease of leasesTOCheck) {
+        const existingStartDate = moment(lease.start_date);
+        const existingEndDate = moment(lease.end_date);
+        const newStartDate = moment(start_date);
+        const newEndDate = moment(end_date);
 
         if (
-          newEndDate.isBefore(existingStartDate) ||
-          newStartDate.isAfter(existingEndDate)
+          newEndDate.isBefore(existingEndDate) &&
+          newStartDate.isAfter(existingStartDate)
         ) {
-          // Date range is entirely before or after existing lease
-          return res.json({
-            statusCode: 200,
-            message: "Date range is available.",
-          });
-        } else {
-          // Date range overlaps with existing lease
           return res.json({
             statusCode: 400,
             message:
@@ -638,7 +639,7 @@ router.post("/check_lease", async (req, res) => {
           });
         }
       }
-    } else if (leasesTOCheck) {
+    } else if (lease_id && leasesTOCheck) {
       for (const lease of leasesTOCheck) {
         if (lease.lease_id !== lease_id) {
           const existingStartDate = moment(lease.start_date);
@@ -652,7 +653,6 @@ router.post("/check_lease", async (req, res) => {
             (newEndDate.isAfter(existingStartDate) &&
               newEndDate.isSameOrBefore(existingEndDate))
           ) {
-            // Date range overlaps with existing lease
             return res.json({
               statusCode: 201,
               message:
@@ -661,16 +661,9 @@ router.post("/check_lease", async (req, res) => {
           }
 
           if (
-            newEndDate.isBefore(existingStartDate) ||
-            newStartDate.isAfter(existingEndDate)
+            newEndDate.isBefore(existingEndDate) &&
+            newStartDate.isAfter(existingStartDate)
           ) {
-            // Date range is entirely before or after existing lease
-            return res.json({
-              statusCode: 200,
-              message: "Date range is available.",
-            });
-          } else {
-            // Date range overlaps with existing lease
             return res.json({
               statusCode: 400,
               message:
@@ -686,7 +679,6 @@ router.post("/check_lease", async (req, res) => {
       });
     }
 
-    // If no existing lease, send success response
     res.json({
       statusCode: 200,
       message: "Date range is available.",
