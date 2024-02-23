@@ -1,9 +1,7 @@
 var express = require("express");
 var router = express.Router();
-var Tenant = require("../../../modals/superadmin/Tenant");
 var Vendor = require("../../../modals/superadmin/Vendor");
-var Lease = require("../../../modals/superadmin/Leasing");
-var Unit = require("../../../modals/superadmin/Unit");
+var WorkOrder = require("../../../modals/superadmin/WorkOrder");
 var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 const { createVenorToken } = require("../../../authentication");
 var moment = require("moment");
@@ -23,7 +21,6 @@ const decrypt = (text) => {
   decrypted += decipher.final("utf-8");
   return decrypted;
 };
-
 
 // ===================  Super Admin===========================================
 
@@ -81,9 +78,7 @@ router.post("/search", async (req, res) => {
         { vendor_name: { $regex: new RegExp(searchValue, "i") } },
         { vendor_email: { $regex: new RegExp(searchValue, "i") } },
         {
-          vendor_phoneNumber: !isNaN(searchValue)
-            ? Number(searchValue)
-            : null,
+          vendor_phoneNumber: !isNaN(searchValue) ? Number(searchValue) : null,
         },
       ];
     }
@@ -119,10 +114,43 @@ router.post("/search", async (req, res) => {
   }
 });
 
-
-
-
 // ===========================================================================
+
+router.get("/dashboard_workorder/:vendor_id/:admin_id", async (req, res) => {
+  try {
+    const vendor_id = req.params.vendor_id;
+    const admin_id = req.params.admin_id;
+
+    const new_workorder = await WorkOrder.find({
+      vendor_id: vendor_id,
+      admin_id: admin_id,
+      status: "New",
+    })
+      .select("work_subject work_category workOrder_id date status")
+      .sort({ date: -1 });
+
+    const currentDate = moment().format("YYYY-MM-DD");
+    const overdue_workorder = await WorkOrder.find({
+      vendor_id: vendor_id,
+      admin_id: admin_id,
+      status: { $ne: "Complete" },
+      date: { $lt: currentDate },
+    })
+      .select("work_subject work_category workOrder_id date status")
+      .sort({ date: -1 });
+
+    res.json({
+      data: { new_workorder, overdue_workorder },
+      statusCode: 200,
+      message: "Read Work-orders",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 // Vendor Login
 router.post("/login", async (req, res) => {

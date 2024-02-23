@@ -201,6 +201,42 @@ router.get("/count/:staffmember_id/:admin_id", async (req, res) => {
   }
 });
 
+router.get("/dashboard_workorder/:staffmember_id/:admin_id", async (req, res) => {
+  try {
+    const staffmember_id = req.params.staffmember_id;
+    const admin_id = req.params.admin_id;
+
+    const new_workorder = await WorkOrder.find({
+      staffmember_id: staffmember_id,
+      admin_id: admin_id,
+      status: "New"
+    })
+      .select("work_subject work_category workOrder_id date status")
+      .sort({ date: -1 });
+
+    const currentDate = moment().format("YYYY-MM-DD");
+    const overdue_workorder = await WorkOrder.find({
+      staffmember_id: staffmember_id,
+      admin_id: admin_id,
+      status: { $ne: "Complete" },
+      date: { $lt: currentDate },
+    })
+      .select("work_subject work_category workOrder_id date status")
+      .sort({ date: -1 });
+
+    res.json({
+      data: { new_workorder, overdue_workorder },
+      statusCode: 200,
+      message: "Read Overdue Work-orders",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 // StaffMember Login
 router.post("/login", async (req, res) => {
   try {

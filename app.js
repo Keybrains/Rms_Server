@@ -55,6 +55,9 @@ var NotificationRouter = require("./routes/api/superadmin/Notification.js");
 var PaymentRouter = require("./routes/api/payments/Payment.js");
 var SurchargeRouter = require("./routes/api/payments/Surcharge.js");
 
+// Email Comfigration
+var EmailConfigrationRouter = require("./routes/api/Email/Email.js")
+
 var app = express();
 
 // view engine setups
@@ -93,6 +96,9 @@ app.use("/api/notification", NotificationRouter);
 // Payment
 app.use("/api/payment", PaymentRouter);
 app.use("/api/surcharge", SurchargeRouter);
+
+// Email configration
+app.use("/api/email_configration", EmailConfigrationRouter);
 
 app.use(function (req, res, next) {
   next(createError(404));

@@ -5,9 +5,7 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Rentals = require("../../../modals/superadmin/Rentals");
 var Unit = require("../../../modals/superadmin/Unit");
-var RentalOwner = require("../../../modals/superadmin/RentalOwner");
-var StaffMember = require("../../../modals/superadmin/StaffMember");
-var PropertyType = require("../../../modals/superadmin/PropertyType");
+var WorkOrder = require("../../../modals/superadmin/WorkOrder");
 const { createTenantToken } = require("../../../authentication");
 var moment = require("moment");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
@@ -130,6 +128,42 @@ router.post("/search", async (req, res) => {
 });
 
 // ============== Admin ==================================
+
+router.get("/dashboard_workorder/:tenant_id/:admin_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+    const admin_id = req.params.admin_id;
+
+    const new_workorder = await WorkOrder.find({
+      tenant_id: tenant_id,
+      admin_id: admin_id,
+      status: "New",
+    })
+      .select("work_subject work_category workOrder_id date status")
+      .sort({ date: -1 });
+
+    const currentDate = moment().format("YYYY-MM-DD");
+    const overdue_workorder = await WorkOrder.find({
+      tenant_id: tenant_id,
+      admin_id: admin_id,
+      status: { $ne: "Complete" },
+      date: { $lt: currentDate },
+    })
+      .select("work_subject work_category workOrder_id date status")
+      .sort({ date: -1 });
+
+    res.json({
+      data: { new_workorder, overdue_workorder },
+      statusCode: 200,
+      message: "Read Work-orders",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 router.get("/tenant_details/:tenant_id", async (req, res) => {
   try {
