@@ -2,12 +2,15 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.socketlabs.com",
+  host: "smtp.sparkpostmail.com",
   port: 587,
   secure: false,
   auth: {
-    user: "server39897",
-    pass: "c9J3Wwm5N4Bj",
+    user: "SMTP_Injection",
+    pass: "3a634e154f87fb51dfd179b5d5ff6d771bf03240",
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 

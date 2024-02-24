@@ -229,8 +229,6 @@ router.post("/vendor", async (req, res) => {
       vendorData.vendor_id = `${vendorTimestamp}`;
       vendorData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
       vendorData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-      let hashConvert = encrypt(req.body.vendor_password);
-      req.body.vendor_password = hashConvert;
 
       const subject = "Vendor Login Credentials";
       const text = `
@@ -243,6 +241,8 @@ router.post("/vendor", async (req, res) => {
 
       // Send email with login credentials
       await emailService.sendWelcomeEmail(req.body.vendor_email, subject, text);
+      let hashConvert = encrypt(req.body.vendor_password);
+      req.body.vendor_password = hashConvert;
 
       const vendor = await Vendor.create(vendorData);
       res.json({
@@ -333,14 +333,33 @@ router.put("/update_vendor/:vendor_id", async (req, res) => {
 
 router.delete("/delete_vendor/:vendor_id", async (req, res) => {
   try {
-    let result = await Vendor.findOneAndDelete({
-      vendor_id: req.params.vendor_id,
+    const vendor_id = req.params.vendor_id;
+    const existingWorkorder = await WorkOrder.findOne({
+      vendor_id: vendor_id,
     });
-    res.json({
-      statusCode: 200,
-      data: result,
-      message: "Vendor Deleted Successfully",
-    });
+
+    if (existingWorkorder) {
+      return res.status(201).json({
+        statusCode: 201,
+        message: `Cannot delete Vendor. Vendor already assigned to workorder!`,
+      });
+    } else {
+      let result = await Vendor.findOneAndDelete({
+        vendor_id: req.params.vendor_id,
+      });
+
+      if (result.deletedCount === 0) {
+        return res.status(404).json({
+          statusCode: 404,
+          message: "Property-Type not found",
+        });
+      }
+      res.json({
+        statusCode: 200,
+        data: result,
+        message: "Vendor Deleted Successfully",
+      });
+    }
   } catch (err) {
     res.json({
       statusCode: 500,

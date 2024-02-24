@@ -463,13 +463,13 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
         });
 
         return_data.push({
-          workOrder_id: workorder_data.workOrder_id,
-          work_subject: workorder_data.work_subject,
-          work_category: workorder_data.work_category,
-          priority: workorder_data.priority,
-          status: workorder_data.status,
-          createdAt: workorder_data.createdAt,
-          updatedAt: workorder_data.updatedAt,
+          workOrder_id: data[i].workOrder_id,
+          work_subject: data[i].work_subject,
+          work_category: data[i].work_category,
+          priority: data[i].priority,
+          status: data[i].status,
+          createdAt: data[i].createdAt,
+          updatedAt: data[i].updatedAt,
           rental_id: rental_data.rental_id,
           unit_id: unit_data.unit_id,
           rental_adress: rental_data.rental_adress,
@@ -534,6 +534,25 @@ router.get("/rental_workorder/:rental_id", async (req, res) => {
     res.json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+
+router.delete("/delete_workorder", async (req, res) => {
+  try {
+    let result = await WorkOrder.findOneAndDelete({
+      workOrder_id: req.body.workOrder_id,
+    });
+
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Workorder Deleted Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
     });
   }
 });

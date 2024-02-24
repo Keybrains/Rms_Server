@@ -207,7 +207,9 @@ router.get("/rental-owners/:admin_id", async (req, res) => {
   const adminId = req.params.admin_id;
 
   try {
-    const rentalOwners = await RentalOwner.find({ admin_id: adminId });
+    const rentalOwners = await RentalOwner.find({ admin_id: adminId }).sort({
+      createdAt: -1,
+    });
 
     if (!rentalOwners || rentalOwners.length === 0) {
       return res
