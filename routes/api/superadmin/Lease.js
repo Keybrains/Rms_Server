@@ -909,12 +909,14 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
     const tenant_id = data[0].tenant_id;
     const unit_id = data[0].unit_id;
     const rental_id = data[0].rental_id;
-
+    
     const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
-
+    
     const rental_data = await Rentals.findOne({
       rental_id: rental_id,
     });
+    
+    const staffmember_id = rental_data.staffmember_id;
     const property_data = await PropertyType.findOne({
       property_id: rental_data.property_id,
     });
@@ -924,6 +926,7 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
     });
 
     const unit_data = await Unit.findOne({ unit_id: unit_id });
+    const staff_data = await StaffMember.findOne({ staffmember_id: staffmember_id });
     const charge = data[0].entry.filter((item) => item.charge_type === "Rent");
 
     const object = {
@@ -939,9 +942,21 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
       tenant_lastName: tenant_data.tenant_lastName,
       tenant_email: tenant_data.tenant_email,
       rental_adress: rental_data.rental_adress,
+      rental_city: rental_data.rental_city,
+      rental_country: rental_data.rental_country,
+      rental_postcode: rental_data.rental_postcode,
+      propertysub_type: property_data.propertysub_type,
       rental_unit: unit_data.rental_unit,
+      rental_unit_adress: unit_data.rental_unit_adress,
+      rental_sqft: unit_data.rental_sqft,
+      rental_bath: unit_data.rental_bath,
+      rental_bed: unit_data.rental_bed,
+      staffmember_name: staff_data.staffmember_name,
       rentalOwner_firstName: rentalOwner_data.rentalOwner_firstName,
       rentalOwner_lastName: rentalOwner_data.rentalOwner_lastName,
+      rentalOwner_companyName: rentalOwner_data.rentalOwner_companyName,
+      rentalOwner_primaryEmail: rentalOwner_data.rentalOwner_primaryEmail,
+      rentalOwner_phoneNumber: rentalOwner_data.rentalOwner_phoneNumber,
       amount: charge[0].amount,
       date: charge[0].date,
     };
