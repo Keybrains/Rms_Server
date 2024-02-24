@@ -95,25 +95,12 @@ router.post("/rentals", async (req, res) => {
       rentalowner_id: rentalOwnerData.rentalowner_id,
     });
     if (!existingRentalOwner) {
-      const existingOwner = await RentalOwner.findOne({
-        admin_id: rentalOwnerData.admin_id,
-        rentalOwner_phoneNumber: rentalOwnerData.rentalOwner_phoneNumber,
-      });
+      const rentalOwnerTimestamp = Date.now();
+      rentalOwnerData.rentalowner_id = `${rentalOwnerTimestamp}`;
+      rentalOwnerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+      rentalOwnerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      if (existingOwner) {
-        rentalOwner = existingOwner;
-        return res.status(201).json({
-          statusCode: 201,
-          message: `${rentalOwnerData.rentalOwner_phoneNumber} Phone Number Already Existing`,
-        });
-      } else {
-        const rentalOwnerTimestamp = Date.now();
-        rentalOwnerData.rentalowner_id = `${rentalOwnerTimestamp}`;
-        rentalOwnerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        rentalOwnerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-        rentalOwner = await RentalOwner.create(rentalOwnerData);
-      }
+      rentalOwner = await RentalOwner.create(rentalOwnerData);
     } else {
       rentalOwner = existingRentalOwner;
     }

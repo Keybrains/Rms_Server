@@ -10,10 +10,10 @@ router.get("/rental_owner/:admin_id", async (req, res) => {
 
     var data = await RentalOwner.aggregate([
       {
-        $match: { admin_id: admin_id }, // Filter by user_id
+        $match: { admin_id: admin_id },
       },
       {
-        $sort: { createdAt: -1 }, // Filter by user_id
+        $sort: { createdAt: -1 },
       },
     ]);
 
@@ -182,6 +182,31 @@ router.put("/rental_owner/:rentalowner_id", async (req, res) => {
       message: "RentalOwner Updated Successfully",
     });
   } catch (err) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
+router.post("/check_rental_owner", async (req, res) => {
+  try {
+    console.log(req.body.rentalOwner_phoneNumber);
+    const existingOwner = await RentalOwner.findOne({
+      admin_id: req.body.admin_id,
+      rentalOwner_phoneNumber: req.body.rentalOwner_phoneNumber,
+    });
+    if (existingOwner) {
+      res.json({
+        statusCode: 201,
+        message: "RentalOwner Already Existing.",
+      });
+    } else {
+      res.json({
+        statusCode: 200,
+      });
+    }
+  } catch (error) {
     res.status(500).json({
       statusCode: 500,
       message: err.message,

@@ -539,7 +539,7 @@ router.put("/leases/:lease_id", async (req, res) => {
         );
         charge.push(newCharge);
       }
-    }    
+    }
 
     await session.commitTransaction();
     session.endSession();
@@ -855,18 +855,20 @@ router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
 
 router.get("/unit_leases/:unit_id", async (req, res) => {
   const unit_id = req.params.unit_id;
+  console.log(unit_id);
   try {
     const leases = await Lease.find({ unit_id: unit_id });
 
     const data = [];
+    // console.log(leases);
 
     await Promise.all(
       leases.map(async (lease) => {
         const tenant = await Tenant.findOne({ tenant_id: lease.tenant_id });
-        const charge = await Charge.findOne({
-          lease_id: lease.lease_id,
-          charge_type: "Last Month's Rent",
-        });
+        const charge = lease.entry.filter(
+          (item) => item.charge_type === "Rent"
+        );
+        console.log(charge);
         const object = {
           tenant_id: tenant.tenant_id,
           tenant_firstName: tenant.tenant_firstName,
@@ -875,7 +877,7 @@ router.get("/unit_leases/:unit_id", async (req, res) => {
           end_date: lease.end_date,
           lease_id: lease.lease_id,
           lease_type: lease.lease_type,
-          amount: charge.amount,
+          amount: charge[0].amount,
         };
         data.push(object);
       })
