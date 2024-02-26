@@ -316,7 +316,7 @@ router.post("/tenants", async (req, res) => {
         <p>Here are your credentials for tenant login:</p>
         <p>Email: ${req.body.tenant_email}</p>
         <p>Password: ${req.body.tenant_password}</p>
-        <p>Login URL: https://302-properties.vercel.app/auth/${adminData.company_name}/tenants/login</p>
+        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/tenants/login</p>
       `;
 
       // Send email with login credentials
@@ -390,7 +390,7 @@ router.delete("/tenant/:tenant_id", async (req, res) => {
         { $set: { is_delete: true } }
       );
 
-      if (deletedTenant.deletedCount !== 0) {
+      if (deletedTenant.modifiedCount === 1) {
         return res.status(200).json({
           statusCode: 200,
           message: `Tenant deleted successfully.`,
@@ -662,6 +662,33 @@ router.get("/leases/:lease_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/count/:tenant_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+
+    const property_tenant = await Rentals.find({
+      tenant_id: tenant_id,
+      is_delete: false,
+    });
+    const workorder_tenant = await WorkOrder.find({
+      tenant_id: tenant_id,
+      is_delete: false,
+    });
+
+    res.json({
+      property_tenant: property_tenant.length,
+      workorder_tenant: workorder_tenant.length,
+      statusCode: 200,
+      message: "Read Tenant Dashboard count",
+    });
+  } catch (error) {
+    res.json({
       statusCode: 500,
       message: error.message,
     });

@@ -7,6 +7,7 @@ const surchargeSchema = new Schema({
   surcharge_percent: { type: Number },
   createdAt: { type: String },
   updatedAt: { type: String },
+  is_delete: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("surcharge", surchargeSchema);

@@ -214,6 +214,7 @@ router.post("/vendor", async (req, res) => {
     const existingVendor = await Vendor.findOne({
       admin_id: vendorData.admin_id,
       vendor_phoneNumber: vendorData.vendor_phoneNumber,
+      is_delete: false,
     });
 
     const adminData = await AdminRegister.findOne({
@@ -236,7 +237,7 @@ router.post("/vendor", async (req, res) => {
         <p>Here are your credentials for vendor login:</p>
         <p>Email: ${req.body.vendor_email}</p>
         <p>Password: ${req.body.vendor_password}</p>
-        <p>Login URL: https://302-properties.vercel.app/auth/${adminData?.company_name}/vendor/login</p>
+        <p>Login URL: http://localhost:3000/auth/${adminData?.company_name}/vendor/login</p>
       `;
 
       // Send email with login credentials
@@ -260,7 +261,10 @@ router.post("/vendor", async (req, res) => {
 router.get("/vendors/:admin_id", async (req, res) => {
   const admin_id = req.params.admin_id;
   try {
-    const vendors = await Vendor.find({ admin_id: admin_id });
+    const vendors = await Vendor.find({
+      admin_id: admin_id,
+      is_delete: false,
+    }).sort({ createdAt: -1 });
 
     if (vendors.length === 0) {
       return res
@@ -344,16 +348,11 @@ router.delete("/delete_vendor/:vendor_id", async (req, res) => {
         message: `Cannot delete Vendor. Vendor already assigned to workorder!`,
       });
     } else {
-      let result = await Vendor.findOneAndDelete({
-        vendor_id: req.params.vendor_id,
-      });
+      let result = await Vendor.updateOne(
+        { vendor_id: req.params.vendor_id },
+        { $set: { is_delete: true } }
+      );
 
-      if (result.deletedCount === 0) {
-        return res.status(404).json({
-          statusCode: 404,
-          message: "Property-Type not found",
-        });
-      }
       res.json({
         statusCode: 200,
         data: result,
@@ -367,5 +366,8 @@ router.delete("/delete_vendor/:vendor_id", async (req, res) => {
     });
   }
 });
+
+
+
 
 module.exports = router;

@@ -16,6 +16,8 @@ const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const StaffMember = require("../../../modals/superadmin/StaffMember");
 const PropertyType = require("../../../modals/superadmin/PropertyType");
 const Payment = require("../../../modals/payment/Payment");
+const ApplicantProperty = require("../../../modals/superadmin/Applicant_property");
+const Applicant = require("../../../modals/superadmin/Applicant");
 
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
@@ -39,7 +41,7 @@ router.get("/lease/get/:admin_id", async (req, res) => {
 
     var data = await Lease.aggregate([
       {
-        $match: { admin_id: admin_id },
+        $match: { admin_id: admin_id, is_delete: false },
       },
       {
         $sort: { createdAt: -1 },
@@ -543,19 +545,32 @@ router.get("/leases/:admin_id", async (req, res) => {
 
 router.delete("/leases/:lease_id", async (req, res) => {
   const lease_id = req.params.lease_id;
+  console.log(lease_id, "lease_id");
   try {
-    const deletedTenant = await Lease.updateOne(
+    const lease = await Lease.findOne({ lease_id: lease_id });
+
+    if (!lease) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: `Lease not found. No action taken.`,
+      });
+    }
+
+    // Update is_delete field of the lease document to true
+    const deletedLease = await Lease.updateOne(
       { lease_id: lease_id },
       { $set: { is_delete: true } }
     );
 
-    if (deletedTenant.deletedCount === 1) {
-      await Charge.updateMany(
-        { lease_id: lease_id },
+    if (deletedLease.modifiedCount === 1) {
+      // Update other collections based on the tenant_id from the lease document
+      const tenant_id = lease.tenant_id;
+      await Cosigner.updateMany(
+        { tenant_id: tenant_id },
         { $set: { is_delete: true } }
       );
 
-      await Cosigner.updateMany(
+      await Charge.updateMany(
         { lease_id: lease_id },
         { $set: { is_delete: true } }
       );
@@ -564,20 +579,15 @@ router.delete("/leases/:lease_id", async (req, res) => {
         { lease_id: lease_id },
         { $set: { is_delete: true } }
       );
-
-      return res.status(200).json({
-        statusCode: 200,
-        message: `Lease deleted successfully.`,
-      });
-    } else {
-      return res.status(201).json({
-        statusCode: 201,
-        message: `Lease not found. No action taken.`,
-      });
     }
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: `Lease deleted successfully.`,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: error });
   }
 });
 
@@ -729,13 +739,13 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
     const tenant_id = data[0].tenant_id;
     const unit_id = data[0].unit_id;
     const rental_id = data[0].rental_id;
-    
+
     const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
-    
+
     const rental_data = await Rentals.findOne({
       rental_id: rental_id,
     });
-    
+
     const staffmember_id = rental_data.staffmember_id;
     const property_data = await PropertyType.findOne({
       property_id: rental_data.property_id,
@@ -746,7 +756,9 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
     });
 
     const unit_data = await Unit.findOne({ unit_id: unit_id });
-    const staff_data = await StaffMember.findOne({ staffmember_id: staffmember_id });
+    const staff_data = await StaffMember.findOne({
+      staffmember_id: staffmember_id,
+    });
     const charge = data[0].entry.filter((item) => item.charge_type === "Rent");
 
     const object = {
@@ -807,56 +819,111 @@ router.get("/get_lease/:lease_id", async (req, res) => {
       },
     ]);
 
-    const tenant_id = data[0].tenant_id;
-    const unit_id = data[0].unit_id;
-    const rental_id = data[0].rental_id;
+    if (data.length === 0) {
+      data = await ApplicantProperty.aggregate([
+        {
+          $match: { lease_id: lease_id },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+      ]);
 
-    const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
+      if (data.length === 0) {
+        res.json({
+          statusCode: 201,
+          message: "Lease Data Not Found",
+        });
+      } else {
+        const applicant_id = data[0].applicant_id;
+        const unit_id = data[0].unit_id;
+        const rental_id = data[0].rental_id;
 
-    const password = decrypt(tenant_data.tenant_password);
-    tenant_data.tenant_password = password;
+        const tenant_data = await Applicant.findOne({
+          applicant_id: applicant_id,
+        });
 
-    const rental_data = await Rentals.findOne({
-      rental_id: rental_id,
-    });
+        const tenantData = {
+          applicant_firstName: "",
+          applicant_firstName: "",
+          applicant_firstName: "",
+          applicant_firstName: "",
+          applicant_firstName: "",
+        }
 
-    const rentalOwner_data = await RentalOwner.findOne({
-      rentalowner_id: rental_data.rentalowner_id,
-    });
+        const rental_data = await Rentals.findOne({
+          rental_id: rental_id,
+        });
 
-    const unit_data = await Unit.findOne({ unit_id: unit_id });
+        const rentalOwner_data = await RentalOwner.findOne({
+          rentalowner_id: rental_data.rentalowner_id,
+        });
 
-    const rec_charge_data = data[0].entry.filter(
-      (item) => item.charge_type === "Recurring Charge"
-    );
+        const unit_data = await Unit.findOne({ unit_id: unit_id });
+        res.json({
+          statusCode: 200,
+          data: {
+            tenant: tenant_data,
+            rental: rental_data,
+            rentalOwner_data,
+            unit_data,
+            leases: data[0],
+          },
+          message: "Read All Request",
+        });
+      }
+    } else {
+      const tenant_id = data[0].tenant_id;
+      const unit_id = data[0].unit_id;
+      const rental_id = data[0].rental_id;
 
-    const one_charge_data = data[0].entry.filter(
-      (item) => item.charge_type === "One Time Charge"
-    );
+      const tenant_data = await Tenant.findOne({ tenant_id: tenant_id });
 
-    const rent_charge_data = data[0].entry.filter(
-      (item) => item.charge_type === "Rent"
-    );
+      const password = decrypt(tenant_data.tenant_password);
+      tenant_data.tenant_password = password;
 
-    const Security_charge_data = data[0].entry.filter(
-      (item) => item.charge_type === "Security Deposite"
-    );
+      const rental_data = await Rentals.findOne({
+        rental_id: rental_id,
+      });
 
-    res.json({
-      statusCode: 200,
-      data: {
-        tenant: tenant_data,
-        rental: rental_data,
-        rentalOwner_data,
-        unit_data,
-        rec_charge_data,
-        one_charge_data,
-        rent_charge_data,
-        Security_charge_data,
-        leases: data[0],
-      },
-      message: "Read All Request",
-    });
+      const rentalOwner_data = await RentalOwner.findOne({
+        rentalowner_id: rental_data.rentalowner_id,
+      });
+
+      const unit_data = await Unit.findOne({ unit_id: unit_id });
+
+      const rec_charge_data = data[0].entry.filter(
+        (item) => item.charge_type === "Recurring Charge"
+      );
+
+      const one_charge_data = data[0].entry.filter(
+        (item) => item.charge_type === "One Time Charge"
+      );
+
+      const rent_charge_data = data[0].entry.filter(
+        (item) => item.charge_type === "Rent"
+      );
+
+      const Security_charge_data = data[0].entry.filter(
+        (item) => item.charge_type === "Security Deposite"
+      );
+
+      res.json({
+        statusCode: 200,
+        data: {
+          tenant: tenant_data,
+          rental: rental_data,
+          rentalOwner_data,
+          unit_data,
+          rec_charge_data,
+          one_charge_data,
+          rent_charge_data,
+          Security_charge_data,
+          leases: data[0],
+        },
+        message: "Read All Request",
+      });
+    }
   } catch (error) {
     res.json({
       statusCode: 500,

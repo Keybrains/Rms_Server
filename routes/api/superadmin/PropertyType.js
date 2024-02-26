@@ -148,7 +148,7 @@ router.delete("/property_type/:property_id", async (req, res) => {
         { $set: { is_delete: true } }
       );
 
-      if (result.deletedCount === 0) {
+      if (result.modifiedCount === 0) {
         return res.status(404).json({
           statusCode: 404,
           message: "Property-Type not found",
