@@ -12,7 +12,7 @@ const RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
-const crypto = require("crypto");
+  const crypto = require("crypto");
 const StaffMember = require("../../../modals/superadmin/StaffMember");
 const PropertyType = require("../../../modals/superadmin/PropertyType");
 
