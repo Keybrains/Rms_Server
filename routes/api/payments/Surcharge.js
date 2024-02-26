@@ -103,6 +103,31 @@ router.get("/surcharge/get/:surcharge_id", async (req, res) => {
   }
 });
 
+router.get("/surcharge/getadmin/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const data = await Surcharge.find({ admin_id });
+
+    if (data.length === 0) {
+      return res.json({
+        statusCode: 404,
+        message: "No record found for the specified admin_id",
+      });
+    }
+
+    res.json({
+      data: data,
+      statusCode: 200,
+      message: "Read PropertyType",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.put("/surcharge/:surcharge_id", async (req, res) => {
   try {
     const { surcharge_id } = req.params;

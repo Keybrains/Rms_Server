@@ -54,6 +54,8 @@ var NotificationRouter = require("./routes/api/superadmin/Notification.js");
 // Payments
 var PaymentRouter = require("./routes/api/payments/Payment.js");
 var SurchargeRouter = require("./routes/api/payments/Surcharge.js");
+var NmiPaymentRouter = require("./routes/api/payments/NMI-response.js");
+var CreditCardRouter = require("./routes/api/payments/CreditCard.js");
 
 // Email Comfigration
 var EmailConfigrationRouter = require("./routes/api/Email/Email.js")
@@ -96,6 +98,8 @@ app.use("/api/notification", NotificationRouter);
 // Payment
 app.use("/api/payment", PaymentRouter);
 app.use("/api/surcharge", SurchargeRouter);
+app.use("/api/nmipayment", NmiPaymentRouter);
+app.use("/api/creditcard", CreditCardRouter);
 
 // Email configration
 app.use("/api/email_configration", EmailConfigrationRouter);

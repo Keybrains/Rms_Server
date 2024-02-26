@@ -7,7 +7,7 @@ const carddetailSchema = new Schema({
 });
 
 const creditCardSchema = new Schema({
-  admin_id: { type: String },
+  // admin_id: { type: String },
   tenant_id: { type: String },
   customer_vault_id: { type: Number },
   card_detail: [carddetailSchema],

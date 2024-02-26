@@ -15,24 +15,28 @@ router.post("/payment", async (req, res) => {
     const entryIds = [];
 
     // Loop through each entry and calculate total amount and generate entryId
+    console.log("1==========");
     for (let i = 0; i < req.body.entry.length; i++) {
       if (req.body.entry[i].entry_id) {
         const findCharge = await Charge.findOne({
           "entry.entry_id": req.body.entry[i].entry_id,
           "entry.is_paid": false,
         });
-        for (const entry of findCharge.entry) {
-          if (
-            entry.entry_id === req.body.entry[i].entry_id &&
-            req.body.entry[i].balance === req.body.entry[i].amount
-          ) {
-            const updatedCharge = await Charge.findOneAndUpdate(
-              {
-                "entry.entry_id": req.body.entry[i].entry_id,
-              },
-              { $set: { "entry.$.is_paid": true } },
-              { new: true }
-            );
+
+        if (findCharge) {
+          for (const entry of findCharge.entry) {
+            if (
+              entry.entry_id === req.body.entry[i].entry_id &&
+              req.body.entry[i].balance === req.body.entry[i].amount
+            ) {
+              const updatedCharge = await Charge.findOneAndUpdate(
+                {
+                  "entry.entry_id": req.body.entry[i].entry_id,
+                },
+                { $set: { "entry.$.is_paid": true } },
+                { new: true }
+              );
+            }
           }
         }
       }
@@ -86,8 +90,8 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
     ]);
 
     const data = [
-      ...payment.map((item) => ({ ...item, type: "payment" })),
-      ...charge.map((item) => ({ ...item, type: "charge" })),
+      ...payment.map((item) => ({ ...item, type: "Payment" })),
+      ...charge.map((item) => ({ ...item, type: "Charge" })),
     ];
 
     const sortedDates = data.sort(
@@ -96,9 +100,9 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
 
     var amount = 0;
     for (const item of sortedDates) {
-      if (item.type === "payment") {
+      if (item.type === "Payment") {
         amount -= item.total_amount;
-      } else if (item.type === "charge") {
+      } else if (item.type === "Charge") {
         amount += item.total_amount;
       }
       item.balance = amount;
@@ -135,8 +139,8 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
     ]);
 
     const data = [
-      ...payment.map((item) => ({ ...item, type: "payment" })),
-      ...charge.map((item) => ({ ...item, type: "charge" })),
+      ...payment.map((item) => ({ ...item, type: "Payment" })),
+      ...charge.map((item) => ({ ...item, type: "Charge" })),
     ];
 
     const sortedDates = data.sort(
@@ -145,9 +149,9 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
 
     var total_amount = 0;
     for (const item of sortedDates) {
-      if (item.type === "payment") {
+      if (item.type === "Payment") {
         total_amount -= item.total_amount;
-      } else if (item.type === "charge") {
+      } else if (item.type === "Charge") {
         total_amount += item.total_amount;
       }
       item.balance = total_amount;

@@ -907,6 +907,7 @@ router.get("/lease_tenant/:lease_id", async (req, res) => {
       admin_id: tenant.admin_id,
       tenant_firstName: tenant.tenant_firstName,
       tenant_lastName: tenant.tenant_lastName,
+      tenant_email: tenant.tenant_email,
     };
 
     res.json({

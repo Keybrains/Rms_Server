@@ -29,6 +29,7 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.5",
     "nodemon": "^3.0.2",
-    "puppeteer": "^22.0.0"
+    "puppeteer": "^22.0.0",
+    "xmldom": "^0.6.0"
   }
 }

@@ -10,6 +10,8 @@ const paymentSchema = new Schema({
   customer_vault_id: { type: Number },
   billing_id: { type: Number },
   check_number: { type: String },
+  transaction_id: { type: String },
+  response: { type: String },
 
   entry: [
     {
