@@ -168,8 +168,6 @@ router.post("/rental_owner", async (req, res) => {
 
 router.put("/rental_owner/:rentalowner_id", async (req, res) => {
   try {
-    console.log(req.body);
-    console.log(req.params.rentalowner_id);
     req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     let result = await RentalOwner.findOneAndUpdate(
       { rentalowner_id: req.params.rentalowner_id },
@@ -191,10 +189,10 @@ router.put("/rental_owner/:rentalowner_id", async (req, res) => {
 
 router.post("/check_rental_owner", async (req, res) => {
   try {
-    console.log(req.body.rentalOwner_phoneNumber);
     const existingOwner = await RentalOwner.findOne({
       admin_id: req.body.admin_id,
       rentalOwner_phoneNumber: req.body.rentalOwner_phoneNumber,
+      is_delete: false,
     });
     if (existingOwner) {
       res.json({

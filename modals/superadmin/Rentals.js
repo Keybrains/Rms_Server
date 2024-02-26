@@ -17,6 +17,7 @@ const rentalsSchema = new Schema({
   staffmember_id: { type: String },
   createdAt: { type: String },
   updatedAt: { type: String },
+  is_delete: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("rental", rentalsSchema);

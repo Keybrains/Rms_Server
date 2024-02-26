@@ -11,6 +11,7 @@ const staffmemberSchema = new Schema({
   staffmember_password: { type: String },
   createdAt: { type: String },
   updatedAt: { type: String },
+  is_delete: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("staffmember", staffmemberSchema);

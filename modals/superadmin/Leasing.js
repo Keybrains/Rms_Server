@@ -29,6 +29,7 @@ const leasesSchema = new Schema({
 
   createdAt: { type: String },
   updatedAt: { type: String },
+  is_delete: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("lease", leasesSchema);

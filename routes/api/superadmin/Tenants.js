@@ -234,7 +234,7 @@ router.get("/tenant_details/:tenant_id", async (req, res) => {
 router.get("/tenants/:admin_id", async (req, res) => {
   const admin_id = req.params.admin_id;
   try {
-    const tenants = await Tenant.find({ admin_id: admin_id });
+    const tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
 
     for (const tenant of tenants) {
       const password = decrypt(tenant.tenant_password);
@@ -285,6 +285,7 @@ router.post("/tenants", async (req, res) => {
     const existingTenants = await Tenant.findOne({
       admin_id: tenantData.admin_id,
       tenant_phoneNumber: tenantData.tenant_phoneNumber,
+      is_delete: false,
     });
 
     const adminData = await AdminRegister.findOne({
@@ -384,12 +385,12 @@ router.delete("/tenant/:tenant_id", async (req, res) => {
         message: `Cannot delete tenant. The tenant is already assigned to a lease.`,
       });
     } else {
-      const deletedTenant = await Tenant.deleteOne({
-        tenant_id: tenant_id,
-      });
+      const deletedTenant = await Tenant.updateOne(
+        { tenant_id: tenant_id },
+        { $set: { is_delete: true } }
+      );
 
-      console.log(deletedTenant.deletedCount, tenant_id);
-      if (deletedTenant.deletedCount === 1) {
+      if (deletedTenant.deletedCount !== 0) {
         return res.status(200).json({
           statusCode: 200,
           message: `Tenant deleted successfully.`,

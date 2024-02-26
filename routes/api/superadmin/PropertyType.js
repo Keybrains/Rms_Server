@@ -14,6 +14,7 @@ router.post("/property_type", async (req, res) => {
       property_type: req.body.property_type,
       propertysub_type: req.body.propertysub_type,
       admin_id: req.body.admin_id,
+      is_delete: false,
     });
     if (!findPropertyNameName) {
       const timestamp = Date.now();
@@ -40,7 +41,6 @@ router.post("/property_type", async (req, res) => {
     });
   }
 });
-
 
 router.post("/search", async (req, res) => {
   try {
@@ -96,7 +96,7 @@ router.get("/property_type/:admin_id", async (req, res) => {
 
     var data = await PropertyType.aggregate([
       {
-        $match: { admin_id: admin_id }, // Filter by user_id
+        $match: { admin_id: admin_id, is_delete: false }, // Filter by user_id
       },
       {
         $sort: { createdAt: -1 }, // Filter by user_id
@@ -114,12 +114,12 @@ router.get("/property_type/:admin_id", async (req, res) => {
       data[i].admin = admin;
     }
 
-    const count = data.length
+    const count = data.length;
 
     res.json({
       statusCode: 200,
       data: data,
-      count:count,
+      count: count,
       message: "Read All Request",
     });
   } catch (error) {
@@ -130,7 +130,7 @@ router.get("/property_type/:admin_id", async (req, res) => {
   }
 });
 
-//delete property type for Super-Admin
+//delete property type for Admin (data not delete in Database, only change is_delete Boolean)
 router.delete("/property_type/:property_id", async (req, res) => {
   const property_id = req.params.property_id;
   try {
@@ -143,9 +143,10 @@ router.delete("/property_type/:property_id", async (req, res) => {
         message: `Cannot delete Property-Type. The Property-Type is already assigned to a lease.`,
       });
     } else {
-      const result = await PropertyType.deleteOne({
-        property_id: property_id,
-      });
+      const result = await PropertyType.updateOne(
+        { property_id: property_id },
+        { $set: { is_delete: true } }
+      );
 
       if (result.deletedCount === 0) {
         return res.status(404).json({

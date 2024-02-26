@@ -201,41 +201,44 @@ router.get("/count/:staffmember_id/:admin_id", async (req, res) => {
   }
 });
 
-router.get("/dashboard_workorder/:staffmember_id/:admin_id", async (req, res) => {
-  try {
-    const staffmember_id = req.params.staffmember_id;
-    const admin_id = req.params.admin_id;
+router.get(
+  "/dashboard_workorder/:staffmember_id/:admin_id",
+  async (req, res) => {
+    try {
+      const staffmember_id = req.params.staffmember_id;
+      const admin_id = req.params.admin_id;
 
-    const new_workorder = await WorkOrder.find({
-      staffmember_id: staffmember_id,
-      admin_id: admin_id,
-      status: "New"
-    })
-      .select("work_subject work_category workOrder_id date status")
-      .sort({ date: -1 });
+      const new_workorder = await WorkOrder.find({
+        staffmember_id: staffmember_id,
+        admin_id: admin_id,
+        status: "New",
+      })
+        .select("work_subject work_category workOrder_id date status")
+        .sort({ date: -1 });
 
-    const currentDate = moment().format("YYYY-MM-DD");
-    const overdue_workorder = await WorkOrder.find({
-      staffmember_id: staffmember_id,
-      admin_id: admin_id,
-      status: { $ne: "Complete" },
-      date: { $lt: currentDate },
-    })
-      .select("work_subject work_category workOrder_id date status")
-      .sort({ date: -1 });
+      const currentDate = moment().format("YYYY-MM-DD");
+      const overdue_workorder = await WorkOrder.find({
+        staffmember_id: staffmember_id,
+        admin_id: admin_id,
+        status: { $ne: "Complete" },
+        date: { $lt: currentDate },
+      })
+        .select("work_subject work_category workOrder_id date status")
+        .sort({ date: -1 });
 
-    res.json({
-      data: { new_workorder, overdue_workorder },
-      statusCode: 200,
-      message: "Read Overdue Work-orders",
-    });
-  } catch (error) {
-    res.json({
-      statusCode: 500,
-      message: error.message,
-    });
+      res.json({
+        data: { new_workorder, overdue_workorder },
+        statusCode: 200,
+        message: "Read Overdue Work-orders",
+      });
+    } catch (error) {
+      res.json({
+        statusCode: 500,
+        message: error.message,
+      });
+    }
   }
-});
+);
 
 // StaffMember Login
 router.post("/login", async (req, res) => {
@@ -293,6 +296,7 @@ router.post("/staff_member", async (req, res) => {
     let findStaffMember = await StaffMember.findOne({
       staffmember_email: req.body.staffmember_email,
       admin_id: req.body.admin_id,
+      is_delete: false,
     });
 
     const adminData = await AdminRegister.findOne({
@@ -333,7 +337,7 @@ router.post("/staff_member", async (req, res) => {
     } else {
       res.json({
         statusCode: 201,
-        message: `${req.body.staffmember_email} E-mail Already Added`,
+        message: `${req.body.staffmember_email} E-mail Already in use`,
       });
     }
   } catch (error) {
@@ -351,7 +355,7 @@ router.get("/staff_member/:admin_id", async (req, res) => {
 
     var data = await StaffMember.aggregate([
       {
-        $match: { admin_id: admin_id }, // Filter by user_id
+        $match: { admin_id: admin_id, is_delete: false }, // Filter by user_id
       },
       {
         $sort: { createdAt: -1 }, // Filter by user_id
@@ -382,7 +386,7 @@ router.get("/staff_member/:admin_id", async (req, res) => {
   }
 });
 
-//delete staff member for admin
+//delete staff member for admin (data not delete in Database, only change is_delete Boolean)
 router.delete("/staff_member/:staffmember_id", async (req, res) => {
   const staffmember_id = req.params.staffmember_id;
   try {
@@ -396,9 +400,10 @@ router.delete("/staff_member/:staffmember_id", async (req, res) => {
         message: `Cannot delete Staff Member. The Staff Member is already assigned to a lease.`,
       });
     } else {
-      let result = await StaffMember.deleteOne({
-        staffmember_id: staffmember_id,
-      });
+      let result = await StaffMember.updateOne(
+        { staffmember_id: staffmember_id },
+        { $set: { is_delete: true } }
+      );
 
       if (result.deletedCount === 0) {
         return res.status(404).json({
