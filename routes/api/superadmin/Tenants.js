@@ -5,9 +5,7 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var Lease = require("../../../modals/superadmin/Leasing");
 var Rentals = require("../../../modals/superadmin/Rentals");
 var Unit = require("../../../modals/superadmin/Unit");
-var RentalOwner = require("../../../modals/superadmin/RentalOwner");
-var StaffMember = require("../../../modals/superadmin/StaffMember");
-var PropertyType = require("../../../modals/superadmin/PropertyType");
+var WorkOrder = require("../../../modals/superadmin/WorkOrder");
 const { createTenantToken } = require("../../../authentication");
 var moment = require("moment");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
@@ -131,6 +129,42 @@ router.post("/search", async (req, res) => {
 
 // ============== Admin ==================================
 
+router.get("/dashboard_workorder/:tenant_id/:admin_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+    const admin_id = req.params.admin_id;
+
+    const new_workorder = await WorkOrder.find({
+      tenant_id: tenant_id,
+      admin_id: admin_id,
+      status: "New",
+    })
+      .select("work_subject work_category workOrder_id date status")
+      .sort({ date: -1 });
+
+    const currentDate = moment().format("YYYY-MM-DD");
+    const overdue_workorder = await WorkOrder.find({
+      tenant_id: tenant_id,
+      admin_id: admin_id,
+      status: { $ne: "Complete" },
+      date: { $lt: currentDate },
+    })
+      .select("work_subject work_category workOrder_id date status")
+      .sort({ date: -1 });
+
+    res.json({
+      data: { new_workorder, overdue_workorder },
+      statusCode: 200,
+      message: "Read Work-orders",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.get("/tenant_details/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
@@ -200,7 +234,12 @@ router.get("/tenant_details/:tenant_id", async (req, res) => {
 router.get("/tenants/:admin_id", async (req, res) => {
   const admin_id = req.params.admin_id;
   try {
-    const tenants = await Tenant.find({ admin_id: admin_id });
+    const tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
+
+    for (const tenant of tenants) {
+      const password = decrypt(tenant.tenant_password);
+      tenant.tenant_password = password;
+    }
 
     if (tenants.length === 0) {
       return res
@@ -246,6 +285,7 @@ router.post("/tenants", async (req, res) => {
     const existingTenants = await Tenant.findOne({
       admin_id: tenantData.admin_id,
       tenant_phoneNumber: tenantData.tenant_phoneNumber,
+      is_delete: false,
     });
 
     const adminData = await AdminRegister.findOne({
@@ -270,17 +310,17 @@ router.post("/tenants", async (req, res) => {
           .json({ message: "Recipient email not provided" });
       }
 
-      // const subject = "Tenant Login Credentials";
-      // const text = `
-      //   <p>Hello,</p>
-      //   <p>Here are your credentials for tenant login:</p>
-      //   <p>Email: ${req.body.tenant_email}</p>
-      //   <p>Password: ${req.body.tenant_password}</p>
-      //   <p>Login URL: https://302-properties.vercel.app/auth/${adminData.company_name}/tenants/login</p>
-      // `;
+      const subject = "Tenant Login Credentials";
+      const text = `
+        <p>Hello,</p>
+        <p>Here are your credentials for tenant login:</p>
+        <p>Email: ${req.body.tenant_email}</p>
+        <p>Password: ${req.body.tenant_password}</p>
+        <p>Login URL: https://302-properties.vercel.app/auth/${adminData.company_name}/tenants/login</p>
+      `;
 
-      // // Send email with login credentials
-      // await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
+      // Send email with login credentials
+      await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
 
       let hashConvert = encrypt(req.body.tenant_password);
       req.body.tenant_password = hashConvert;
@@ -345,12 +385,12 @@ router.delete("/tenant/:tenant_id", async (req, res) => {
         message: `Cannot delete tenant. The tenant is already assigned to a lease.`,
       });
     } else {
-      const deletedTenant = await Tenant.deleteOne({
-        tenant_id: tenant_id,
-      });
+      const deletedTenant = await Tenant.updateOne(
+        { tenant_id: tenant_id },
+        { $set: { is_delete: true } }
+      );
 
-      console.log(deletedTenant.deletedCount, tenant_id);
-      if (deletedTenant.deletedCount === 1) {
+      if (deletedTenant.deletedCount !== 0) {
         return res.status(200).json({
           statusCode: 200,
           message: `Tenant deleted successfully.`,

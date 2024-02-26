@@ -478,8 +478,9 @@ router.get("/admin_count/:admin_id", async (req, res) => {
   try {
     const { admin_id } = req.params;
     const staffMember = (await StaffMember.find({ admin_id: admin_id })).length;
-    const propertyType = (await PropertyType.find({ admin_id: admin_id }))
-      .length;
+    const propertyType = (
+      await PropertyType.find({ admin_id: admin_id, is_delete: false })
+    ).length;
     const rental_owner = (await RentalOwner.find({ admin_id: admin_id }))
       .length;
     const tenant = (await Tenant.find({ admin_id: admin_id })).length;

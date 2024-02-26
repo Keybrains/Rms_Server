@@ -93,27 +93,15 @@ router.post("/rentals", async (req, res) => {
 
     const existingRentalOwner = await RentalOwner.findOne({
       rentalowner_id: rentalOwnerData.rentalowner_id,
+      is_delete: false,
     });
     if (!existingRentalOwner) {
-      const existingOwner = await RentalOwner.findOne({
-        admin_id: rentalOwnerData.admin_id,
-        rentalOwner_phoneNumber: rentalOwnerData.rentalOwner_phoneNumber,
-      });
+      const rentalOwnerTimestamp = Date.now();
+      rentalOwnerData.rentalowner_id = `${rentalOwnerTimestamp}`;
+      rentalOwnerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
+      rentalOwnerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      if (existingOwner) {
-        rentalOwner = existingOwner;
-        return res.status(201).json({
-          statusCode: 201,
-          message: `${rentalOwnerData.rentalOwner_phoneNumber} Phone Number Already Existing`,
-        });
-      } else {
-        const rentalOwnerTimestamp = Date.now();
-        rentalOwnerData.rentalowner_id = `${rentalOwnerTimestamp}`;
-        rentalOwnerData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        rentalOwnerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-
-        rentalOwner = await RentalOwner.create(rentalOwnerData);
-      }
+      rentalOwner = await RentalOwner.create(rentalOwnerData);
     } else {
       rentalOwner = existingRentalOwner;
     }
@@ -123,6 +111,7 @@ router.post("/rentals", async (req, res) => {
       rental_adress: rentalData.rental_adress,
       rental_city: rentalData.rental_city,
       rental_state: rentalData.rental_state,
+      is_delete: false,
     });
 
     if (existingRental) {
@@ -207,7 +196,12 @@ router.get("/rental-owners/:admin_id", async (req, res) => {
   const adminId = req.params.admin_id;
 
   try {
-    const rentalOwners = await RentalOwner.find({ admin_id: adminId });
+    const rentalOwners = await RentalOwner.find({
+      admin_id: adminId,
+      is_delete: false,
+    }).sort({
+      createdAt: -1,
+    });
 
     if (!rentalOwners || rentalOwners.length === 0) {
       return res
@@ -231,7 +225,7 @@ router.get("/rentals/:admin_id", async (req, res) => {
         $sort: { createdAt: -1 },
       },
       {
-        $match: { admin_id: admin_id }, // Filter by user_id
+        $match: { admin_id: admin_id, is_delete: false }, // Filter by user_id
       },
     ]);
 
@@ -479,11 +473,12 @@ router.delete("/rental-owners/:rentalowner_id", async (req, res) => {
         message: `Cannot delete rental owner. The rental owner is already assigned to a property.`,
       });
     } else {
-      const deletedTenant = await RentalOwner.deleteOne({
-        rentalowner_id: rentalowner_id,
-      });
+      const deletedTenant = await RentalOwner.updateOne(
+        { rentalowner_id: rentalowner_id },
+        { $set: { is_delete: true } }
+      );
 
-      if (deletedTenant.deletedCount === 1) {
+      if (deletedTenant.deletedCount !== 0) {
         return res.status(200).json({
           statusCode: 200,
           message: `Rental owner deleted successfully.`,
@@ -554,11 +549,17 @@ router.delete("/rental/:rental_id", async (req, res) => {
         message: `Cannot delete rental. The rental is already assigned to a tenant.`,
       });
     } else {
-      const deletedTenant = await Rentals.deleteOne({
-        rental_id: rental_id,
-      });
+      await Unit.updateMany(
+        { rental_id: rental_id },
+        { $set: { is_delete: true } }
+      );
 
-      if (deletedTenant.deletedCount === 1) {
+      const deletedTenant = await Rentals.updateOne(
+        { rental_id: rental_id },
+        { $set: { is_delete: true } }
+      );
+
+      if (deletedTenant.deletedCount !== 0) {
         return res.status(200).json({
           statusCode: 200,
           message: `Rental deleted successfully.`,

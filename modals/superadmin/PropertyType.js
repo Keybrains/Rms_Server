@@ -9,6 +9,7 @@ const propertyTypeSchema = new Schema({
   is_multiunit: { type: Boolean, default: false },
   createdAt: { type: String },
   updatedAt: { type: String },
+  is_delete: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("property-type", propertyTypeSchema);
