@@ -4,7 +4,6 @@ var Payment = require("../../../modals/payment/Payment");
 var Surcharge = require("../../../modals/payment/Surcharge");
 var moment = require("moment");
 const Charge = require("../../../modals/superadmin/Charge");
-const Leasing = require("../../../modals/superadmin/Leasing");
 
 router.post("/payment", async (req, res) => {
   try {
@@ -17,6 +16,26 @@ router.post("/payment", async (req, res) => {
 
     // Loop through each entry and calculate total amount and generate entryId
     for (let i = 0; i < req.body.entry.length; i++) {
+      if (req.body.entry[i].entry_id) {
+        const findCharge = await Charge.findOne({
+          "entry.entry_id": req.body.entry[i].entry_id,
+          "entry.is_paid": false,
+        });
+        for (const entry of findCharge.entry) {
+          if (
+            entry.entry_id === req.body.entry[i].entry_id &&
+            req.body.entry[i].balance === req.body.entry[i].amount
+          ) {
+            const updatedCharge = await Charge.findOneAndUpdate(
+              {
+                "entry.entry_id": req.body.entry[i].entry_id,
+              },
+              { $set: { "entry.$.is_paid": true } },
+              { new: true }
+            );
+          }
+        }
+      }
       const timestampForEntryId = Date.now();
       const entryId = `${timestampForEntryId}-${i}`; // Include index to ensure uniqueness
       entryIds.push(entryId);
@@ -75,20 +94,20 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
       (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
 
-    var total_amount = 0;
+    var amount = 0;
     for (const item of sortedDates) {
       if (item.type === "payment") {
         amount -= item.total_amount;
       } else if (item.type === "charge") {
         amount += item.total_amount;
       }
-      item.balance = total_amount;
+      item.balance = amount;
     }
 
     res.json({
       statusCode: 200,
       data: sortedDates.reverse(),
-      totalBalance: total_amount,
+      totalBalance: amount,
       message: "Read All Charges",
     });
   } catch (error) {
