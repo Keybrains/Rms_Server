@@ -20,8 +20,8 @@ const applicantSchema = new Schema({
   applicant_NotesAndFile: {
     type: [
       {
-        applicant_notes: { type: String },
-        applicant_file: { type: String },
+        applicant_notes: String,
+        applicant_file: String,
       },
     ],
     default: [],
@@ -29,9 +29,9 @@ const applicantSchema = new Schema({
 
   applicant_status: [
     {
-      status: { type: String, default: "Undecided" },
-      updateAt: { type: String },
-      statusUpdatedBy: { type: String },
+      status: String,
+      updateAt: String,
+      statusUpdatedBy: String,
     },
   ],
 });
