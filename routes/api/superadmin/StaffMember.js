@@ -181,10 +181,12 @@ router.get("/count/:staffmember_id/:admin_id", async (req, res) => {
     const property_staffMember = await Rentals.find({
       staffmember_id: staffmember_id,
       admin_id: admin_id,
+      is_delete: false,
     });
     const workorder_staffMember = await WorkOrder.find({
       staffmember_id: staffmember_id,
       admin_id: admin_id,
+      is_delete: false,
     });
 
     res.json({
@@ -316,7 +318,7 @@ router.post("/staff_member", async (req, res) => {
         <p>Here are your credentials for staffmember login:</p>
         <p>Email: ${req.body.staffmember_email}</p>
         <p>Password: ${req.body.staffmember_password}</p>
-        <p>Login URL: https://302-properties.vercel.app/auth/${adminData.company_name}/staffmember/login</p>
+        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/staffmember/login</p>
       `;
 
       await emailService.sendWelcomeEmail(
@@ -405,7 +407,7 @@ router.delete("/staff_member/:staffmember_id", async (req, res) => {
         { $set: { is_delete: true } }
       );
 
-      if (result.deletedCount === 0) {
+      if (result.modifiedCount === 1) {
         return res.status(404).json({
           statusCode: 404,
           message: "Staff Member not found",

@@ -9,6 +9,7 @@ router.post("/surcharge", async (req, res) => {
     let findSurcharge = await Surcharge.findOne({
       admin_id: req.body.admin_id,
       surcharge_percent: req.body.surcharge_percent,
+      is_delete: false,
     });
     if (!findSurcharge) {
       const timestamp = Date.now();
@@ -44,7 +45,7 @@ router.get("/surcharge/:admin_id", async (req, res) => {
 
     var data = await Surcharge.aggregate([
       {
-        $match: { admin_id: admin_id }, // Filter by user_id
+        $match: { admin_id: admin_id, is_delete: false }, // Filter by user_id
       },
       {
         $sort: { createdAt: -1 }, // Filter by user_id
@@ -81,7 +82,7 @@ router.get("/surcharge/:admin_id", async (req, res) => {
 router.get("/surcharge/get/:surcharge_id", async (req, res) => {
   try {
     const surcharge_id = req.params.surcharge_id;
-    const data = await Surcharge.find({ surcharge_id });
+    const data = await Surcharge.find({ surcharge_id, is_delete: false });
 
     if (data.length === 0) {
       return res.json({

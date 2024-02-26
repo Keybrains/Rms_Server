@@ -101,7 +101,10 @@ router.get("/workorder_details/:workOrder_id", async (req, res) => {
   try {
     const workOrder_id = req.params.workOrder_id;
 
-    const workOrderData = await WorkOrder.findOne({ workOrder_id });
+    const workOrderData = await WorkOrder.findOne({
+      workOrder_id,
+      is_delete: false,
+    });
 
     if (!workOrderData) {
       res.status(201).json({
@@ -159,7 +162,10 @@ router.get("/work-orders/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
 
-    const workOrdersData = await WorkOrder.find({ admin_id });
+    const workOrdersData = await WorkOrder.find({
+      admin_id,
+      is_delete: false,
+    }).sort({ createdAt: -1 });
     if (!workOrdersData || workOrdersData.length === 0) {
       return res.status(200).json({
         statusCode: 201,
@@ -314,7 +320,7 @@ router.get("/vendor_work/:vendor_id", async (req, res) => {
 
     var data = await WorkOrder.aggregate([
       {
-        $match: { vendor_id: vendor_id }, // Filter by user_id
+        $match: { vendor_id: vendor_id, is_delete: false }, // Filter by user_id
       },
       {
         $sort: { createdAt: -1 }, // Filter by user_id
@@ -367,7 +373,7 @@ router.get("/staff_work/:staffmember_id", async (req, res) => {
 
     var data = await WorkOrder.aggregate([
       {
-        $match: { staffmember_id: staffmember_id }, // Filter by user_id
+        $match: { staffmember_id: staffmember_id, is_delete: false }, // Filter by user_id
       },
       {
         $sort: { createdAt: -1 }, // Filter by user_id
@@ -423,7 +429,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
 
     var data = await WorkOrder.aggregate([
       {
-        $match: { tenant_id: tenant_id }, // Filter by user_id
+        $match: { tenant_id: tenant_id, is_delete: false }, // Filter by user_id
       },
       {
         $sort: { createdAt: -1 }, // Filter by user_id
@@ -501,7 +507,7 @@ router.get("/rental_workorder/:rental_id", async (req, res) => {
 
     var data = await WorkOrder.aggregate([
       {
-        $match: { rental_id: rental_id },
+        $match: { rental_id: rental_id, is_delete: false },
       },
       {
         $sort: { createdAt: -1 },
@@ -538,22 +544,50 @@ router.get("/rental_workorder/:rental_id", async (req, res) => {
   }
 });
 
-router.delete("/delete_workorder", async (req, res) => {
+router.delete("/delete_workorder/:workOrder_id", async (req, res) => {
+  const workOrder_id = req.params.workOrder_id;
+  console.log(workOrder_id, "workOrder_id")
   try {
-    let result = await WorkOrder.findOneAndDelete({
-      workOrder_id: req.body.workOrder_id,
-    });
+    // Find the work order by workOrder_id
+    const workOrder = await WorkOrder.findOne({ workOrder_id: workOrder_id });
 
-    res.json({
-      statusCode: 200,
-      data: result,
-      message: "Workorder Deleted Successfully",
-    });
-  } catch (err) {
-    res.json({
-      statusCode: 500,
-      message: err.message,
-    });
+    if (!workOrder) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: `Work Order not found. No action taken.`,
+      });
+    }
+
+    // Check if the status of the work order is "New"
+    if (workOrder.status === "New") {
+      // Update is_delete field to true for WorkOrder
+      const result = await WorkOrder.updateOne(
+        { workOrder_id: workOrder_id },
+        { $set: { is_delete: true } }
+      );
+      console.log(result, "result")
+
+      if (result.modifiedCount === 1) {
+        // Update is_delete field to true for related Parts
+        await Parts.updateMany(
+          { workOrder_id: workOrder_id },
+          { $set: { is_delete: true } }
+        );
+
+        return res.status(200).json({
+          statusCode: 200,
+          message: `Work Order and related parts deleted successfully.`,
+        });
+      }
+    } else {
+      return res.status(203).json({
+        statusCode: 203,
+        message: `Work Order status is not 'New'. No action taken.`,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

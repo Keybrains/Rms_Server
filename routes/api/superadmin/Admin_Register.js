@@ -106,7 +106,7 @@ router.post("/register", async (req, res) => {
       <p>Here are your credentials for Admin login:</p>
       <p>Email: ${req.body.email}</p>
       <p>Password: ${req.body.password}</p>
-      <p>Login URL: https://302-properties.vercel.app/auth/auth/login</p>
+      <p>Login URL: http://localhost:3000/auth/auth/login</p>
     `;
 
     await emailService.sendWelcomeEmail(req.body.email, subject, text);
@@ -258,11 +258,12 @@ router.post("/login", async (req, res) => {
     const user = await AdminRegister.findOne({
       email: req.body.email,
       isAdmin_delete: false,
+      roll: "admin",
     });
 
     if (!user) {
       return res
-        .status(201)
+        .status(200)
         .json({ statusCode: 201, message: "User doesn't exist" });
     }
 
@@ -428,7 +429,10 @@ router.put("/appliance/:appliance_id", async (req, res) => {
 router.get("/company/:company_name", async (req, res) => {
   try {
     const company_name = req.params.company_name;
-    const data = await AdminRegister.find({ company_name });
+    const data = await AdminRegister.find({
+      company_name,
+      isAdmin_delete: false,
+    });
 
     if (data.length === 0) {
       return res.json({
@@ -477,18 +481,26 @@ router.delete("/admin", async (req, res) => {
 router.get("/admin_count/:admin_id", async (req, res) => {
   try {
     const { admin_id } = req.params;
-    const staffMember = (await StaffMember.find({ admin_id: admin_id })).length;
+    const staffMember = (
+      await StaffMember.find({ admin_id: admin_id, is_delete: false })
+    ).length;
     const propertyType = (
       await PropertyType.find({ admin_id: admin_id, is_delete: false })
     ).length;
-    const rental_owner = (await RentalOwner.find({ admin_id: admin_id }))
+    const rental_owner = (
+      await RentalOwner.find({ admin_id: admin_id, is_delete: false })
+    ).length;
+    const tenant = (await Tenant.find({ admin_id: admin_id, is_delete: false }))
       .length;
-    const tenant = (await Tenant.find({ admin_id: admin_id })).length;
-    const unit = (await Unit.find({ admin_id: admin_id })).length;
-    const lease = (await Lease.find({ admin_id: admin_id })).length;
-    const rentals_properties = (await Rentals.find({ admin_id: admin_id }))
+    const unit = (await Unit.find({ admin_id: admin_id, is_delete: false }))
       .length;
-    const vendor = (await Vendor.find({ admin_id: admin_id })).length;
+    const lease = (await Lease.find({ admin_id: admin_id, is_delete: false }))
+      .length;
+    const rentals_properties = (
+      await Rentals.find({ admin_id: admin_id, is_delete: false })
+    ).length;
+    const vendor = (await Vendor.find({ admin_id: admin_id, is_delete: false }))
+      .length;
 
     res.status(200).json({
       statusCode: 200,
@@ -514,7 +526,7 @@ router.get("/admin_profile/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
     const data = await AdminRegister.findOne(
-      { admin_id: admin_id },
+      { admin_id: admin_id, isAdmin_delete: false },
       "-password"
     );
 
@@ -587,19 +599,18 @@ router.post("/superadmin_register", async (req, res) => {
 
 router.post("/superadmin_login", async (req, res) => {
   try {
-    console.log(req.body);
     const superAdmin = await AdminRegister.findOne({
       email: req.body.email,
-      role: req.body.role,
+      roll: "super_admin",
     });
-    console.log(req.body);
+
     if (!superAdmin) {
       return res.status(201).json({
         statusCode: 201,
         message: "superAdmin does not exist",
       });
     }
-    console.log(req.body);
+    
     const isMatch = decrypt(superAdmin.password);
     console.log(req.body);
     if (req.body.password !== isMatch) {
@@ -636,7 +647,10 @@ router.post("/superadmin_login", async (req, res) => {
 router.get("/check_company/:admin", async (req, res) => {
   try {
     const admin = req.params.admin;
-    const adminData = await AdminRegister.findOne({ company_name: admin });
+    const adminData = await AdminRegister.findOne({
+      company_name: admin,
+      isAdmin_delete: false,
+    });
     if (!adminData) {
       return res.status(201).json({
         statusCode: 201,

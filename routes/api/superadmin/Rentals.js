@@ -22,7 +22,7 @@ router.get("/properties/:admin_id", async (req, res) => {
 
     var data = await Rentals.aggregate([
       {
-        $match: { admin_id: admin_id },
+        $match: { admin_id: admin_id, is_delete: false },
       },
       {
         $sort: { createdAt: -1 },
@@ -478,7 +478,7 @@ router.delete("/rental-owners/:rentalowner_id", async (req, res) => {
         { $set: { is_delete: true } }
       );
 
-      if (deletedTenant.deletedCount !== 0) {
+      if (deletedTenant.modifiedCount !== 1) {
         return res.status(200).json({
           statusCode: 200,
           message: `Rental owner deleted successfully.`,
@@ -559,7 +559,7 @@ router.delete("/rental/:rental_id", async (req, res) => {
         { $set: { is_delete: true } }
       );
 
-      if (deletedTenant.deletedCount !== 0) {
+      if (deletedTenant.modifiedCount === 1) {
         return res.status(200).json({
           statusCode: 200,
           message: `Rental deleted successfully.`,

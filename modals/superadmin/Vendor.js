@@ -12,6 +12,7 @@ const vendorAdminSchema = new Schema({
 
   createdAt: { type: String },
   updatedAt: { type: String },
+  is_delete: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("vendor", vendorAdminSchema);
