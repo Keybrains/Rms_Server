@@ -463,38 +463,105 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// router.get("/tenant_profile/:tenant_id", async (req, res) => {
+//   try {
+//     const tenant_id = req.params.tenant_id;
+
+//     const tenantData = await Tenant.findOne({ tenant_id: tenant_id });
+
+//     if (!tenantData) {
+//       return res.status(201).json({
+//         statusCode: 201,
+//         message: "Tenant not found",
+//       });
+//     }
+
+//     const data = {};
+//     const leaseData = await Lease.find({ tenant_id: tenant_id });
+
+//     data.tenantData = tenantData;
+//     data.leaseData = [];
+//     for (let i = 0; i < leaseData.length; i++) {
+//       const rental_id = leaseData[i].rental_id;
+
+//       const rentalData = await Rentals.findOne({ rental_id: rental_id });
+
+//       data.leaseData.push({
+//         lease: leaseData[i],
+//         rental: rentalData,
+//       });
+//     }
+
+//     res.json({
+//       statusCode: 200,
+//       data: data,
+//       message: "Read All Request",
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+
 router.get("/tenant_profile/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
+    const currentDate = moment().startOf("day"); // Get current date
 
     const tenantData = await Tenant.findOne({ tenant_id: tenant_id });
 
     if (!tenantData) {
-      return res.status(201).json({
-        statusCode: 201,
+      return res.status(404).json({
+        statusCode: 404,
         message: "Tenant not found",
       });
     }
 
-    const data = {};
     const leaseData = await Lease.find({ tenant_id: tenant_id });
+    const filteredLeaseData = leaseData.filter((lease) => {
+      const startDate = moment(lease.start_date);
+      const endDate = moment(lease.end_date);
+      return currentDate.isBetween(startDate, endDate, null, "[]");
+    });
 
-    data.tenantData = tenantData;
-    data.leaseData = [];
-    for (let i = 0; i < leaseData.length; i++) {
-      const rental_id = leaseData[i].rental_id;
+    const entry = filteredLeaseData.map((lease) => {
+      const entryData = lease.entry.filter(
+        (entry) => entry.charge_type === "Rent"
+      );
+      return entryData[0];
+    });
 
-      const rentalData = await Rentals.findOne({ rental_id: rental_id });
+    console.log(entry[0]);
 
-      data.leaseData.push({
-        lease: leaseData[i],
-        rental: rentalData,
-      });
-    }
+    const rental_id = filteredLeaseData[0].rental_id;
+    const rentalData = await Rentals.findOne({ rental_id: rental_id });
+    const unit_id = filteredLeaseData[0].unit_id;
+    const unitData = await Unit.findOne({ unit_id: unit_id });
+
+    const object = {
+      lease_id: filteredLeaseData[0].lease_id,
+      lease_type: filteredLeaseData[0].lease_type,
+      start_date: filteredLeaseData[0].start_date,
+      end_date: filteredLeaseData[0].end_date,
+      tenant_id: tenant_id,
+      tenant_firstName: tenantData.tenant_firstName,
+      tenant_lastName: tenantData.tenant_lastName,
+      tenant_phoneNumber: tenantData.tenant_phoneNumber,
+      tenant_email: tenantData.tenant_email,
+      rental_id: rental_id,
+      rental_adress: rentalData.rental_adress,
+      unit_id: unit_id,
+      rental_unit: unitData.rental_unit,
+      amount: entry[0].amount,
+      date: entry[0].date,
+      rent_cycle: entry[0].rent_cycle,
+    };
 
     res.json({
       statusCode: 200,
-      data: data,
+      data: object,
       message: "Read All Request",
     });
   } catch (error) {

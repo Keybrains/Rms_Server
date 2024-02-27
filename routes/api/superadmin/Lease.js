@@ -101,7 +101,7 @@ router.post("/leases", async (req, res) => {
 
   try {
     const { leaseData, tenantData, cosignerData, chargeData } = req.body;
-
+    console.log(req.body);
     const existingTenant = await Tenant.findOne({
       admin_id: tenantData.admin_id,
       tenant_id: tenantData.tenant_id,
@@ -167,7 +167,7 @@ router.post("/leases", async (req, res) => {
     );
 
     //cosigner
-    if (cosignerData) {
+    if (cosignerData?.cosigner_firstName) {
       const cosignerTimestamp = Date.now();
       cosignerData.cosigner_id = `${cosignerTimestamp}`;
       cosignerData.tenant_id = tenant.tenant_id;
@@ -318,7 +318,7 @@ router.put("/leases/:lease_id", async (req, res) => {
     }
 
     //cosigner
-    if (cosignerData) {
+    if (cosignerData?.cosigner_firstName) {
       cosignerData.tenant_id = tenant.tenant_id;
       cosignerData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
