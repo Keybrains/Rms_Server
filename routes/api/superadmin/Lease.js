@@ -12,7 +12,7 @@ const RentalOwner = require("../../../modals/superadmin/RentalOwner");
 var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
-  const crypto = require("crypto");
+const crypto = require("crypto");
 const StaffMember = require("../../../modals/superadmin/StaffMember");
 const PropertyType = require("../../../modals/superadmin/PropertyType");
 const Payment = require("../../../modals/payment/Payment");
@@ -844,28 +844,33 @@ router.get("/get_lease/:lease_id", async (req, res) => {
         });
 
         const tenantData = {
-          applicant_firstName: "",
-          applicant_firstName: "",
-          applicant_firstName: "",
-          applicant_firstName: "",
-          applicant_firstName: "",
-        }
+          tenant_firstName: tenant_data.applicant_firstName,
+          tenant_lastName: tenant_data.applicant_lastName,
+          tenant_email: tenant_data.applicant_email,
+          tenant_phoneNumber: tenant_data.applicant_phoneNumber,
+          tenant_alternativeNumber: tenant_data.applicant_homeNumber,
+          tenant_alternativeEmail: "",
+          tenant_birthDate: "",
+        };
 
         const rental_data = await Rentals.findOne({
           rental_id: rental_id,
         });
 
-        const rentalOwner_data = await RentalOwner.findOne({
-          rentalowner_id: rental_data.rentalowner_id,
-        });
-
         const unit_data = await Unit.findOne({ unit_id: unit_id });
+
+        data[0].start_date = moment().format("YYYY-MM-DD");
+        console.log(data[0].start_date);
+        const nextDate = moment(data[0].start_date)
+          .add(1, "months")
+          .format("YYYY-MM-DD");
+        data[0].end_date = nextDate;
+
         res.json({
           statusCode: 200,
           data: {
-            tenant: tenant_data,
+            tenant: tenantData,
             rental: rental_data,
-            rentalOwner_data,
             unit_data,
             leases: data[0],
           },
@@ -884,10 +889,6 @@ router.get("/get_lease/:lease_id", async (req, res) => {
 
       const rental_data = await Rentals.findOne({
         rental_id: rental_id,
-      });
-
-      const rentalOwner_data = await RentalOwner.findOne({
-        rentalowner_id: rental_data.rentalowner_id,
       });
 
       const unit_data = await Unit.findOne({ unit_id: unit_id });
@@ -913,7 +914,6 @@ router.get("/get_lease/:lease_id", async (req, res) => {
         data: {
           tenant: tenant_data,
           rental: rental_data,
-          rentalOwner_data,
           unit_data,
           rec_charge_data,
           one_charge_data,
