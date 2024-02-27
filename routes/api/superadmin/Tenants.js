@@ -505,6 +505,77 @@ router.get("/tenant_profile/:tenant_id", async (req, res) => {
   }
 });
 
+router.get("/test/:tenant_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+    const currentDate = moment().startOf("day"); // Get current date
+
+    const tenantData = await Tenant.findOne({ tenant_id: tenant_id });
+
+    if (!tenantData) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Tenant not found",
+      });
+    }
+
+    const leaseData = await Lease.find({ tenant_id: tenant_id });
+
+    // Filter leaseData based on current date falling within the range of start_date and end_date
+    const filteredLeaseData = leaseData.filter((lease) => {
+      const startDate = moment(lease.start_date);
+      const endDate = moment(lease.end_date);
+      return currentDate.isBetween(startDate, endDate, null, "[]"); // '[]' includes start_date and end_date
+    });
+
+    filteredLeaseData.forEach((lease) => {
+      lease.entry = lease.entry.filter((entry) => entry.charge_type === "Rent");
+    });
+
+    // const data = { lease_id: filteredLeaseData[0].lease_id };
+
+    res.json({
+      statusCode: 200,
+      data: filteredLeaseData,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+// router.get("/test/:tenant_id", async (req, res) => {
+//   try {
+//     const tenant_id = req.params.tenant_id;
+
+//     const tenantData = await Tenant.findOne({ tenant_id: tenant_id });
+
+//     if (!tenantData) {
+//       return res.status(201).json({
+//         statusCode: 201,
+//         message: "Tenant not found",
+//       });
+//     }
+
+//     const data = [];
+//     const leaseData = await Lease.find({ tenant_id: tenant_id });
+
+//     res.json({
+//       statusCode: 200,
+//       data: leaseData,
+//       message: "Read All Request",
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+
 router.get("/tenant_property/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;

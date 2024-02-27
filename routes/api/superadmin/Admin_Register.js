@@ -151,6 +151,27 @@ router.post("/register", async (req, res) => {
   }
 });
 
+router.put("/admin_edit/:admin_id", async (req, res) => {
+  try {
+    req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    req.body.password = encrypt(req.body.password);
+    let result = await AdminRegister.findOneAndUpdate(
+      { admin_id: req.params.admin_id },
+      { $set: req.body }
+    );
+    res.json({
+      statusCode: 200,
+      data: result,
+      message: "Admin Updated Successfully",
+    });
+  } catch (err) {
+    res.json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 //Admin Login
 // router.post("/login", async (req, res) => {
 //   try {
@@ -375,6 +396,12 @@ router.get("/admin", async (req, res) => {
         $limit: pageSize,
       },
     ]);
+
+    for (let i = 0; i < data.length; i++) {
+      const element = data[i];
+      const decryptedPassword = decrypt(element.password);
+      data[i].password = decryptedPassword;
+    }
 
     var count = data.length;
 
@@ -610,7 +637,7 @@ router.post("/superadmin_login", async (req, res) => {
         message: "superAdmin does not exist",
       });
     }
-    
+
     const isMatch = decrypt(superAdmin.password);
     console.log(req.body);
     if (req.body.password !== isMatch) {
