@@ -137,4 +137,24 @@ router.post("/search", async (req, res) => {
   }
 });
 
+
+router.get("/plan_get/:plan_id", async (req, res) => {
+  try {
+    const plan_id = req.params.plan_id;
+
+    const data = await Plans.find({ plan_id: plan_id });
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;
