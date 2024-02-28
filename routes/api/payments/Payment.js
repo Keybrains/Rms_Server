@@ -4,6 +4,9 @@ var Payment = require("../../../modals/payment/Payment");
 var Surcharge = require("../../../modals/payment/Surcharge");
 var moment = require("moment");
 const Charge = require("../../../modals/superadmin/Charge");
+const Leasing = require("../../../modals/superadmin/Leasing");
+const Unit = require("../../../modals/superadmin/Unit");
+const Rentals = require("../../../modals/superadmin/Rentals");
 
 router.post("/payment", async (req, res) => {
   try {
@@ -138,31 +141,72 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
       },
     ]);
 
-    const data = [
-      ...payment.map((item) => ({ ...item, type: "Payment" })),
-      ...charge.map((item) => ({ ...item, type: "Charge" })),
-    ];
+    let lease_id = null;
 
-    const sortedDates = data.sort(
-      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-    );
-
-    var total_amount = 0;
-    for (const item of sortedDates) {
-      if (item.type === "Payment") {
-        total_amount -= item.total_amount;
-      } else if (item.type === "Charge") {
-        total_amount += item.total_amount;
+    // Find lease_id from payment
+    for (const item of payment) {
+      if (item.lease_id) {
+        lease_id = item.lease_id;
+        break;
       }
-      item.balance = total_amount;
     }
 
-    res.json({
-      statusCode: 200,
-      data: sortedDates.reverse(),
-      totalBalance: total_amount,
-      message: "Read All Tenant-Financial Blance",
-    });
+    // If lease_id is not found in payment, find it from charge
+    if (!lease_id) {
+      for (const item of charge) {
+        if (item.lease_id) {
+          lease_id = item.lease_id;
+          break;
+        }
+      }
+    }
+
+    // If lease_id is found, proceed with fetching lease data
+    if (lease_id) {
+      var lease_data = await Leasing.findOne({ lease_id: lease_id });
+      var rental_data = await Rentals.findOne({
+        rental_id: lease_data.rental_id,
+      });
+      var unit_data = await Unit.findOne({ unit_id: lease_data.unit_id });
+
+      const data = [
+        ...payment.map((item) => ({ ...item, type: "Payment" })),
+        ...charge.map((item) => ({ ...item, type: "Charge" })),
+      ];
+
+      const sortedDates = data.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+
+      var total_amount = 0;
+      for (const item of sortedDates) {
+        if (item.type === "Payment") {
+          total_amount -= item.total_amount;
+        } else if (item.type === "Charge") {
+          total_amount += item.total_amount;
+        }
+        item.balance = total_amount;
+      }
+
+      // Include rental_unit_adress and rental_address in response
+      const responseData = sortedDates.reverse().map((item) => ({
+        ...item,
+        rental_unit: unit_data.rental_unit,
+        rental_address: rental_data.rental_adress,
+      }));
+
+      res.json({
+        statusCode: 200,
+        data: responseData,
+        totalBalance: total_amount,
+        message: "Read All Tenant-Financial Blance",
+      });
+    } else {
+      res.json({
+        statusCode: 404,
+        message: "Lease ID not found for the given tenant ID",
+      });
+    }
   } catch (error) {
     res.json({
       statusCode: 500,
