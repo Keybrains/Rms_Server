@@ -20,7 +20,7 @@ function getCurrentDateAndTime() {
 //defined storage path
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    let destinationFolder = "../.././Cms_SaaS/Rms_client/files/";
+    let destinationFolder = "../.././mern/Rms_client/files/";
 
     // Define the destination folder based on file type
     if (file.mimetype === "application/pdf") {
@@ -111,14 +111,14 @@ router.get("/get-file/:filename", async (req, res) => {
   try {
     const filename = req.params.filename;
     const filePath1 = path.join(
-      "../.././Cms_SaaS/Rms_client/files/images/",
+      "../.././mern/Rms_client/files/images/",
       filename
     );
     const filePath2 = path.join(
-      "../.././Cms_SaaS/Rms_client/files/docs/",
+      "../.././mern/Rms_client/files/docs/",
       filename
     );
-    const filePath3 = path.join("../.././Cms_SaaS/Rms_client/files/pdf/", filename);
+    const filePath3 = path.join("../.././mern/Rms_client/files/pdf/", filename);
 
     if (fs.existsSync(filePath1)) {
       const fileBuffer = fs.readFileSync(filePath1);
@@ -151,7 +151,7 @@ router.delete("/upload/:filetype/:filename", async (req, res) => {
 
     // Construct the file path
     const filePath = path.join(
-      "../.././Cms_SaaS/Rms_client/files/",
+      "../.././mern/Rms_client/files/",
       filetype,
       filename
     );
@@ -180,7 +180,7 @@ router.put(
 
       // Construct the file path
       const filePath = path.join(
-        "../.././Cms_SaaS/Rms_client/files/",
+        "../.././mern/Rms_client/files/",
         filetype,
         filename
       );
