@@ -20,7 +20,7 @@ function getCurrentDateAndTime() {
 //defined storage path
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    let destinationFolder = "../.././mern/Rms_client/files/";
+    let destinationFolder = "../.././Cms_SaaS/Rms_client/files/";
 
     // Define the destination folder based on file type
     if (file.mimetype === "application/pdf") {
@@ -53,6 +53,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+//upload sinle and multiple files
 router.post("/upload", upload.array("files", 12), async (req, res) => {
   try {
     const uploadedFiles = req.files.map((file, index) => {
@@ -71,7 +72,7 @@ router.post("/upload", upload.array("files", 12), async (req, res) => {
           url: url,
         };
       } else if (file.mimetype === "application/pdf") {
-        const url = baseUrl + "/" + file.filename;
+        const url = baseUrl + "/pdf/" + file.filename;
         return {
           fileType: file.mimetype.split("/")[1],
           index: index,
@@ -79,7 +80,7 @@ router.post("/upload", upload.array("files", 12), async (req, res) => {
           url: url,
         };
       } else {
-        const url = baseUrl + "/" + file.filename;
+        const url = baseUrl + "/docs/" + file.filename;
         return {
           fileType: file.mimetype.split("/")[1],
           index: index,
@@ -110,14 +111,14 @@ router.get("/get-file/:filename", async (req, res) => {
   try {
     const filename = req.params.filename;
     const filePath1 = path.join(
-      "../.././mern/Rms_client/files/images/",
+      "../.././Cms_SaaS/Rms_client/files/images/",
       filename
     );
     const filePath2 = path.join(
-      "../.././mern/Rms_client/files/docs/",
+      "../.././Cms_SaaS/Rms_client/files/docs/",
       filename
     );
-    const filePath3 = path.join("../.././mern/Rms_client/files/pdf/", filename);
+    const filePath3 = path.join("../.././Cms_SaaS/Rms_client/files/pdf/", filename);
 
     if (fs.existsSync(filePath1)) {
       const fileBuffer = fs.readFileSync(filePath1);
@@ -150,7 +151,7 @@ router.delete("/upload/:filetype/:filename", async (req, res) => {
 
     // Construct the file path
     const filePath = path.join(
-      "../.././mern/Rms_client/files/",
+      "../.././Cms_SaaS/Rms_client/files/",
       filetype,
       filename
     );
@@ -179,7 +180,7 @@ router.put(
 
       // Construct the file path
       const filePath = path.join(
-        "../.././mern/Rms_client/files/",
+        "../.././Cms_SaaS/Rms_client/files/",
         filetype,
         filename
       );

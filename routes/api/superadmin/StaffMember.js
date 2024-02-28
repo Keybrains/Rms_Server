@@ -281,6 +281,7 @@ router.post("/login", async (req, res) => {
 
     res.json({
       statusCode: 200,
+      message: "Staff Member Login Success",
       token: token,
     });
   } catch (error) {

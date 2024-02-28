@@ -452,6 +452,7 @@ router.post("/login", async (req, res) => {
 
     res.json({
       statusCode: 200,
+      message: "Tenant Login Success",
       token: token,
     });
   } catch (error) {
