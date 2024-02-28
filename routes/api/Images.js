@@ -69,7 +69,6 @@ router.post("/upload", upload.array("files", 12), async (req, res) => {
           fileType: file.mimetype.split("/")[1],
           index: index,
           filename: file.filename,
-          url: url,
         };
       } else if (file.mimetype === "application/pdf") {
         const url = baseUrl + "/pdf/" + file.filename;
@@ -77,7 +76,6 @@ router.post("/upload", upload.array("files", 12), async (req, res) => {
           fileType: file.mimetype.split("/")[1],
           index: index,
           filename: file.filename,
-          url: url,
         };
       } else {
         const url = baseUrl + "/docs/" + file.filename;
@@ -85,7 +83,6 @@ router.post("/upload", upload.array("files", 12), async (req, res) => {
           fileType: file.mimetype.split("/")[1],
           index: index,
           filename: file.filename,
-          url: url,
         };
       }
     });
