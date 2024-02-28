@@ -8,7 +8,7 @@ router.post("/", async (req, res) => {
   try {
     const timestamp = Date.now();
     const uniqueId = `${timestamp}`;
-    req.body["email_configuration_id"] = uniqueId;
+    req.body["email_configration_id"] = uniqueId;
     req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
 
@@ -47,6 +47,30 @@ router.get("/", async (req, res) => {
       data: data,
       count: count,
       message: "Read All Plans",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/mail/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const data = await Email.find({ admin_id });
+
+    if (data.length === 0) {
+      return res.json({
+        statusCode: 404,
+        message: "No record found for the specified admin_id",
+      });
+    }
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Get Email Configuration Successfully",
     });
   } catch (error) {
     res.json({
