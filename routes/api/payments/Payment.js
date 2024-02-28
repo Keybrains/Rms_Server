@@ -135,78 +135,57 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
       },
     ]);
 
+    for (const pay of payment) {
+      const lease_id = pay.lease_id;
+
+      const lease = await Leasing.findOne({ lease_id });
+      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+      const unit = await Unit.findOne({ unit_id: lease.unit_id });
+      pay.rental_address = rental.rental_adress;
+      pay.rental_unit = unit.rental_unit;
+    }
+
     var charge = await Charge.aggregate([
       {
         $match: { tenant_id: tenant_id },
       },
     ]);
 
-    let lease_id = null;
+    for (const pay of charge) {
+      const lease_id = pay.lease_id;
 
-    // Find lease_id from payment
-    for (const item of payment) {
-      if (item.lease_id) {
-        lease_id = item.lease_id;
-        break;
-      }
+      const lease = await Leasing.findOne({ lease_id });
+      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+      const unit = await Unit.findOne({ unit_id: lease.unit_id });
+      pay.rental_address = rental.rental_adress;
+      pay.rental_unit = unit.rental_unit;
     }
 
-    // If lease_id is not found in payment, find it from charge
-    if (!lease_id) {
-      for (const item of charge) {
-        if (item.lease_id) {
-          lease_id = item.lease_id;
-          break;
-        }
+    const data = [
+      ...payment.map((item) => ({ ...item, type: "Payment" })),
+      ...charge.map((item) => ({ ...item, type: "Charge" })),
+    ];
+
+    const sortedDates = data.sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
+
+    var total_amount = 0;
+    for (const item of sortedDates) {
+      if (item.type === "Payment") {
+        total_amount -= item.total_amount;
+      } else if (item.type === "Charge") {
+        total_amount += item.total_amount;
       }
+      item.balance = total_amount;
     }
 
-    // If lease_id is found, proceed with fetching lease data
-    if (lease_id) {
-      var lease_data = await Leasing.findOne({ lease_id: lease_id });
-      var rental_data = await Rentals.findOne({
-        rental_id: lease_data.rental_id,
-      });
-      var unit_data = await Unit.findOne({ unit_id: lease_data.unit_id });
-
-      const data = [
-        ...payment.map((item) => ({ ...item, type: "Payment" })),
-        ...charge.map((item) => ({ ...item, type: "Charge" })),
-      ];
-
-      const sortedDates = data.sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      );
-
-      var total_amount = 0;
-      for (const item of sortedDates) {
-        if (item.type === "Payment") {
-          total_amount -= item.total_amount;
-        } else if (item.type === "Charge") {
-          total_amount += item.total_amount;
-        }
-        item.balance = total_amount;
-      }
-
-      // Include rental_unit_adress and rental_address in response
-      const responseData = sortedDates.reverse().map((item) => ({
-        ...item,
-        rental_unit: unit_data.rental_unit,
-        rental_address: rental_data.rental_adress,
-      }));
-
-      res.json({
-        statusCode: 200,
-        data: responseData,
-        totalBalance: total_amount,
-        message: "Read All Tenant-Financial Blance",
-      });
-    } else {
-      res.json({
-        statusCode: 404,
-        message: "Lease ID not found for the given tenant ID",
-      });
-    }
+    res.json({
+      statusCode: 200,
+      data: sortedDates.reverse(),
+      totalBalance: total_amount,
+      message: "Read All Tenant-Financial Blance",
+    });
   } catch (error) {
     res.json({
       statusCode: 500,

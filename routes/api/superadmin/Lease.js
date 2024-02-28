@@ -774,6 +774,7 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
       tenant_lastName: tenant_data.tenant_lastName,
       tenant_email: tenant_data.tenant_email,
       rental_adress: rental_data.rental_adress,
+      rental_image: rental_data.rental_image,
       rental_city: rental_data.rental_city,
       rental_country: rental_data.rental_country,
       rental_postcode: rental_data.rental_postcode,

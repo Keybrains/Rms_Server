@@ -5,6 +5,7 @@ var Lease = require("../../../modals/superadmin/Leasing");
 var Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
 var Lease = require("../../../modals/superadmin/Leasing");
+const Leasing = require("../../../modals/superadmin/Leasing");
 
 // ===================  Super Admin============================
 
