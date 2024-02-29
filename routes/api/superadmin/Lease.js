@@ -514,20 +514,20 @@ router.get("/leases/:admin_id", async (req, res) => {
       );
 
       const object = {
-        lease_id: lease.lease_id,
-        tenant_id: lease.tenant_id,
-        rental_id: lease.rental_id,
-        unit_id: lease.unit_id,
-        lease_type: lease.lease_type,
-        start_date: lease.start_date,
-        end_date: lease.end_date,
+        lease_id: lease?.lease_id,
+        tenant_id: lease?.tenant_id,
+        rental_id: lease?.rental_id,
+        unit_id: lease?.unit_id,
+        lease_type: lease?.lease_type,
+        start_date: lease?.start_date,
+        end_date: lease?.end_date,
         amount: charge[0].amount,
-        tenant_firstName: tenant.tenant_firstName,
-        tenant_lastName: tenant.tenant_lastName,
-        rental_adress: rental.rental_adress,
-        rental_unit: unit.rental_unit,
-        createdAt: lease.createdAt,
-        updatedAt: lease.updatedAt,
+        tenant_firstName: tenant?.tenant_firstName,
+        tenant_lastName: tenant?.tenant_lastName,
+        rental_adress: rental?.rental_adress,
+        rental_unit: unit?.rental_unit,
+        createdAt: lease?.createdAt,
+        updatedAt: lease?.updatedAt,
       };
 
       data.push(object);
