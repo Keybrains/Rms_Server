@@ -7,6 +7,7 @@ const Charge = require("../../../modals/superadmin/Charge");
 const Leasing = require("../../../modals/superadmin/Leasing");
 const Unit = require("../../../modals/superadmin/Unit");
 const Rentals = require("../../../modals/superadmin/Rentals");
+const Tenant = require("../../../modals/superadmin/Tenant");
 
 router.post("/payment", async (req, res) => {
   try {
@@ -85,6 +86,12 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
         $match: { lease_id: lease_id },
       },
     ]);
+
+    for (const pay of payment) {
+      if (pay.payment_type === "Credit Card") {
+        pay.total_amount += parseFloat(pay.surcharge);
+      }
+    }
 
     var charge = await Charge.aggregate([
       {
@@ -189,6 +196,81 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
     res.json({
       statusCode: 500,
       message: error.message,
+    });
+  }
+});
+
+router.get("/payment/:payment_id", async (req, res) => {
+  try {
+    const payment_id = req.params.payment_id;
+
+    var charge_data = await Payment.aggregate([
+      {
+        $match: { payment_id: payment_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    const tenant_data = await Tenant.findOne({
+      tenant_id: charge_data[0].tenant_id,
+    });
+
+    res.json({
+      statusCode: 200,
+      data: { ...charge_data, tenant_data },
+      message: "Read  Charge",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/payment/:payment_id", async (req, res) => {
+  try {
+    const { payment_id } = req.params;
+    const allEntery = req.body.entry;
+    console.log(req.body);
+
+    req.body.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
+    const updatedCharge = await Payment.findOneAndUpdate(
+      { payment_id: payment_id },
+      { $set: req.body },
+      { new: true }
+    );
+
+    if (!updatedCharge) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Charge not found",
+      });
+    }
+
+    const updatedEntries = [];
+    for (const entry of allEntery) {
+      const entry_id = entry.entry_id;
+      const updatedEntry = await Payment.findOneAndUpdate(
+        { "entry.entry_id": entry_id },
+        { $set: { "entry.$": entry } },
+        { new: true }
+      );
+      updatedEntries.push(updatedEntry);
+    }
+
+    res.json({
+      statusCode: 200,
+      data: { charge: updatedCharge, entries: updatedEntries },
+      message: "Charge and entries updated successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      statusCode: 500,
+      message: "Server Error",
     });
   }
 });

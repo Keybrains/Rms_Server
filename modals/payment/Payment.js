@@ -6,7 +6,7 @@ const paymentSchema = new Schema({
   admin_id: { type: String },
   lease_id: { type: String },
   tenant_id: { type: String },
-
+  surcharge: {type: Number},
   customer_vault_id: { type: Number },
   billing_id: { type: Number },
   check_number: { type: String },

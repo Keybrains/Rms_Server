@@ -50,6 +50,7 @@ var WorkOrderRouter = require("./routes/api/superadmin/WorkOrder.js");
 var RentalOwnerRouter = require("./routes/api/superadmin/RentalOwner.js");
 var ChargesRouter = require("./routes/api/superadmin/Charges.js");
 var NotificationRouter = require("./routes/api/superadmin/Notification.js");
+var CronjobRoutes = require("./routes/api/superadmin/Cronjob.js")
 
 // Payments
 var PaymentRouter = require("./routes/api/payments/Payment.js");
@@ -94,6 +95,7 @@ app.use("/api/work-order", WorkOrderRouter);
 app.use("/api/rental_owner", RentalOwnerRouter);
 app.use("/api/charge", ChargesRouter);
 app.use("/api/notification", NotificationRouter);
+app.use('/api/cronjob', CronjobRoutes)
 
 // Payment
 app.use("/api/payment", PaymentRouter);

@@ -498,7 +498,7 @@ router.get("/leases/:admin_id", async (req, res) => {
         lease_type: lease?.lease_type,
         start_date: lease?.start_date,
         end_date: lease?.end_date,
-        amount: charge[0]?.amount,
+        amount: charge[0].amount,
         tenant_firstName: tenant?.tenant_firstName,
         tenant_lastName: tenant?.tenant_lastName,
         rental_adress: rental?.rental_adress,
