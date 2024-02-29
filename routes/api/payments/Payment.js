@@ -92,10 +92,7 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
       },
     ]);
 
-    const data = [
-      ...payment.map((item) => ({ ...item, type: "Payment" })),
-      ...charge.map((item) => ({ ...item, type: "Charge" })),
-    ];
+    const data = [...payment, ...charge];
 
     const sortedDates = data.sort(
       (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
@@ -103,9 +100,11 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
 
     var amount = 0;
     for (const item of sortedDates) {
-      if (item.type === "Payment") {
+      if (item?.type === "Payment") {
         amount -= item.total_amount;
-      } else if (item.type === "Charge") {
+      } else if (item?.type === "Charge") {
+        amount += item.total_amount;
+      } else if (item?.type === "Refund") {
         amount += item.total_amount;
       }
       item.balance = amount;

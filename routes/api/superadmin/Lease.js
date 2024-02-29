@@ -349,31 +349,7 @@ router.put("/leases/:lease_id", async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
-
-    // Notification When Assign Lease
-    // const notificationTimestamp = Date.now();
-    // const notificationData = {
-    //   notification_id: notificationTimestamp,
-    //   admin_id: lease.admin_id,
-    //   rental_id: lease.rental_id,
-    //   unit_id: lease.unit_id,
-    //   notification_title: "Lease Created",
-    //   notification_detail: "A new lease has been created.",
-    //   notification_read: { is_tenant_read: false, is_staffmember_read: false },
-    //   notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
-    //   notification_send_to: [
-    //     {
-    //       tenant_id: tenant.tenant_id,
-    //       staffmember_id: getRentalsData.staffmember_id,
-    //     },
-    //   ], // Fill this array with users you want to send the notification to
-    //   createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-    //   updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-    //   is_lease: true,
-    // };
-
-    // const notification = await Notification.create(notificationData);
-
+    
     res.json({
       statusCode: 200,
       data: { lease, tenant, cosigner, charge },
@@ -498,6 +474,7 @@ router.post("/check_lease", async (req, res) => {
 });
 
 router.get("/leases/:admin_id", async (req, res) => {
+  console.log("first===========")
   const admin_id = req.params.admin_id;
   try {
     const leases = await Lease.find({ admin_id: admin_id, is_delete: false });
@@ -514,20 +491,20 @@ router.get("/leases/:admin_id", async (req, res) => {
       );
 
       const object = {
-        lease_id: lease.lease_id,
-        tenant_id: lease.tenant_id,
-        rental_id: lease.rental_id,
-        unit_id: lease.unit_id,
-        lease_type: lease.lease_type,
-        start_date: lease.start_date,
-        end_date: lease.end_date,
-        amount: charge[0].amount,
-        tenant_firstName: tenant.tenant_firstName,
-        tenant_lastName: tenant.tenant_lastName,
-        rental_adress: rental.rental_adress,
-        rental_unit: unit.rental_unit,
-        createdAt: lease.createdAt,
-        updatedAt: lease.updatedAt,
+        lease_id: lease?.lease_id,
+        tenant_id: lease?.tenant_id,
+        rental_id: lease?.rental_id,
+        unit_id: lease?.unit_id,
+        lease_type: lease?.lease_type,
+        start_date: lease?.start_date,
+        end_date: lease?.end_date,
+        amount: charge[0]?.amount,
+        tenant_firstName: tenant?.tenant_firstName,
+        tenant_lastName: tenant?.tenant_lastName,
+        rental_adress: rental?.rental_adress,
+        rental_unit: unit?.rental_unit,
+        createdAt: lease?.createdAt,
+        updatedAt: lease?.updatedAt,
       };
 
       data.push(object);

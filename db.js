@@ -15,7 +15,7 @@ const mongoose = require("mongoose");
 
 mongoose
    //.connect("mongodb+srv://shivamshukla:shivamshukla123@shivamshukla.iozmxlc.mongodb.net/RMS", {
-  .connect("mongodb+srv://shivamshukla:shivamshukla123@shivamshukla.iozmxlc.mongodb.net/302_Property", {
+  .connect("mongodb+srv://shivamshukla:shivamshukla123@shivamshukla.iozmxlc.mongodb.net/saas_302", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
