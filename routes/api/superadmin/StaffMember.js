@@ -313,20 +313,20 @@ router.post("/staff_member", async (req, res) => {
       req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
       req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      const subject = "Staff-Member Login Credentials";
-      const text = `
-        <p>Hello,</p>
-        <p>Here are your credentials for staffmember login:</p>
-        <p>Email: ${req.body.staffmember_email}</p>
-        <p>Password: ${req.body.staffmember_password}</p>
-        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/staffmember/login</p>
-      `;
+      // const subject = "Staff-Member Login Credentials";
+      // const text = `
+      //   <p>Hello,</p>
+      //   <p>Here are your credentials for staffmember login:</p>
+      //   <p>Email: ${req.body.staffmember_email}</p>
+      //   <p>Password: ${req.body.staffmember_password}</p>
+      //   <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/staffmember/login</p>
+      // `;
 
-      await emailService.sendWelcomeEmail(
-        req.body.staffmember_email,
-        subject,
-        text
-      );
+      // await emailService.sendWelcomeEmail(
+      //   req.body.staffmember_email,
+      //   subject,
+      //   text
+      // );
 
       let hashConvert = encrypt(req.body.staffmember_password);
       req.body.staffmember_password = hashConvert;

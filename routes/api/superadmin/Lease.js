@@ -349,31 +349,7 @@ router.put("/leases/:lease_id", async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
-
-    // Notification When Assign Lease
-    // const notificationTimestamp = Date.now();
-    // const notificationData = {
-    //   notification_id: notificationTimestamp,
-    //   admin_id: lease.admin_id,
-    //   rental_id: lease.rental_id,
-    //   unit_id: lease.unit_id,
-    //   notification_title: "Lease Created",
-    //   notification_detail: "A new lease has been created.",
-    //   notification_read: { is_tenant_read: false, is_staffmember_read: false },
-    //   notification_type: { type: "Assign Lease", lease_id: lease.lease_id },
-    //   notification_send_to: [
-    //     {
-    //       tenant_id: tenant.tenant_id,
-    //       staffmember_id: getRentalsData.staffmember_id,
-    //     },
-    //   ], // Fill this array with users you want to send the notification to
-    //   createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-    //   updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-    //   is_lease: true,
-    // };
-
-    // const notification = await Notification.create(notificationData);
-
+    
     res.json({
       statusCode: 200,
       data: { lease, tenant, cosigner, charge },
@@ -498,6 +474,7 @@ router.post("/check_lease", async (req, res) => {
 });
 
 router.get("/leases/:admin_id", async (req, res) => {
+  console.log("first===========")
   const admin_id = req.params.admin_id;
   try {
     const leases = await Lease.find({ admin_id: admin_id, is_delete: false });
@@ -649,6 +626,85 @@ router.post("/lease_mail", async (req, res) => {
     });
   }
 });
+
+router.get("/get_leases/:tenant_id", async (req, res) => {
+  try {
+    const tenant_id = req.params.tenant_id;
+
+    // Fetch lease data
+    const lease_data = await Lease.aggregate([
+      {
+        $match: { tenant_id: tenant_id },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    if (lease_data.length === 0) {
+      return res.json({
+        statusCode: 201,
+        message: "Lease Data Not Found",
+      });
+    } 
+
+    // Initialize arrays to hold rental and unit data
+    const rentalPromises = [];
+    const unitPromises = [];
+
+    // Fetch rental and unit data for each lease
+    lease_data.forEach(lease => {
+      rentalPromises.push(Rentals.findOne({ rental_id: lease.rental_id }));
+      unitPromises.push(Unit.findOne({ unit_id: lease.unit_id }));
+    });
+
+    // Wait for all promises to resolve
+    const rental_data = await Promise.all(rentalPromises);
+    const unit_data = await Promise.all(unitPromises);
+
+
+   // Prepare final data
+const currentDate = new Date();
+const leases = lease_data.map((lease, index) => {
+  let status = '';
+  const startDate = new Date(lease.start_date);
+  const endDate = new Date(lease.end_date);
+  
+  if (currentDate >= startDate && currentDate <= endDate) {
+    status = 'Active';
+  } else if (currentDate > endDate) {
+    status = 'Expired';
+  } else if (currentDate < startDate) {
+    status = 'Future';
+  }
+  
+  return {
+    lease_id: lease.lease_id,
+    start_date: lease.start_date,
+    end_date: lease.end_date,
+    status: status,
+    rental_adress: rental_data[index].rental_adress,
+    rental_unit: unit_data[index].rental_unit,
+  };
+});
+
+
+    res.json({
+      statusCode: 200,
+      data: {
+        leases: leases,
+      },
+      message: "Read All Request",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+
 
 router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
   try {

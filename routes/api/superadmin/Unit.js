@@ -194,7 +194,7 @@ router.post("/unit", async (req, res) => {
       res.json({
         statusCode: 200,
         data: data,
-        message: "Add Umit Successfully",
+        message: "Add Unit Successfully",
       });
     } else {
       res.json({

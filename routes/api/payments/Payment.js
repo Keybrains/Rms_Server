@@ -88,7 +88,7 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
     ]);
 
     for (const pay of payment) {
-      if (pay.payment_type === "Credit Card" && pay.type==="Payment") {
+      if (pay.payment_type === "Credit Card"&& pay.type==="Payment") {
         pay.total_amount += parseFloat(pay.surcharge);
       }
     }
@@ -142,6 +142,12 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
     ]);
 
     for (const pay of payment) {
+      if (pay.payment_type === "Credit Card" && pay.type === "Payment") {
+        pay.total_amount += parseFloat(pay.surcharge);
+      }
+    }
+
+    for (const pay of payment) {
       const lease_id = pay.lease_id;
 
       const lease = await Leasing.findOne({ lease_id });
@@ -167,10 +173,7 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
       pay.rental_unit = unit.rental_unit;
     }
 
-    const data = [
-      ...payment.map((item) => ({ ...item, type: "Payment" })),
-      ...charge.map((item) => ({ ...item, type: "Charge" })),
-    ];
+    const data = [...payment, ...charge];
 
     const sortedDates = data.sort(
       (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
@@ -180,7 +183,7 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
     for (const item of sortedDates) {
       if (item.type === "Payment") {
         total_amount -= item.total_amount;
-      } else if (item.type === "Charge") {
+      } else if (item.type === "Charge" || item.type === "Refund") {
         total_amount += item.total_amount;
       }
       item.balance = total_amount;
