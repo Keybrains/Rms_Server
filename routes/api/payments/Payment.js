@@ -88,7 +88,7 @@ router.get("/charges_payments/:lease_id", async (req, res) => {
     ]);
 
     for (const pay of payment) {
-      if (pay.payment_type === "Credit Card") {
+      if (pay.payment_type === "Credit Card" && pay.type==="Payment") {
         pay.total_amount += parseFloat(pay.surcharge);
       }
     }
