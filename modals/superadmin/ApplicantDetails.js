@@ -11,13 +11,14 @@ const applicantDetailsSchema = new Schema({
   applicant_state: { type: String },
   applicant_country: { type: String },
   applicant_postalCode: { type: String },
+  agreeBy: { type: String },
 
   emergency_contact: {
     first_name: { type: String },
     last_name: { type: String },
     relationship: { type: String },
     email: { type: String },
-    phone_number: { type: String },
+    phone_number: { type: Number },
   },
 
   rental_history: {
@@ -33,7 +34,7 @@ const applicantDetailsSchema = new Schema({
     rentalOwner_firstName: { type: String },
     rentalOwner_lastName: { type: String },
     rentalOwner_primaryEmail: { type: String },
-    rentalOwner_phoneNumber: { type: String },
+    rentalOwner_phoneNumber: { type: Number },
   },
 
   employment: {
@@ -44,8 +45,11 @@ const applicantDetailsSchema = new Schema({
     country: { type: String },
     postalCode: { type: String },
     employment_primaryEmail: { type: String },
-    employment_phoneNumber: { type: String },
+    employment_phoneNumber: { type: Number },
     employment_position: { type: String },
+    supervisor_firstName: { type: String },
+    supervisor_lastName: { type: String },
+    supervisor_title: { type: String },
   },
 });
 

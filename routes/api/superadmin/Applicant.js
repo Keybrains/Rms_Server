@@ -622,15 +622,21 @@ router.get("/applicant_details/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const applicantDetails = await ApplicantDetails.find({
+    const applicantDetails = await ApplicantDetails.findOne({
       applicant_id: id,
     });
 
-    const applicantData = await Applicant.find({
+    const applicantData = await Applicant.findOne({
       applicant_id: id,
     });
 
-    const data = [...applicantDetails, ...applicantData];
+    const data = {
+      ...applicantDetails.toObject(),
+      applicant_firstName: applicantData.applicant_firstName,
+      applicant_lastName: applicantData.applicant_lastName,
+      applicant_email: applicantData.applicant_email,
+      applicant_phoneNumber: applicantData.applicant_phoneNumber,
+    };
 
     res.json({
       statusCode: 200,
