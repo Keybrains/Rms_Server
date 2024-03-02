@@ -7,6 +7,7 @@ var Admin = require("../../../modals/superadmin/Admin_Register");
 var moment = require("moment");
 const Rentals = require("../../../modals/superadmin/Rentals");
 var emailService = require("./emailService");
+const ApplicantDetails = require("../../../modals/superadmin/ApplicantDetails");
 
 router.post("/applicant", async (req, res) => {
   try {
@@ -571,10 +572,25 @@ router.get("/status_data/:id/:status", async (req, res) => {
   try {
     const { id, status } = req.params;
 
-    const applicantData = await Applicant.find({
-      applicant_id: id,
-      "applicant_status.status": status,
-    });
+    const applicantData = await Applicant.aggregate([
+      {
+        $match: {
+          applicant_id: id,
+        },
+      },
+      {
+        $project: {
+          applicant_id: 1,
+          lastStatus: { $arrayElemAt: ["$applicant_status", -1] },
+        },
+      },
+      {
+        $match: {
+          "lastStatus.status": { $ne: "Approved" },
+          "lastStatus.status": status,
+        },
+      },
+    ]);
 
     const lease_data = [];
     for (const data of applicantData) {
@@ -592,6 +608,33 @@ router.get("/status_data/:id/:status", async (req, res) => {
     res.json({
       statusCode: 200,
       data: lease_data,
+      message: "Mail Sent Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/applicant_details/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const applicantDetails = await ApplicantDetails.find({
+      applicant_id: id,
+    });
+
+    const applicantData = await Applicant.find({
+      applicant_id: id,
+    });
+
+    const data = [...applicantDetails, ...applicantData];
+
+    res.json({
+      statusCode: 200,
+      data: data[0],
       message: "Mail Sent Successfully",
     });
   } catch (error) {
