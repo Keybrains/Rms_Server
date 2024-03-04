@@ -427,15 +427,27 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
 
-    var data = await WorkOrder.aggregate([
-      {
-        $match: { tenant_id: tenant_id, is_delete: false }, // Filter by user_id
-      },
-      {
-        $sort: { createdAt: -1 }, // Filter by user_id
-      },
-    ]);
+    const currentDate = new Date();
 
+    const leases = await Leasing.find({
+      tenant_id,
+      $expr: {
+        $and: [
+          { $lte: [{ $toDate: "$start_date" }, currentDate] },
+          { $gte: [{ $toDate: "$end_date" }, currentDate] },
+        ],
+      },
+    });
+
+    const data = [];
+    for (const lease of leases) {
+      var work = await WorkOrder.find({
+        rental_id: lease.rental_id,
+        unit_id: lease.unit_id,
+        is_delete: false,
+      });
+      data.push(...work);
+    }
     if (!data) {
       res.status(201).json({
         statusCode: 201,
@@ -446,6 +458,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
     const return_data = [];
 
     // Fetch client and property information for each item in data
+    console.log(data);
     for (let i = 0; i < data.length; i++) {
       const rental_id = data[i].rental_id;
       const unit_id = data[i].unit_id;
