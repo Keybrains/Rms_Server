@@ -651,4 +651,30 @@ router.get("/applicant_details/:id", async (req, res) => {
   }
 });
 
+router.post("/application/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const applicant = await Applicant.findOne({ applicant_id: id });
+    if (!applicant) {
+      res.json({
+        statusCode: 201,
+        message: "Applicant not found",
+      });
+    }
+    const applicantDetails = await ApplicantDetails.create(req.body);
+
+    console.log(applicantDetails);
+    res.json({
+      statusCode: 200,
+      data: applicantDetails,
+      message: "Add Applicant Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;

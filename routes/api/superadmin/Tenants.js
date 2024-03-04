@@ -587,7 +587,10 @@ router.get("/tenant_property/:tenant_id", async (req, res) => {
     }
 
     const data = [];
-    const leaseData = await Lease.find({ tenant_id: tenant_id });
+    const leaseData = await Lease.find({
+      tenant_id: tenant_id,
+      is_delete: "false",
+    });
 
     for (let i = 0; i < leaseData.length; i++) {
       const rental_id = leaseData[i].rental_id;
@@ -740,10 +743,12 @@ router.get("/count/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
 
-    const property_tenant = await Rentals.find({
+    console.log(tenant_id);
+    const property_tenant = await Lease.find({
       tenant_id: tenant_id,
       is_delete: false,
     });
+
     const workorder_tenant = await WorkOrder.find({
       tenant_id: tenant_id,
       is_delete: false,

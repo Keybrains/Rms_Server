@@ -349,7 +349,7 @@ router.put("/leases/:lease_id", async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
-    
+
     res.json({
       statusCode: 200,
       data: { lease, tenant, cosigner, charge },
@@ -474,7 +474,7 @@ router.post("/check_lease", async (req, res) => {
 });
 
 router.get("/leases/:admin_id", async (req, res) => {
-  console.log("first===========")
+  console.log("first===========");
   const admin_id = req.params.admin_id;
   try {
     const leases = await Lease.find({ admin_id: admin_id, is_delete: false });
@@ -646,14 +646,14 @@ router.get("/get_leases/:tenant_id", async (req, res) => {
         statusCode: 201,
         message: "Lease Data Not Found",
       });
-    } 
+    }
 
     // Initialize arrays to hold rental and unit data
     const rentalPromises = [];
     const unitPromises = [];
 
     // Fetch rental and unit data for each lease
-    lease_data.forEach(lease => {
+    lease_data.forEach((lease) => {
       rentalPromises.push(Rentals.findOne({ rental_id: lease.rental_id }));
       unitPromises.push(Unit.findOne({ unit_id: lease.unit_id }));
     });
@@ -662,32 +662,30 @@ router.get("/get_leases/:tenant_id", async (req, res) => {
     const rental_data = await Promise.all(rentalPromises);
     const unit_data = await Promise.all(unitPromises);
 
+    // Prepare final data
+    const currentDate = new Date();
+    const leases = lease_data.map((lease, index) => {
+      let status = "";
+      const startDate = new Date(lease.start_date);
+      const endDate = new Date(lease.end_date);
 
-   // Prepare final data
-const currentDate = new Date();
-const leases = lease_data.map((lease, index) => {
-  let status = '';
-  const startDate = new Date(lease.start_date);
-  const endDate = new Date(lease.end_date);
-  
-  if (currentDate >= startDate && currentDate <= endDate) {
-    status = 'Active';
-  } else if (currentDate > endDate) {
-    status = 'Expired';
-  } else if (currentDate < startDate) {
-    status = 'Future';
-  }
-  
-  return {
-    lease_id: lease.lease_id,
-    start_date: lease.start_date,
-    end_date: lease.end_date,
-    status: status,
-    rental_adress: rental_data[index].rental_adress,
-    rental_unit: unit_data[index].rental_unit,
-  };
-});
+      if (currentDate >= startDate && currentDate <= endDate) {
+        status = "Active";
+      } else if (currentDate > endDate) {
+        status = "Expired";
+      } else if (currentDate < startDate) {
+        status = "Future";
+      }
 
+      return {
+        lease_id: lease.lease_id,
+        start_date: lease.start_date,
+        end_date: lease.end_date,
+        status: status,
+        rental_adress: rental_data[index].rental_adress,
+        rental_unit: unit_data[index].rental_unit,
+      };
+    });
 
     res.json({
       statusCode: 200,
@@ -703,8 +701,6 @@ const leases = lease_data.map((lease, index) => {
     });
   }
 });
-
-
 
 router.get("/get_tenants/:rental_id/:unit_id", async (req, res) => {
   try {
@@ -785,7 +781,7 @@ router.get("/lease_summary/:lease_id", async (req, res) => {
 
     var data = await Lease.aggregate([
       {
-        $match: { lease_id: lease_id },
+        $match: { lease_id: lease_id, is_delete: false },
       },
       {
         $sort: { createdAt: -1 },
