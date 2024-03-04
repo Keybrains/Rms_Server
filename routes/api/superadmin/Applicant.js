@@ -3,8 +3,11 @@ var router = express.Router();
 var Applicant = require("../../../modals/superadmin/Applicant");
 var Leasing = require("../../../modals/superadmin/Applicant_property");
 var Unit = require("../../../modals/superadmin/Unit");
+var Admin = require("../../../modals/superadmin/Admin_Register");
 var moment = require("moment");
 const Rentals = require("../../../modals/superadmin/Rentals");
+var emailService = require("./emailService");
+const ApplicantDetails = require("../../../modals/superadmin/ApplicantDetails");
 
 router.post("/applicant", async (req, res) => {
   try {
@@ -235,9 +238,8 @@ router.put("/applicant/:id/status", async (req, res) => {
 
     const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-    // Update the status of the specified applicant
-    const updatedApplicant = await Applicant.findByIdAndUpdate(
-      applicantId,
+    const updatedApplicant = await Applicant.findOneAndUpdate(
+      { applicant_id: applicantId },
       {
         $push: {
           applicant_status: {
@@ -258,25 +260,28 @@ router.put("/applicant/:id/status", async (req, res) => {
     }
 
     if (newStatus === "Approved") {
-      const { rental_adress, rental_unit } = updatedApplicant;
+      const { rental_id, unit_id } = req.body;
+      const leases = await Leasing.find({ rental_id, unit_id });
 
-      await Applicant.updateMany(
-        {
-          rental_adress,
-          rental_units,
-          _id: { $ne: applicantId },
-          "applicant_status.status": { $ne: "Approved" },
-        },
-        {
-          $push: {
-            applicant_status: {
-              statusUpdatedBy: "Admin",
-              status: "Rejected",
-              updateAt: updatedAt,
-            },
+      for (const lease of leases) {
+        const lease_id = lease.lease_id;
+        await Applicant.updateOne(
+          {
+            lease_id,
+            applicant_id: { $ne: applicantId },
+            "applicant_status.status": { $ne: "Approved" },
           },
-        }
-      );
+          {
+            $push: {
+              applicant_status: {
+                statusUpdatedBy: "Admin",
+                status: "Rejected",
+                updateAt: updatedAt,
+              },
+            },
+          }
+        );
+      }
     }
 
     res.json({
@@ -461,17 +466,6 @@ router.put("/applicant/note_attachment/:applicant_id", async (req, res) => {
       });
     }
 
-    // Log the state before and after the update
-    console.log(
-      "Before Update - applicant_NotesAndFile:",
-      updatedApplicant.applicant_NotesAndFile
-    );
-    console.log("Updated Applicant:", updatedApplicant);
-    console.log(
-      "After Update - applicant_NotesAndFile:",
-      updatedApplicant.applicant_NotesAndFile
-    );
-
     res.json({
       statusCode: 200,
       data: updatedApplicant,
@@ -519,5 +513,168 @@ router.delete(
     }
   }
 );
+
+router.get("/applicant/mail/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch data from the Applicant database using the provided id
+    const applicantData = await Applicant.findOne({ applicant_id: id });
+    if (!applicantData) {
+      return res.json({
+        statusCode: 404,
+        message: "Applicant not found",
+      });
+    }
+
+    const admin = await Admin.findOne({ admin_id: applicantData.admin_id });
+    const lease = await Leasing.findOne({ applicant_id: id });
+    const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+    const unit = await Unit.findOne({ unit_id: lease.unit_id });
+    const { applicant_email, applicant_firstName, applicant_lastName } =
+      applicantData;
+
+    // Update the document with the current date
+    applicantData.applicant_emailsend_date = moment()
+      .add(1, "seconds")
+      .format("YYYY-MM-DD HH:mm:ss");
+    await applicantData.save();
+
+    const applicationURL = `https://propertymanager.cloudpress.host/KeyBrainTech/applicant-form/1709220636248`;
+
+    const htmlContent = `
+      <p>You're invited to apply!</p>
+      <p>Hi ${applicant_firstName} ${applicant_lastName},</p>
+      <p>Thanks for your interest in Garden Row (multi-building complex) - 2D! Click below to get started.</p>
+      <a href="${applicationURL}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: #fff; text-decoration: none; border-radius: 5px;">Start Application</a>
+    `;
+
+    const info = await emailService.sendWelcomeEmail(
+      applicant_email,
+      `${rental.rental_adress} - ${unit.rental_unit}`,
+      htmlContent
+    );
+
+    res.json({
+      statusCode: 200,
+      data: applicantData,
+      message: "Mail Sent Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/status_data/:id/:status", async (req, res) => {
+  try {
+    const { id, status } = req.params;
+
+    const applicantData = await Applicant.aggregate([
+      {
+        $match: {
+          applicant_id: id,
+        },
+      },
+      {
+        $project: {
+          applicant_id: 1,
+          lastStatus: { $arrayElemAt: ["$applicant_status", -1] },
+        },
+      },
+      {
+        $match: {
+          "lastStatus.status": { $ne: "Approved" },
+          "lastStatus.status": status,
+        },
+      },
+    ]);
+
+    const lease_data = [];
+    for (const data of applicantData) {
+      const applicant_id = data.applicant_id;
+      const lease = await Leasing.findOne({ applicant_id });
+      const rental = await Rentals.findOne({ rental_id: lease.rental_id });
+      const unit = await Unit.findOne({ unit_id: lease.unit_id });
+      lease_data.push({
+        ...lease.toObject(),
+        rental_adress: rental.rental_adress,
+        rental_unit: unit.rental_unit,
+      });
+    }
+    console.log(lease_data);
+    res.json({
+      statusCode: 200,
+      data: lease_data,
+      message: "Mail Sent Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/applicant_details/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const applicantDetails = await ApplicantDetails.findOne({
+      applicant_id: id,
+    });
+
+    const applicantData = await Applicant.findOne({
+      applicant_id: id,
+    });
+
+    const data = {
+      ...applicantDetails.toObject(),
+      applicant_firstName: applicantData.applicant_firstName,
+      applicant_lastName: applicantData.applicant_lastName,
+      applicant_email: applicantData.applicant_email,
+      applicant_phoneNumber: applicantData.applicant_phoneNumber,
+    };
+
+    res.json({
+      statusCode: 200,
+      data: data[0],
+      message: "Mail Sent Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.post("/application/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const applicant = await Applicant.findOne({ applicant_id: id });
+    if (!applicant) {
+      res.json({
+        statusCode: 201,
+        message: "Applicant not found",
+      });
+    }
+    const applicantDetails = await ApplicantDetails.create(req.body);
+
+    console.log(applicantDetails);
+    res.json({
+      statusCode: 200,
+      data: applicantDetails,
+      message: "Add Applicant Successfully",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 module.exports = router;
