@@ -429,7 +429,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
 
     const currentDate = new Date();
 
-    const leases = await Leasing.find({
+    const leases = await Lease.find({
       tenant_id,
       $expr: {
         $and: [
