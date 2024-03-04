@@ -120,6 +120,33 @@ router.put("/charge/:charge_id", async (req, res) => {
   }
 });
 
+router.delete("/charge/:charge_id", async (req, res) => {
+  try {
+    const charge_id = req.params.charge_id;
+
+    // Find and delete the charge
+    const deletedCharge = await Charge.findOneAndDelete({ charge_id: charge_id });
+
+    if (!deletedCharge) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Charge not found",
+      });
+    }
+
+    res.json({
+      statusCode: 200,
+      data: deletedCharge,
+      message: "Charge deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 router.get("/charges/:lease_id", async (req, res) => {
   try {
     const lease_id = req.params.lease_id;
