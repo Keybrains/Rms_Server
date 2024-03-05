@@ -106,7 +106,7 @@ router.post("/register", async (req, res) => {
       <p>Here are your credentials for Admin login:</p>
       <p>Email: ${req.body.email}</p>
       <p>Password: ${req.body.password}</p>
-      <p>Login URL: http://localhost:3000/auth/auth/login</p>
+      <p>Login URL: https://saas.cloudrentalmanager.com/auth/login</p>
     `;
 
     await emailService.sendWelcomeEmail(req.body.email, subject, text);

@@ -316,7 +316,7 @@ router.post("/tenants", async (req, res) => {
         <p>Here are your credentials for tenant login:</p>
         <p>Email: ${req.body.tenant_email}</p>
         <p>Password: ${req.body.tenant_password}</p>
-        <p>Login URL: http://localhost:3000/auth/${adminData.company_name}/tenants/login</p>
+        <p>Login URL: https://saas.cloudrentalmanager.com/auth/${adminData.company_name}/tenants/login</p>
       `;
 
       // Send email with login credentials
