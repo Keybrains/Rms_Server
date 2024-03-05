@@ -25,4 +25,31 @@ router.post("/purchase", async (req, res) => {
   }
 });
 
+router.get('/plan-purchase/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const planPurchase = await PlanPurchase.findById(id);
+
+    if (!planPurchase) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: 'Plan purchase not found'
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      message: 'Plan purchase details retrieved successfully',
+      data: planPurchase
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

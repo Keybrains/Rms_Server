@@ -622,43 +622,39 @@ router.get("/applicant_details/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Find applicant details
     const applicantDetails = await ApplicantDetails.findOne({
       applicant_id: id,
     });
 
+    // Find applicant data
     const applicantData = await Applicant.findOne({
       applicant_id: id,
     });
 
-    if (!applicantData) {
-      res.json({
-        statusCode: 201,
-        message: "Applicant not found",
-      });
-    }
-
+    // Check if applicantDetails is null
     if (!applicantDetails) {
-      res.json({
-        statusCode: 200,
-        data: applicantData,
-        message: "Data found Successfully",
+      return res.json({
+        statusCode: 404,
+        message: "Applicant details not found",
       });
     }
-    if (applicantDetails && applicantData) {
-      const data = {
-        ...applicantDetails.toObject(),
-        applicant_firstName: applicantData.applicant_firstName,
-        applicant_lastName: applicantData.applicant_lastName,
-        applicant_email: applicantData.applicant_email,
-        applicant_phoneNumber: applicantData.applicant_phoneNumber,
-      };
 
-      res.json({
-        statusCode: 200,
-        data: data[0],
-        message: "Data found Successfully",
-      });
-    }
+    // Create response data
+    const data = {
+      ...applicantDetails.toObject(), // Only access toObject if applicantDetails is not null
+      applicant_firstName: applicantData.applicant_firstName,
+      applicant_lastName: applicantData.applicant_lastName,
+      applicant_email: applicantData.applicant_email,
+      applicant_phoneNumber: applicantData.applicant_phoneNumber,
+    };
+
+    // Return response
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Applicant details retrieved successfully",
+    });
   } catch (error) {
     res.json({
       statusCode: 500,
@@ -666,6 +662,7 @@ router.get("/applicant_details/:id", async (req, res) => {
     });
   }
 });
+
 
 router.post("/application/:id", async (req, res) => {
   try {

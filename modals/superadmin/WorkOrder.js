@@ -10,7 +10,6 @@ const workOrderSchema = new Schema({
   vendor_id: { type: String },
   tenant_id: { type: String },
   staffmember_id: { type: String },
-
   work_subject: { type: String },
   work_category: { type: String },
   entry_allowed: { type: Boolean },

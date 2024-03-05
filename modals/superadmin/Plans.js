@@ -33,9 +33,30 @@ const planSchema = new Schema({
   maximum_add: {
     type: Number,
   },
+  property_count: {
+    type: Number,
+  },
+  tenant_count: {
+    type: Number,
+  },
+  lease_count: {
+    type: Number,
+  },
+  rentalowner_count: {
+    type: Number,
+  },
+  applicant_count: {
+    type: Number,
+  },
+  staffmember_count: {
+    type: Number,
+  },
+  payment_functionality: {
+    type: Boolean,
+  },
   annual_discount: {
     type: Number,
-    default: null,
+    default: "null",
   },
   createdAt: {
     type: String,
