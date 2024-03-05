@@ -1,6 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var Plans = require("../../../modals/superadmin/Plans");
+var PlanPurchase = require("../../../modals/superadmin/Plans_Purchased");
+var Rental = require("../../../modals/superadmin/Rentals");
+var Admin = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
 
 router.post("/plans", async (req, res) => {
@@ -92,7 +95,7 @@ router.put("/plans/:id", async (req, res) => {
 router.delete("/plans", async (req, res) => {
   try {
     let result = await Plans.deleteMany({
-      _id: { $in: req.body },
+      plan_id: { $in: req.body },
     });
     res.json({
       statusCode: 200,
@@ -137,7 +140,6 @@ router.post("/search", async (req, res) => {
   }
 });
 
-
 router.get("/plan_get/:plan_id", async (req, res) => {
   try {
     const plan_id = req.params.plan_id;
@@ -151,6 +153,53 @@ router.get("/plan_get/:plan_id", async (req, res) => {
     });
   } catch (error) {
     res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/planlimitations/property/:admin_id", async (req, res) => {
+  try {
+    // Check if admin can add rental records
+    const adminId = req.params.admin_id;
+    const admin = await Admin.findOne({ admin_id: adminId });
+    if (!admin) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Admin not found",
+      });
+    }
+
+    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planId = planPur.plan_id;
+    console.log(planId)
+    const plan = await Plans.findOne({ plan_id: planId });
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const propertyCountLimit = plan.property_count;
+    const rentalCount = await Rental.countDocuments({ admin_id: adminId });
+
+    if (rentalCount >= propertyCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        message:
+          "Plan limitation is for " + propertyCountLimit + " rental records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      rentalCount: rentalCount, // If needed, you can also return the rental count
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
       statusCode: 500,
       message: error.message,
     });

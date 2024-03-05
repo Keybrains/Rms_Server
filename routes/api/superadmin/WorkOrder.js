@@ -10,7 +10,7 @@ const StaffMember = require("../../../modals/superadmin/StaffMember");
 const Vendor = require("../../../modals/superadmin/Vendor");
 const Lease = require("../../../modals/superadmin/Leasing");
 const Notification = require("../../../modals/superadmin/Notification");
-
+  
 router.post("/work-order", async (req, res) => {
   try {
     const timestamp = Date.now();
@@ -19,18 +19,19 @@ router.post("/work-order", async (req, res) => {
     req.body.workOrder["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     var workOrder = await WorkOrder.create(req.body.workOrder);
-
     const parts = [];
-
-    for (const part of req.body.parts) {
-      const timestampFotParts = Date.now();
-      const partId = `${timestampFotParts}`;
-      part["parts_id"] = partId;
-      part["workOrder_id"] = workOrder.workOrder_id;
-      part["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-      part["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-      var newpart = await Parts.create(part);
-      parts.push(newpart);
+    
+    if (req.body.parts) {
+      for (const part of req.body.parts) {
+        const timestampFotParts = Date.now();
+        const partId = `${timestampFotParts}`;
+        part["parts_id"] = partId;
+        part["workOrder_id"] = workOrder.workOrder_id;
+        part["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+        part["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+        var newpart = await Parts.create(part);
+        parts.push(newpart);
+      }
     }
 
     const notificationTimestamp = Date.now();
@@ -87,7 +88,7 @@ router.post("/work-order", async (req, res) => {
     res.json({
       statusCode: 200,
       data: { workOrder, parts, notification },
-      message: "Add Umit Successfully",
+      message: "Add Work Order Successfully",
     });
   } catch (error) {
     res.json({
@@ -559,7 +560,7 @@ router.get("/rental_workorder/:rental_id", async (req, res) => {
 
 router.delete("/delete_workorder/:workOrder_id", async (req, res) => {
   const workOrder_id = req.params.workOrder_id;
-  console.log(workOrder_id, "workOrder_id")
+  console.log(workOrder_id, "workOrder_id");
   try {
     // Find the work order by workOrder_id
     const workOrder = await WorkOrder.findOne({ workOrder_id: workOrder_id });
@@ -578,7 +579,7 @@ router.delete("/delete_workorder/:workOrder_id", async (req, res) => {
         { workOrder_id: workOrder_id },
         { $set: { is_delete: true } }
       );
-      console.log(result, "result")
+      console.log(result, "result");
 
       if (result.modifiedCount === 1) {
         // Update is_delete field to true for related Parts

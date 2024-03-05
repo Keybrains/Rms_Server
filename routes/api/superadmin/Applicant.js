@@ -622,26 +622,38 @@ router.get("/applicant_details/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Find applicant details
     const applicantDetails = await ApplicantDetails.findOne({
       applicant_id: id,
     });
 
+    // Find applicant data
     const applicantData = await Applicant.findOne({
       applicant_id: id,
     });
 
+    // Check if applicantDetails is null
+    if (!applicantDetails) {
+      return res.json({
+        statusCode: 404,
+        message: "Applicant details not found",
+      });
+    }
+
+    // Create response data
     const data = {
-      ...applicantDetails.toObject(),
+      ...applicantDetails.toObject(), // Only access toObject if applicantDetails is not null
       applicant_firstName: applicantData.applicant_firstName,
       applicant_lastName: applicantData.applicant_lastName,
       applicant_email: applicantData.applicant_email,
       applicant_phoneNumber: applicantData.applicant_phoneNumber,
     };
 
+    // Return response
     res.json({
       statusCode: 200,
-      data: data[0],
-      message: "Mail Sent Successfully",
+      data: data,
+      message: "Applicant details retrieved successfully",
     });
   } catch (error) {
     res.json({
@@ -650,6 +662,7 @@ router.get("/applicant_details/:id", async (req, res) => {
     });
   }
 });
+
 
 router.post("/application/:id", async (req, res) => {
   try {

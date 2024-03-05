@@ -1442,4 +1442,173 @@ router.post("/update-customer-vault", async (req, res) => {
     }
   });
 
-  module.exports = router;
+  router.post("/add-plan", async (req, res) => {
+    try {
+      const {
+        //security_key,
+        planPayments,
+        planAmount,
+        planName,
+        planId,
+        day_of_month,
+        month_frequency,
+      } = req.body;
+  
+      let postData = {
+        recurring: "add_plan",
+        plan_payments: planPayments, //if 0 than payments done until cancel
+        plan_amount: planAmount,
+        plan_name: planName,
+        plan_id: planId,
+        month_frequency: month_frequency,
+        day_of_month: day_of_month,
+        security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      };
+  
+      postData = querystring.stringify(postData);
+  
+      var config = {
+        method: "post",
+        url: "https://secure.nmi.com/api/transact.php",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: postData,
+      };
+  
+      axios(config)
+        .then(async (response) => {
+          const parsedResponse = querystring.parse(response.data);
+  
+          if (parsedResponse.response_code == 100) {
+            console.log("API hitt End");
+  
+              sendResponse(res, "Payment plan added successfully.");
+          } else sendResponse(res, parsedResponse.responsetext, 403);
+          console.log("parsedResponse.responsetext", parsedResponse.responsetext);
+        })
+        .catch(function (error) {
+          //console.log("for 500", res);
+  
+          sendResponse(res, error, 500);
+        });
+    } catch (error) {
+      sendResponse(res, "Something went wrong!", 500);
+    }
+  });
+
+  router.post("/delete-plan", async (req, res) => {
+    try {
+      const {
+        //security_key,
+        // current_plan_id,
+        planId,
+      } = req.body;
+  
+      let postData = {
+        recurring: "delete_plan",
+        // current_plan_id:current_plan_id,
+        plan_id: planId,
+        security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      };
+  
+      postData = querystring.stringify(postData);
+  
+      var config = {
+        method: "post",
+        url: "https://secure.nmi.com/api/transact.php",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: postData,
+      };
+  
+      axios(config)
+        .then(async (response) => {
+          const parsedResponse = querystring.parse(response.data);
+  
+          if (parsedResponse.response_code == 100) {
+              sendResponse(res, "Payment plan deleted successfully.");
+          } else sendResponse(res, parsedResponse.responsetext, 403);
+          console.log("parsedResponse.responsetext", parsedResponse.responsetext);
+        })
+        .catch(function (error) {
+          //console.log("for 500", res);
+          sendResponse(res, error, 500);
+        });
+    } catch (error) {
+      sendResponse(res, "Something went wrong!", 500);
+    }
+  });
+
+//custom create subscription NMI API
+router.post("/custom-add-subscription", async (req, res) => {
+  try {
+    const {
+      security_key,
+      recurring,
+      planId,
+      ccnumber,
+      ccexp,
+      first_name,
+      last_name,
+      address,
+      email,
+      city,
+      state,
+      zip,
+    } = req.body;
+
+    let postData = {
+      security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
+      recurring: "add_subscription",
+      plan_id: planId,
+      ccnumber,
+      email,
+      ccexp,
+      first_name: first_name,
+      last_name: last_name,
+      address1: address,
+      // next_charge_date: nextDue_date,
+      // start_date: start_date,
+      city: city,
+      state: state,
+      zip: zip,
+    };
+    console.log("...........postData..........", postData);
+
+    postData = querystring.stringify(postData);
+
+    var config = {
+      method: "post",
+      url: "https://secure.nmi.com/api/transact.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: postData,
+    };
+    axios(config)
+      .then(async (response) => {
+        const parsedResponse = querystring.parse(response.data);
+        // console.log("ek ek krne", parsedResponse);
+        if (parsedResponse.response_code == 100) {
+          // Handle successful subscription creation
+          sendResponse(
+            res,
+            `Custom subscription added successfully. TransactionId:` +
+              parsedResponse.transactionid
+          );
+        } else {
+          // Handle subscription creation failure
+          sendResponse(res, parsedResponse.responsetext, 403);
+        }
+      })
+      .catch(function (error) {
+        sendResponse(res, error, 500);
+      });
+  } catch (error) {
+    sendResponse(res, "Something went wrong!", 500);
+  }
+});
+
+module.exports = router;

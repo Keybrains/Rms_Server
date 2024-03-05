@@ -11,6 +11,7 @@ var moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const Notification = require("../../../modals/superadmin/Notification");
+const { default: axios } = require("axios");
 
 // ============== Super Admin ==================================
 
@@ -87,6 +88,14 @@ router.post("/rentals", async (req, res) => {
   let rentalOwner, rental, units;
 
   try {
+    const externalApiResponse = await axios.get(
+      "https://saas.cloudrentalmanager.com/api/plans/planlimitations/property/1707921596879"
+    );
+    
+    if (externalApiResponse.status === 201) {
+      return res.status(201).json(externalApiResponse.data);
+    }
+
     const rentalOwnerData = req.body.rentalOwner;
     const rentalData = req.body.rental;
     const unitDataArray = req.body.units;
