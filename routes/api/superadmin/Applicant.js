@@ -630,19 +630,35 @@ router.get("/applicant_details/:id", async (req, res) => {
       applicant_id: id,
     });
 
-    const data = {
-      ...applicantDetails.toObject(),
-      applicant_firstName: applicantData.applicant_firstName,
-      applicant_lastName: applicantData.applicant_lastName,
-      applicant_email: applicantData.applicant_email,
-      applicant_phoneNumber: applicantData.applicant_phoneNumber,
-    };
+    if (!applicantData) {
+      res.json({
+        statusCode: 201,
+        message: "Applicant not found",
+      });
+    }
 
-    res.json({
-      statusCode: 200,
-      data: data[0],
-      message: "Mail Sent Successfully",
-    });
+    if (!applicantDetails) {
+      res.json({
+        statusCode: 200,
+        data: applicantData,
+        message: "Data found Successfully",
+      });
+    }
+    if (applicantDetails && applicantData) {
+      const data = {
+        ...applicantDetails.toObject(),
+        applicant_firstName: applicantData.applicant_firstName,
+        applicant_lastName: applicantData.applicant_lastName,
+        applicant_email: applicantData.applicant_email,
+        applicant_phoneNumber: applicantData.applicant_phoneNumber,
+      };
+
+      res.json({
+        statusCode: 200,
+        data: data[0],
+        message: "Data found Successfully",
+      });
+    }
   } catch (error) {
     res.json({
       statusCode: 500,
