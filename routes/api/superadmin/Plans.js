@@ -158,66 +158,49 @@ router.get("/plan_get/:plan_id", async (req, res) => {
   }
 });
 
-// router.get("/plans", async (req, res) => {
-//   try {
-//     var pageSize = parseInt(req.query.pageSize) || 10; // Default to 10 if not provided
-//     var pageNumber = parseInt(req.query.pageNumber) || 0; // Default to 0 if not provided
+router.get("/planlimitations/property", async (req, res) => {
+  try {
+    // Check if admin can add rental records
+    const adminId = req.body.admin_id;
+    const admin = await Admin.findOne({ admin_id: adminId });
+    if (!admin) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Admin not found",
+      });
+    }
 
-//     var data = await Plans.aggregate([
-//       {
-//         $skip: pageSize * pageNumber,
-//       },
-//       {
-//         $limit: pageSize,
-//       },
-//     ]);
+    const planId = admin.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
 
-//     var count = await Plans.countDocuments();
+    const propertyCountLimit = plan.property_count;
+    const rentalCount = await Rental.countDocuments({ admin_id: adminId });
 
-//     // Optionally reverse the data array
-//     data.reverse();
+    if (rentalCount >= propertyCountLimit) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Plan limitation is for " + propertyCountLimit + " rental records",
+      });
+    }
 
-//     // Check if admin can add rental records
-//     const adminId = req.user.admin_id;
-//     const admin = await Admin.findOne({ admin_id: adminId });
-//     if (!admin) {
-//       return res.json({
-//         statusCode: 404,
-//         message: "Admin not found",
-//       });
-//     }
-
-//     const planId = admin.subscription.plan_id;
-//     const plan = await Plans.findOne({ plan_id: planId });
-//     if (!plan) {
-//       return res.json({
-//         statusCode: 404,
-//         message: "Plan not found",
-//       });
-//     }
-
-//     const propertyCountLimit = plan.property_count;
-//     const rentalCount = await Rental.countDocuments({ admin_id: adminId });
-
-//     if (rentalCount >= propertyCountLimit) {
-//       return res.json({
-//         statusCode: 400,
-//         message: "Plan limitation is for " + propertyCountLimit + " rental records",
-//       });
-//     }
-
-//     res.json({
-//       statusCode: 200,
-//       data: data,
-//       count: count,
-//       message: "Read All Plans",
-//     });
-//   } catch (error) {
-//     res.json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
+    res.status(200).json({
+      statusCode: 200,
+      data: plan, // You may want to return the plan details here
+      rentalCount: rentalCount, // If needed, you can also return the rental count
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 module.exports = router;
