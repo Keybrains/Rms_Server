@@ -89,7 +89,7 @@ router.post("/rentals", async (req, res) => {
 
   try {
     const externalApiResponse = await axios.get(
-      `http://localhost:4000/api/plans/planlimitations/property/${req.body.rental.admin_id}`
+      `https://saas.cloudrentalmanager.com/api/plans/planlimitations/property/${req.body.rental.admin_id}`
     );
     
     if (externalApiResponse.status === 201) {
