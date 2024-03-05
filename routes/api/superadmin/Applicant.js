@@ -540,7 +540,7 @@ router.get("/applicant/mail/:id", async (req, res) => {
       .format("YYYY-MM-DD HH:mm:ss");
     await applicantData.save();
 
-    const applicationURL = `https://propertymanager.cloudpress.host/KeyBrainTech/applicant-form/1709220636248`;
+    const applicationURL = `https://saas.cloudrentalmanager.com/KeyBrainTech/applicant-form/${id}`;
 
     const htmlContent = `
       <p>You're invited to apply!</p>
@@ -662,7 +662,6 @@ router.get("/applicant_details/:id", async (req, res) => {
     });
   }
 });
-
 
 router.post("/application/:id", async (req, res) => {
   try {

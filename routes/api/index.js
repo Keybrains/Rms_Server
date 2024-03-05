@@ -51,7 +51,7 @@ router.get("/login/:admin_id", async (req, res) => {
     }
 
     // Navigate to the login page
-    await page.goto("https://propertymanager.cloudpress.host/auth/login");
+    await page.goto("https://saas.cloudrentalmanager.com/auth/login");
 
     // Wait for the login form to appear
     await page.waitForSelector('input[name="email"]');
