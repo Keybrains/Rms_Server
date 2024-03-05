@@ -19,18 +19,19 @@ router.post("/work-order", async (req, res) => {
     req.body.workOrder["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     var workOrder = await WorkOrder.create(req.body.workOrder);
-
     const parts = [];
-
-    for (const part of req.body.parts) {
-      const timestampFotParts = Date.now();
-      const partId = `${timestampFotParts}`;
-      part["parts_id"] = partId;
-      part["workOrder_id"] = workOrder.workOrder_id;
-      part["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-      part["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-      var newpart = await Parts.create(part);
-      parts.push(newpart);
+    
+    if (req.body.parts) {
+      for (const part of req.body.parts) {
+        const timestampFotParts = Date.now();
+        const partId = `${timestampFotParts}`;
+        part["parts_id"] = partId;
+        part["workOrder_id"] = workOrder.workOrder_id;
+        part["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+        part["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+        var newpart = await Parts.create(part);
+        parts.push(newpart);
+      }
     }
 
     const notificationTimestamp = Date.now();
@@ -87,7 +88,7 @@ router.post("/work-order", async (req, res) => {
     res.json({
       statusCode: 200,
       data: { workOrder, parts, notification },
-      message: "Add Umit Successfully",
+      message: "Add Work Order Successfully",
     });
   } catch (error) {
     res.json({
@@ -427,15 +428,27 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
 
-    var data = await WorkOrder.aggregate([
-      {
-        $match: { tenant_id: tenant_id, is_delete: false }, // Filter by user_id
-      },
-      {
-        $sort: { createdAt: -1 }, // Filter by user_id
-      },
-    ]);
+    const currentDate = new Date();
 
+    const leases = await Lease.find({
+      tenant_id,
+      $expr: {
+        $and: [
+          { $lte: [{ $toDate: "$start_date" }, currentDate] },
+          { $gte: [{ $toDate: "$end_date" }, currentDate] },
+        ],
+      },
+    });
+
+    const data = [];
+    for (const lease of leases) {
+      var work = await WorkOrder.find({
+        rental_id: lease.rental_id,
+        unit_id: lease.unit_id,
+        is_delete: false,
+      });
+      data.push(...work);
+    }
     if (!data) {
       res.status(201).json({
         statusCode: 201,
@@ -446,6 +459,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
     const return_data = [];
 
     // Fetch client and property information for each item in data
+    console.log(data);
     for (let i = 0; i < data.length; i++) {
       const rental_id = data[i].rental_id;
       const unit_id = data[i].unit_id;
@@ -546,7 +560,7 @@ router.get("/rental_workorder/:rental_id", async (req, res) => {
 
 router.delete("/delete_workorder/:workOrder_id", async (req, res) => {
   const workOrder_id = req.params.workOrder_id;
-  console.log(workOrder_id, "workOrder_id")
+  console.log(workOrder_id, "workOrder_id");
   try {
     // Find the work order by workOrder_id
     const workOrder = await WorkOrder.findOne({ workOrder_id: workOrder_id });
@@ -565,7 +579,7 @@ router.delete("/delete_workorder/:workOrder_id", async (req, res) => {
         { workOrder_id: workOrder_id },
         { $set: { is_delete: true } }
       );
-      console.log(result, "result")
+      console.log(result, "result");
 
       if (result.modifiedCount === 1) {
         // Update is_delete field to true for related Parts
