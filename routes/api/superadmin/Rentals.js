@@ -12,6 +12,8 @@ const { default: mongoose } = require("mongoose");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const Notification = require("../../../modals/superadmin/Notification");
 const { default: axios } = require("axios");
+const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
+const Plans = require("../../../modals/superadmin/Plans");
 
 // ============== Super Admin ==================================
 
@@ -91,7 +93,7 @@ router.post("/rentals", async (req, res) => {
     const externalApiResponse = await axios.get(
       `https://saas.cloudrentalmanager.com/api/plans/planlimitations/property/${req.body.rental.admin_id}`
     );
-    
+
     if (externalApiResponse.status === 201) {
       return res.status(201).json(externalApiResponse.data);
     }
@@ -582,6 +584,42 @@ router.delete("/rental/:rental_id", async (req, res) => {
     }
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/limitation/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const rentalCount = await Rentals.count({ admin_id, is_delete: false });
+    const planPur = await Plans_Purchased.findOne({ admin_id });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const propertyCountLimit = plan.property_count;
+
+    if (rentalCount >= propertyCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        message:
+          "Plan limitation is for " + propertyCountLimit + " rental records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      rentalCount: rentalCount,
+      propertyCountLimit: propertyCountLimit,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });

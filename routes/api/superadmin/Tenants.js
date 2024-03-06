@@ -282,6 +282,14 @@ router.get("/get_tenant/:tenant_id", async (req, res) => {
 router.post("/tenants", async (req, res) => {
   const tenantData = req.body;
   try {
+    const externalApiResponse = await axios.get(
+      `https://saas.cloudrentalmanager.com/api/plans/planlimitations/tenant/${tenantData.admin_id}`
+    );
+
+    if (externalApiResponse.status === 201) {
+      return res.status(201).json(externalApiResponse.data);
+    }
+
     const existingTenants = await Tenant.findOne({
       admin_id: tenantData.admin_id,
       tenant_phoneNumber: tenantData.tenant_phoneNumber,

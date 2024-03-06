@@ -5,6 +5,7 @@ var PlanPurchase = require("../../../modals/superadmin/Plans_Purchased");
 var Rental = require("../../../modals/superadmin/Rentals");
 var Admin = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
+const Tenant = require("../../../modals/superadmin/Tenant");
 
 router.post("/plans", async (req, res) => {
   try {
@@ -173,7 +174,7 @@ router.get("/planlimitations/property/:admin_id", async (req, res) => {
 
     const planPur = await PlanPurchase.findOne({ admin_id: adminId });
     const planId = planPur.plan_id;
-    console.log(planId)
+    console.log(planId);
     const plan = await Plans.findOne({ plan_id: planId });
     if (!plan) {
       return res.status(404).json({
@@ -196,6 +197,52 @@ router.get("/planlimitations/property/:admin_id", async (req, res) => {
     res.status(200).json({
       statusCode: 200,
       rentalCount: rentalCount, // If needed, you can also return the rental count
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/planlimitations/tenant/:admin_id", async (req, res) => {
+  try {
+    const adminId = req.params.admin_id;
+    const admin = await Admin.findOne({ admin_id: adminId });
+    if (!admin) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Admin not found",
+      });
+    }
+
+    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+    console.log(plan.tenant_count);
+
+    const tenantCountLimit = plan.tenant_count;
+    const tenantCount = await Tenant.countDocuments({ admin_id: adminId });
+
+    if (tenantCount >= tenantCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        message:
+          "Plan limitation is for " + tenantCountLimit + " tenant records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      tenantCount: tenantCount,
       message: "Plan limitations checked successfully",
     });
   } catch (error) {
