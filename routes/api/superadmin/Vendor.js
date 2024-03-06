@@ -158,6 +158,7 @@ router.post("/login", async (req, res) => {
     const vendor = await Vendor.findOne({
       vendor_email: req.body.email,
       admin_id: req.body.admin_id,
+      is_delete: false
     });
     console.log(vendor, "vendor");
 

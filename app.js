@@ -32,7 +32,7 @@ var indexRouter = require("./routes/api/index");
 // var webhookRoutes = require("./routes/api/webhook");
 var imagesRouter = require("./routes/api/Images");
 
-// =================  Super Admin  =======================================
+// =================  Super Admin  ===================
 var PlansRouter = require("./routes/api/superadmin/Plans.js");
 var PropertyTypeRouter = require("./routes/api/superadmin/PropertyType.js");
 var AdminRegisterRouter = require("./routes/api/superadmin/Admin_Register.js");
@@ -50,11 +50,12 @@ var WorkOrderRouter = require("./routes/api/superadmin/WorkOrder.js");
 var RentalOwnerRouter = require("./routes/api/superadmin/RentalOwner.js");
 var ChargesRouter = require("./routes/api/superadmin/Charges.js");
 var NotificationRouter = require("./routes/api/superadmin/Notification.js");
-var CronjobRoutes = require("./routes/api/superadmin/Cronjob.js")
+var CronjobRoutes = require("./routes/api/superadmin/Cronjob.js");
 
 // Payments
 var PaymentRouter = require("./routes/api/payments/Payment.js");
 var SurchargeRouter = require("./routes/api/payments/Surcharge.js");
+var LateFeeRouter = require("./routes/api/payments/Latefee.js");
 var NmiPaymentRouter = require("./routes/api/payments/NMI-response.js");
 var CreditCardRouter = require("./routes/api/payments/CreditCard.js");
 
@@ -77,7 +78,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api", indexRouter);
 app.use("/api/images", imagesRouter);
 
-// ===============  Super Admin  ====================================
+// ===============  Super Admin  ==========================
 app.use("/api/plans", PlansRouter);
 app.use("/api/propertytype", PropertyTypeRouter);
 app.use("/api/admin", AdminRegisterRouter);
@@ -95,11 +96,12 @@ app.use("/api/work-order", WorkOrderRouter);
 app.use("/api/rental_owner", RentalOwnerRouter);
 app.use("/api/charge", ChargesRouter);
 app.use("/api/notification", NotificationRouter);
-app.use('/api/cronjob', CronjobRoutes)
+app.use('/api/cronjob', CronjobRoutes);
 
 // Payment
 app.use("/api/payment", PaymentRouter);
 app.use("/api/surcharge", SurchargeRouter);
+app.use("/api/latefee", LateFeeRouter);
 app.use("/api/nmipayment", NmiPaymentRouter);
 app.use("/api/creditcard", CreditCardRouter);
 
