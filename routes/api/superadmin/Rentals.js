@@ -489,7 +489,7 @@ router.delete("/rental-owners/:rentalowner_id", async (req, res) => {
         { $set: { is_delete: true } }
       );
 
-      if (deletedTenant.modifiedCount !== 1) {
+      if (deletedTenant.modifiedCount !== 0) {
         return res.status(200).json({
           statusCode: 200,
           message: `Rental owner deleted successfully.`,
@@ -608,6 +608,8 @@ router.get("/limitation/:admin_id", async (req, res) => {
     if (rentalCount >= propertyCountLimit) {
       return res.status(201).json({
         statusCode: 201,
+        rentalCount: rentalCount,
+        propertyCountLimit: propertyCountLimit,
         message:
           "Plan limitation is for " + propertyCountLimit + " rental records",
       });
