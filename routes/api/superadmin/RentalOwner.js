@@ -3,6 +3,9 @@ var router = express.Router();
 const moment = require("moment");
 const RentalOwner = require("../../../modals/superadmin/RentalOwner");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
+const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
+const Plans = require("../../../modals/superadmin/Plans");
+const { default: axios } = require("axios");
 
 router.get("/rental_owner/:admin_id", async (req, res) => {
   try {
@@ -147,6 +150,15 @@ router.get("/rental_owner_count/:admin_id", async (req, res) => {
 
 router.post("/rental_owner", async (req, res) => {
   try {
+    console.log(req.body.admin_id);
+    const externalApiResponse = await axios.get(
+      `https://saas.cloudrentalmanager.com/api/plans/planlimitations/rentalowner/${req.body.admin_id}`
+    );
+
+    if (externalApiResponse.status === 201) {
+      return res.status(200).json(externalApiResponse.data);
+    }
+
     const rentalOwnerTimestamp = Date.now();
     req.body.rentalowner_id = `${rentalOwnerTimestamp}`;
     req.body.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
@@ -209,6 +221,44 @@ router.post("/check_rental_owner", async (req, res) => {
       statusCode: 500,
       message: err.message,
     });
+  }
+});
+
+router.get("/limitation/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const rentalownerCount = await RentalOwner.count({ admin_id, is_delete: false });
+    const planPur = await Plans_Purchased.findOne({ admin_id });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const rentalOwnerCountLimit = plan.rentalowner_count;
+
+    if (rentalownerCount >= rentalOwnerCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        rentalownerCount: rentalownerCount,
+        rentalOwnerCountLimit: rentalOwnerCountLimit,
+        message:
+          "Plan limitation is for " + rentalOwnerCountLimit + " rentalowner records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      rentalownerCount: rentalownerCount,
+      rentalOwnerCountLimit: rentalOwnerCountLimit,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

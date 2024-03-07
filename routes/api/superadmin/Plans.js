@@ -7,6 +7,8 @@ var Admin = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
 const Tenant = require("../../../modals/superadmin/Tenant");
 const StaffMember = require("../../../modals/superadmin/StaffMember");
+const RentalOwner = require("../../../modals/superadmin/RentalOwner");
+const Lease = require("../../../modals/superadmin/Leasing");
 
 router.post("/plans", async (req, res) => {
   try {
@@ -185,7 +187,10 @@ router.get("/planlimitations/property/:admin_id", async (req, res) => {
     }
 
     const propertyCountLimit = plan.property_count;
-    const rentalCount = await Rental.countDocuments({ admin_id: adminId });
+    const rentalCount = await Rental.countDocuments({
+      admin_id: adminId,
+      is_delete: "false",
+    });
 
     if (rentalCount >= propertyCountLimit) {
       return res.status(201).json({
@@ -231,7 +236,10 @@ router.get("/planlimitations/tenant/:admin_id", async (req, res) => {
     console.log(plan.tenant_count);
 
     const tenantCountLimit = plan.tenant_count;
-    const tenantCount = await Tenant.countDocuments({ admin_id: adminId });
+    const tenantCount = await Tenant.countDocuments({
+      admin_id: adminId,
+      is_delete: "false",
+    });
 
     if (tenantCount >= tenantCountLimit) {
       return res.status(201).json({
@@ -257,7 +265,7 @@ router.get("/planlimitations/tenant/:admin_id", async (req, res) => {
 router.get("/planlimitations/staff/:admin_id", async (req, res) => {
   try {
     const adminId = req.params.admin_id;
-    console.log(adminId)
+    console.log(adminId);
     const admin = await Admin.findOne({ admin_id: adminId });
     if (!admin) {
       return res.status(404).json({
@@ -277,7 +285,10 @@ router.get("/planlimitations/staff/:admin_id", async (req, res) => {
     }
 
     const staffCountLimit = plan.staffmember_count;
-    const staffCount = await StaffMember.countDocuments({ admin_id: adminId });
+    const staffCount = await StaffMember.countDocuments({
+      admin_id: adminId,
+      is_delete: "false",
+    });
 
     if (staffCount >= staffCountLimit) {
       return res.status(201).json({
@@ -290,6 +301,106 @@ router.get("/planlimitations/staff/:admin_id", async (req, res) => {
     res.status(200).json({
       statusCode: 200,
       staffCount: staffCount,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/planlimitations/rentalowner/:admin_id", async (req, res) => {
+  try {
+    const adminId = req.params.admin_id;
+    console.log(adminId);
+    const admin = await Admin.findOne({ admin_id: adminId });
+    if (!admin) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Admin not found",
+      });
+    }
+
+    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const rentalOwnerCountLimit = plan.rentalowner_count;
+    const rentalOwnerCount = await RentalOwner.countDocuments({
+      admin_id: adminId,
+      is_delete: "false",
+    });
+
+    if (rentalOwnerCount >= rentalOwnerCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        message:
+          "Plan limitation is for " +
+          rentalOwnerCountLimit +
+          "rental owner records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      rentalOwnerCount: rentalOwnerCount,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/planlimitations/lease/:admin_id", async (req, res) => {
+  try {
+    const adminId = req.params.admin_id;
+    console.log(adminId);
+    const admin = await Admin.findOne({ admin_id: adminId });
+    if (!admin) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Admin not found",
+      });
+    }
+
+    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const leaseCountLimit = plan.lease_count;
+    const leaseCount = await Lease.countDocuments({
+      admin_id: adminId,
+      is_delete: "false",
+    });
+
+    if (leaseCount >= leaseCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        message:
+          "Plan limitation is for " + leaseCountLimit + " lease records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      leaseCount: leaseCount,
       message: "Plan limitations checked successfully",
     });
   } catch (error) {

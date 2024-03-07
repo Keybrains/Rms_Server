@@ -303,7 +303,7 @@ router.post("/staff_member", async (req, res) => {
     const externalApiResponse = await axios.get(
       `https://saas.cloudrentalmanager.com/api/plans/planlimitations/staff/${req.body.admin_id}`
     );
-
+    console.log(externalApiResponse);
     if (externalApiResponse.status === 201) {
       return res.status(200).json(externalApiResponse.data);
     }

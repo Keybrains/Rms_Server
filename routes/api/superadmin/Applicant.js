@@ -8,6 +8,8 @@ var moment = require("moment");
 const Rentals = require("../../../modals/superadmin/Rentals");
 var emailService = require("./emailService");
 const ApplicantDetails = require("../../../modals/superadmin/ApplicantDetails");
+const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
+const Plans = require("../../../modals/superadmin/Plans");
 
 router.post("/applicant", async (req, res) => {
   try {
@@ -686,6 +688,45 @@ router.post("/application/:id", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+router.get("/limitation/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const applicantCount = await Applicant.count({ admin_id });
+    console.log('applicantCount', applicantCount)
+    const planPur = await Plans_Purchased.findOne({ admin_id });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const applicantCountLimit = plan.applicant_count;
+
+    if (applicantCount >= applicantCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        applicantCount: applicantCount,
+        applicantCountLimit: applicantCountLimit,
+        message:
+          "Plan limitation is for " + applicantCountLimit + " applicant records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      applicantCount: applicantCount,
+      applicantCountLimit: applicantCountLimit,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

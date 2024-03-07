@@ -18,6 +18,9 @@ const PropertyType = require("../../../modals/superadmin/PropertyType");
 const Payment = require("../../../modals/payment/Payment");
 const ApplicantProperty = require("../../../modals/superadmin/Applicant_property");
 const Applicant = require("../../../modals/superadmin/Applicant");
+const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
+const Plans = require("../../../modals/superadmin/Plans");
+const { default: axios } = require("axios");
 
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
@@ -101,7 +104,15 @@ router.post("/leases", async (req, res) => {
 
   try {
     const { leaseData, tenantData, cosignerData, chargeData } = req.body;
-    console.log(req.body);
+    
+    const externalApiResponse = await axios.get(
+      `https://saas.cloudrentalmanager.com/api/plans/planlimitations/lease/${tenantData.admin_id}`
+    );
+
+    console.log(externalApiResponse);
+    if (externalApiResponse.status === 201) {
+      return res.status(200).json(externalApiResponse.data);
+    }
     const existingTenant = await Tenant.findOne({
       admin_id: tenantData.admin_id,
       tenant_id: tenantData.tenant_id,
@@ -1040,6 +1051,43 @@ router.get("/lease_tenant/:lease_id", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+router.get("/limitation/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const leaseCount = await Lease.count({ admin_id, is_delete: false });
+    const planPur = await Plans_Purchased.findOne({ admin_id });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const leaseCountLimit = plan.lease_count;
+
+    if (leaseCount >= leaseCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        leaseCount: leaseCount,
+        leaseCountLimit: leaseCountLimit,
+        message: "Plan limitation is for " + leaseCountLimit + " lease records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      leaseCount: leaseCount,
+      leaseCountLimit: leaseCountLimit,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
