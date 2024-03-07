@@ -7,6 +7,8 @@ const { createVenorToken } = require("../../../authentication");
 var moment = require("moment");
 const crypto = require("crypto");
 var emailService = require("./emailService");
+const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
+const Plans = require("../../../modals/superadmin/Plans");
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
   let encrypted = cipher.update(text, "utf-8", "hex");
@@ -369,6 +371,45 @@ router.delete("/delete_vendor/:vendor_id", async (req, res) => {
   }
 });
 
+router.get("/limitation/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const vendorCount = await Vendor.count({ admin_id, is_delete: false });
+    const planPur = await Plans_Purchased.findOne({ admin_id });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const vendorCountLimit = plan.vendor_count;
+
+    if (vendorCount >= vendorCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        vendorCount: vendorCount,
+        vendorCountLimit: vendorCountLimit,
+        message:
+          "Plan limitation is for " + vendorCountLimit + " vendor records",
+      });
+    }
+    console.log('vendorCount', vendorCount)
+    console.log('vendorCountLimit', vendorCountLimit)
+
+    res.status(200).json({
+      statusCode: 200,
+      vendorCount: vendorCount,
+      vendorCountLimit: vendorCountLimit,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
 
 
 

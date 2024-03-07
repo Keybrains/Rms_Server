@@ -51,6 +51,9 @@ const planSchema = new Schema({
   staffmember_count: {
     type: Number,
   },
+  vendor_count: {
+    type: Number,
+  },
   payment_functionality: {
     type: Boolean,
   },
