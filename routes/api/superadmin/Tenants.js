@@ -11,6 +11,8 @@ var moment = require("moment");
 const Admin_Register = require("../../../modals/superadmin/Admin_Register");
 const crypto = require("crypto");
 var emailService = require("./emailService");
+const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
+const Plans = require("../../../modals/superadmin/Plans");
 
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
@@ -773,6 +775,44 @@ router.get("/count/:tenant_id", async (req, res) => {
       statusCode: 500,
       message: error.message,
     });
+  }
+});
+
+router.get("/limitation/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    const rentalCount = await Tenant.count({ admin_id, is_delete: false });
+    const planPur = await Plans_Purchased.findOne({ admin_id });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const propertyCountLimit = plan.tenant_count;
+
+    if (rentalCount >= propertyCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        rentalCount: rentalCount,
+        propertyCountLimit: propertyCountLimit,
+        message:
+          "Plan limitation is for " + propertyCountLimit + " tenant records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      rentalCount: rentalCount,
+      propertyCountLimit: propertyCountLimit,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

@@ -608,6 +608,8 @@ router.get("/limitation/:admin_id", async (req, res) => {
     if (rentalCount >= propertyCountLimit) {
       return res.status(201).json({
         statusCode: 201,
+        rentalCount: rentalCount,
+        propertyCountLimit: propertyCountLimit,
         message:
           "Plan limitation is for " + propertyCountLimit + " rental records",
       });

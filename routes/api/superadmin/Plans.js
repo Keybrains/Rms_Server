@@ -6,6 +6,7 @@ var Rental = require("../../../modals/superadmin/Rentals");
 var Admin = require("../../../modals/superadmin/Admin_Register");
 const moment = require("moment");
 const Tenant = require("../../../modals/superadmin/Tenant");
+const StaffMember = require("../../../modals/superadmin/StaffMember");
 
 router.post("/plans", async (req, res) => {
   try {
@@ -243,6 +244,52 @@ router.get("/planlimitations/tenant/:admin_id", async (req, res) => {
     res.status(200).json({
       statusCode: 200,
       tenantCount: tenantCount,
+      message: "Plan limitations checked successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/planlimitations/staff/:admin_id", async (req, res) => {
+  try {
+    const adminId = req.params.admin_id;
+    console.log(adminId)
+    const admin = await Admin.findOne({ admin_id: adminId });
+    if (!admin) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Admin not found",
+      });
+    }
+
+    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planId = planPur.plan_id;
+    const plan = await Plans.findOne({ plan_id: planId });
+    if (!plan) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Plan not found",
+      });
+    }
+
+    const staffCountLimit = plan.staffmember_count;
+    const staffCount = await StaffMember.countDocuments({ admin_id: adminId });
+
+    if (staffCount >= staffCountLimit) {
+      return res.status(201).json({
+        statusCode: 201,
+        message:
+          "Plan limitation is for " + staffCountLimit + " staff member records",
+      });
+    }
+
+    res.status(200).json({
+      statusCode: 200,
+      staffCount: staffCount,
       message: "Plan limitations checked successfully",
     });
   } catch (error) {
