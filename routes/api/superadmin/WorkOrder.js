@@ -286,13 +286,24 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
     const parts = [];
 
     for (const part of req.body.parts) {
-      part["updatedAt"] = updatedAt;
-      const partsData = await Parts.findOneAndUpdate(
-        { parts_id: part.parts_id },
-        { $set: part },
-        { new: true }
-      );
-      parts.push(partsData);
+      if (part?.parts_id) {
+        part["updatedAt"] = updatedAt;
+        const partsData = await Parts.findOneAndUpdate(
+          { parts_id: part.parts_id },
+          { $set: part },
+          { new: true }
+        );
+        parts.push(partsData);
+      } else {
+        const timestampFotParts = Date.now();
+        const partId = `${timestampFotParts}`;
+        part["parts_id"] = partId;
+        part["workOrder_id"] = result.workOrder_id;
+        part["createdAt"] = updatedAt;
+        part["updatedAt"] = updatedAt;
+        const partsData = await Parts.create(part);
+        parts.push(partsData);
+      }
     }
 
     if (result) {

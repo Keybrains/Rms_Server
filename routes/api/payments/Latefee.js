@@ -26,7 +26,7 @@ router.post("/latefee", async (req, res) => {
 
 router.get("/latefee/:admin_id", async (req, res) => {
     try {
-      var data = await LateFee.findOne({"admin_id":req.params.admin_id});
+      var data = await LateFee.findOne({"admin_id": req.params.admin_id});
     //   data.reverse();
       res.json({
         statusCode: 200,

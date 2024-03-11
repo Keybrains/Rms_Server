@@ -4,6 +4,8 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 var PropertyType = require("../../../modals/superadmin/PropertyType");
 const moment = require("moment");
 const Rentals = require("../../../modals/superadmin/Rentals");
+const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
+const Plans = require("../../../modals/superadmin/Plans");
 
 // ==================== Admin =====================================================
 
@@ -94,14 +96,34 @@ router.get("/property_type/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
 
-    var data = await PropertyType.aggregate([
-      {
-        $match: { admin_id: admin_id, is_delete: false }, // Filter by user_id
-      },
-      {
-        $sort: { createdAt: -1 }, // Filter by user_id
-      },
-    ]);
+    const planPur = await Plans_Purchased.findOne({
+      admin_id,
+      is_active: true,
+    });
+
+    const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+
+    var data = [];
+    if (plan.plan_name === "Free Plan") {
+      const data1 = await PropertyType.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+
+      const data2 = await PropertyType.find({
+        admin_id: "is_trial",
+        is_delete: false,
+      });
+
+      data.push(...data1, ...data2);
+    } else {
+      const data1 = await PropertyType.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+
+      data.push(...data1);
+    }
 
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
@@ -136,6 +158,7 @@ router.delete("/property_type/:property_id", async (req, res) => {
   try {
     const existingTenant = await Rentals.findOne({
       property_id: property_id,
+      is_delete: false,
     });
     if (existingTenant) {
       return res.status(201).json({

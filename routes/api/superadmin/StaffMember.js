@@ -42,16 +42,37 @@ router.get("/staffmember/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
 
-    var data = await StaffMember.aggregate([
-      {
-        $match: { admin_id: admin_id }, // Filter by user_id
-      },
-      {
-        $sort: { createdAt: -1 }, // Filter by user_id
-      },
-    ]);
+    const planPur = await Plans_Purchased.findOne({
+      admin_id,
+      is_active: true,
+    });
 
-    // Fetch client and property information for each item in data
+    const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+    console.log(plan);
+
+    var data = [];
+    if (plan.plan_name === "Free Plan") {
+      console.log("=========");
+      const data1 = await StaffMember.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+
+      const data2 = await StaffMember.find({
+        admin_id: "is_trial",
+        is_delete: false,
+      });
+
+      data.push(...data1, ...data2);
+    } else {
+      const data1 = await StaffMember.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+
+      data.push(...data1);
+    }
+
     for (let i = 0; i < data.length; i++) {
       const admin_id = data[i].admin_id;
 
@@ -368,14 +389,34 @@ router.get("/staff_member/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
 
-    var data = await StaffMember.aggregate([
-      {
-        $match: { admin_id: admin_id, is_delete: false }, // Filter by user_id
-      },
-      {
-        $sort: { createdAt: -1 }, // Filter by user_id
-      },
-    ]);
+    const planPur = await Plans_Purchased.findOne({
+      admin_id,
+      is_active: true,
+    });
+
+    const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+
+    var data = [];
+    if (plan.plan_name === "Free Plan") {
+      const data1 = await StaffMember.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+
+      const data2 = await StaffMember.find({
+        admin_id: "is_trial",
+        is_delete: false,
+      });
+
+      data.push(...data1, ...data2);
+    } else {
+      const data1 = await StaffMember.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+
+      data.push(...data1);
+    }
 
     // Fetch client and property information for each item in data
     for (let i = 0; i < data.length; i++) {
@@ -407,6 +448,7 @@ router.delete("/staff_member/:staffmember_id", async (req, res) => {
   try {
     const existingTenant = await Rentals.findOne({
       staffmember_id: staffmember_id,
+      is_delete: false,
     });
 
     if (existingTenant) {
@@ -660,7 +702,7 @@ router.get("/staffmember_summary/:rental_id", async (req, res) => {
 router.get("/staff_count/:admin_id", async (req, res) => {
   try {
     const { admin_id } = req.params;
-    const rentals = await StaffMember.find({ admin_id });
+    const rentals = await StaffMember.find({ admin_id, is_delete: false });
     const count = rentals.length;
     res.status(200).json({
       statusCode: 200,

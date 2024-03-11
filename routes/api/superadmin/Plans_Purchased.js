@@ -31,6 +31,7 @@ router.get("/plan-purchase/:id", async (req, res) => {
   try {
     const planPurchase = await Plans_Purchased.findOne({
       admin_id: req.params.id,
+      is_active: true,
     });
 
     if (!planPurchase) {
@@ -45,7 +46,7 @@ router.get("/plan-purchase/:id", async (req, res) => {
     res.status(200).json({
       statusCode: 200,
       message: "Plan purchase details retrieved successfully",
-      data: { ...planPurchase.toObject(), plan_name: plan.plan_name },
+      data: { ...planPurchase.toObject(), plan_detail: plan },
     });
   } catch (error) {
     res.status(500).json({

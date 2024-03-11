@@ -255,7 +255,6 @@ router.put("/tenant_notification/:notification_id", async (req, res) => {
   }
 });
 
-
 router.put("/vendor_notification/:notification_id", async (req, res) => {
   try {
     const notification_id = req.params.notification_id;
