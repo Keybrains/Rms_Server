@@ -31,6 +31,7 @@ router.get("/plan-purchase/:id", async (req, res) => {
   try {
     const planPurchase = await Plans_Purchased.findOne({
       admin_id: req.params.id,
+      is_active: true,
     });
 
     if (!planPurchase) {

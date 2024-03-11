@@ -476,6 +476,7 @@ router.delete("/rental-owners/:rentalowner_id", async (req, res) => {
   try {
     const existingTenant = await Rentals.findOne({
       rentalowner_id: rentalowner_id,
+      is_delete: false,
     });
 
     if (existingTenant) {
@@ -510,7 +511,7 @@ router.delete("/rental-owners/:rentalowner_id", async (req, res) => {
 router.get("/rental_count/:admin_id", async (req, res) => {
   try {
     const { admin_id } = req.params;
-    const rentals = await Rentals.find({ admin_id });
+    const rentals = await Rentals.find({ admin_id, is_delete: false });
     const count = rentals.length;
     res.status(200).json({
       statusCode: 200,
@@ -552,6 +553,7 @@ router.delete("/rental/:rental_id", async (req, res) => {
   try {
     const existingTenant = await Leasing.findOne({
       rental_id: rental_id,
+      is_delete: false,
     });
 
     if (existingTenant) {

@@ -18,6 +18,7 @@ var emailService = require("./emailService");
 const crypto = require("crypto");
 const Plans = require("../../../modals/superadmin/Plans");
 const Vendor = require("../../../modals/superadmin/Vendor");
+const { default: axios } = require("axios");
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
   let encrypted = cipher.update(text, "utf-8", "hex");
@@ -32,43 +33,6 @@ const decrypt = (text) => {
   decrypted += decipher.final("utf-8");
   return decrypted;
 };
-//Admin Registers
-// router.post("/register", async (req, res) => {
-//   try {
-//     const user = await AdminRegister.findOne({ email: req.body.email });
-//     if (user) {
-//       return res
-//         .status(401)
-//         .send({ statusCode: 401, message: "Email all ready in use" });
-//     }
-//     let hashConvert = await hashPassword(req.body.password, req.body.cPassword);
-//     req.body.password = hashConvert;
-//     req.body.cPassword = hashConvert;
-
-//     const timestamp = Date.now();
-//     const uniqueId = `${timestamp}`;
-
-//     req.body["admin_id"] = uniqueId;
-//     req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-//     req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-//     const data = await AdminRegister.create(req.body);
-
-//     if (data) {
-//       res.json({
-//         statusCode: 200,
-//         data: data,
-//         message: "Add successfully",
-//       });
-//     } else {
-//       return res.json({ statusCode: 500, message: "User doesn't exist" });
-//     }
-//   } catch (error) {
-//     res.json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
 
 router.post("/register", async (req, res) => {
   try {
@@ -116,33 +80,31 @@ router.post("/register", async (req, res) => {
 
     const data = await AdminRegister.create(req.body);
 
-    if (data) {
-      const trialData = {
-        status: "active",
-        start_date: moment().format("YYYY-MM-DD HH:mm:ss"),
-        end_date: moment().add(15, "days").format("YYYY-MM-DD HH:mm:ss"),
-      };
+    const plan = await Plans.findOne({ plan_name: "Free Plan" });
 
-      const subscription = {
-        status: "inactive",
-        start_date: "",
-        end_date: "",
-        plan_purchase_id: null, // Set initial value to null
-      };
+    const planObject = {
+      admin_id: data?.admin_id,
+      plan_id: plan?.plan_id,
+      status: "",
+      purchase_date: moment().format("YYYY-MM-DD"),
+      plan_amount: 0,
+      expiration_date: moment().add(14, "days").format("YYYY-MM-DD"),
+      first_name: data?.first_name,
+      last_name: data?.last_name,
+      email: data?.email,
+      is_active: true,
+    };
 
-      // Update the user document with the trial data
-      await AdminRegister.findByIdAndUpdate(data._id, {
-        $set: { trial: trialData, subscription: subscription },
-      });
+    const response = await axios.post(
+      `http://localhost:4000/api/purchase/purchase`,
+      planObject
+    );
 
-      res.json({
-        statusCode: 200,
-        data: data,
-        message: "Added successfully",
-      });
-    } else {
-      return res.json({ statusCode: 500, message: "User doesn't exist" });
-    }
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Added successfully",
+    });
   } catch (error) {
     res.json({
       statusCode: 500,
@@ -290,86 +252,98 @@ router.post("/login", async (req, res) => {
 
     // Compare the encrypted password sent from the scraper with the hashed password stored in the database
     const isMatch = decrypt(user.password);
-
+    console.log(isMatch);
     if (req.body.password !== isMatch) {
       return res
         .status(200)
         .json({ statusCode: 202, message: "Invalid Admin Password" });
     }
 
-    const currentDate = moment().startOf("day");
-    let response;
+    // const currentDate = moment().startOf("day");
 
-    // Check trial status and validity (ignoring time)
-    if (
-      user.trial.status === "active" &&
-      currentDate.isBetween(
-        moment(user.trial.start_date).startOf("day"),
-        moment(user.trial.end_date).startOf("day"),
-        null,
-        "[]"
-      )
-    ) {
-      response = {
-        statusCode: 200,
-        message: "User Authenticated",
-        token: await createToken({
-          _id: user._id,
-          admin_id: user.admin_id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          company_name: user.company_name,
-          phone_number: user.phone_number,
-        }),
-      };
-    } else if (user.trial.status === "inactive") {
-      if (user.subscription.status === "inactive") {
-        response = {
-          statusCode: 203,
-          message:
-            "Your plan purchase has expired. Please purchase a new plan.",
-        };
-      } else {
-        // Check subscription start and end dates
-        const subscriptionStart = moment(user.subscription.start_date).startOf(
-          "day"
-        );
-        const subscriptionEnd = moment(user.subscription.end_date).startOf(
-          "day"
-        );
+    // // Check trial status and validity (ignoring time)
+    // if (
+    //   user.trial.status === "active" &&
+    //   currentDate.isBetween(
+    //     moment(user.trial.start_date).startOf("day"),
+    //     moment(user.trial.end_date).startOf("day"),
+    //     null,
+    //     "[]"
+    //   )
+    // ) {
+    //   response = {
+    //     statusCode: 200,
+    //     message: "User Authenticated",
+    //     token: await createToken({
+    //       _id: user._id,
+    //       admin_id: user.admin_id,
+    //       first_name: user.first_name,
+    //       last_name: user.last_name,
+    //       email: user.email,
+    //       company_name: user.company_name,
+    //       phone_number: user.phone_number,
+    //     }),
+    //   };
+    // } else if (user.trial.status === "inactive") {
+    //   if (user.subscription.status === "inactive") {
+    //     response = {
+    //       statusCode: 203,
+    //       message:
+    //         "Your plan purchase has expired. Please purchase a new plan.",
+    //     };
+    //   } else {
+    //     // Check subscription start and end dates
+    //     const subscriptionStart = moment(user.subscription.start_date).startOf(
+    //       "day"
+    //     );
+    //     const subscriptionEnd = moment(user.subscription.end_date).startOf(
+    //       "day"
+    //     );
 
-        if (
-          user.subscription.status === "active" &&
-          currentDate.isBetween(subscriptionStart, subscriptionEnd, null, "[]")
-        ) {
-          response = {
-            statusCode: 200,
-            message: "User Authenticated",
-            token: await createToken({
-              _id: user._id,
-              admin_id: user.admin_id,
-              first_name: user.first_name,
-              last_name: user.last_name,
-              email: user.email,
-              company_name: user.company_name,
-              phone_number: user.phone_number,
-            }),
-          };
-        } else {
-          response = {
-            statusCode: 203,
-            message:
-              "Your subscription has expired. Please purchase a new plan.",
-          };
-        }
-      }
-    } else {
-      response = {
-        statusCode: 201,
-        message: "Your free trial has expired. Please purchase a subscription.",
-      };
-    }
+    //     if (
+    //       user.subscription.status === "active" &&
+    //       currentDate.isBetween(subscriptionStart, subscriptionEnd, null, "[]")
+    //     ) {
+    //       response = {
+    //         statusCode: 200,
+    //         message: "User Authenticated",
+    //         token: await createToken({
+    //           _id: user._id,
+    //           admin_id: user.admin_id,
+    //           first_name: user.first_name,
+    //           last_name: user.last_name,
+    //           email: user.email,
+    //           company_name: user.company_name,
+    //           phone_number: user.phone_number,
+    //         }),
+    //       };
+    //     } else {
+    //       response = {
+    //         statusCode: 203,
+    //         message:
+    //           "Your subscription has expired. Please purchase a new plan.",
+    //       };
+    //     }
+    //   }
+    // } else {
+    //   response = {
+    //     statusCode: 201,
+    //     message: "Your free trial has expired. Please purchase a subscription.",
+    //   };
+    // }
+
+    let response = {
+      statusCode: 200,
+      message: "User Authenticated",
+      token: await createToken({
+        admin_id: user.admin_id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        company_name: user.company_name,
+        phone_number: user.phone_number,
+      }),
+    };
 
     return res.json(response);
   } catch (error) {
