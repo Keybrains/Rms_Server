@@ -6,6 +6,7 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 const { createVenorToken } = require("../../../authentication");
 var moment = require("moment");
 const crypto = require("crypto");
+const { default: axios } = require("axios");
 var emailService = require("./emailService");
 const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
 const Plans = require("../../../modals/superadmin/Plans");
@@ -160,7 +161,7 @@ router.post("/login", async (req, res) => {
     const vendor = await Vendor.findOne({
       vendor_email: req.body.email,
       admin_id: req.body.admin_id,
-      is_delete: false
+      is_delete: false,
     });
     console.log(vendor, "vendor");
 
@@ -215,6 +216,15 @@ router.post("/login", async (req, res) => {
 router.post("/vendor", async (req, res) => {
   const vendorData = req.body;
   try {
+    console.log(req.body.admin_id);
+    const externalApiResponse = await axios.get(
+      `http://localhost:4000/api/plans/planlimitations/vendor/${req.body.admin_id}`
+    );
+    console.log(externalApiResponse);
+    if (externalApiResponse.status === 201) {
+      return res.status(200).json(externalApiResponse.data);
+    }
+
     const existingVendor = await Vendor.findOne({
       admin_id: vendorData.admin_id,
       vendor_phoneNumber: vendorData.vendor_phoneNumber,
@@ -397,8 +407,8 @@ router.get("/limitation/:admin_id", async (req, res) => {
           "Plan limitation is for " + vendorCountLimit + " vendor records",
       });
     }
-    console.log('vendorCount', vendorCount)
-    console.log('vendorCountLimit', vendorCountLimit)
+    console.log("vendorCount", vendorCount);
+    console.log("vendorCountLimit", vendorCountLimit);
 
     res.status(200).json({
       statusCode: 200,
@@ -410,7 +420,5 @@ router.get("/limitation/:admin_id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
-
 
 module.exports = router;

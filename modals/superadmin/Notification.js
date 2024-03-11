@@ -14,11 +14,13 @@ const notificationSchema = new Schema({
   notification_send_to: { type: Array },
 
   notification_read: { type: Object },
-
+  
   is_rental: { type: Boolean, default: false },
   is_lease: { type: Boolean, default: false },
   is_workorder: { type: Boolean, default: false },
   is_staffmember: { type: Boolean, default: false },
+
+  payment_type: { type: String },
 
   createdAt: {
     type: String,

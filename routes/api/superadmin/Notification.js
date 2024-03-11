@@ -10,20 +10,66 @@ const Unit = require("../../../modals/superadmin/Unit");
 const Tenant = require("../../../modals/superadmin/Tenant");
 const Rentals = require("../../../modals/superadmin/Rentals");
 
-router.get("/:tenant_id", async (req, res) => {
+// router.get("/:tenant_id", async (req, res) => {
+//   try {
+//     const tenant_id = req.params.tenant_id;
+
+//     var data = await Notification.aggregate([
+//       {
+//         $match: {
+//           notification_send_to: {
+//             $elemMatch: { tenant_id: tenant_id },
+//           },
+//           "notification_read.is_tenant_read": false,
+//         },
+//       },
+
+//       {
+//         $sort: { createdAt: -1 },
+//       },
+//     ]);
+
+//     for (let i = 0; i < data.length; i++) {
+//       const admin_id = data[i].admin_id;
+//       const unit_id = data[i].unit_id;
+//       const rental_id = data[i].rental_id;
+
+//       const admin_data = await Admin_Register.findOne({ admin_id });
+//       const unit_data = await Unit.findOne({ unit_id: unit_id });
+//       const rental_data = await Rentals.findOne({ rental_id: rental_id });
+
+//       data[i].admin_data = {
+//         admin_id: admin_data?.admin_id,
+//         first_name: admin_data?.first_name,
+//         last_name: admin_data?.last_name,
+//       };
+
+//       data[i].unit_data = unit_data;
+//       data[i].rental_data = rental_data;
+//     }
+
+//     res.json({
+//       statusCode: 200,
+//       data: data,
+//       message: "Read Notification",
+//     });
+//   } catch (error) {
+//     res.json({
+//       statusCode: 500,
+//       message: error.message,
+//     });
+//   }
+// });
+router.get("/tenant/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
 
     var data = await Notification.aggregate([
       {
         $match: {
-          notification_send_to: {
-            $elemMatch: { tenant_id: tenant_id },
-          },
-          "notification_read.is_tenant_read": false,
+          "notification_send_to.tenant_id": tenant_id,
         },
       },
-
       {
         $sort: { createdAt: -1 },
       },
