@@ -1512,10 +1512,10 @@ router.post("/edit-plan", async (req, res) => {
 
     let postData = {
       recurring: "edit_plan",
-      plan_payments: planPayments, //if 0 than payments done until cancel
+      plan_payments: planPayments,
       plan_amount: planAmount,
       plan_name: planName,
-      plan_id: planId,
+      current_plan_id: (planId),
       month_frequency: month_frequency,
       day_of_month: day_of_month,
       security_key: "b6F87GPCBSYujtQFW26583EM8H34vM5r",
