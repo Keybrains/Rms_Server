@@ -133,7 +133,7 @@ router.get("/rentalowner_details/:rentalowner_id", async (req, res) => {
 router.get("/rental_owner_count/:admin_id", async (req, res) => {
   try {
     const { admin_id } = req.params;
-    const rentals = await RentalOwner.find({ admin_id });
+    const rentals = await RentalOwner.find({ admin_id, is_delete: false });
     const count = rentals.length;
     res.status(200).json({
       statusCode: 200,

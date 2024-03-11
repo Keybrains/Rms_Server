@@ -82,7 +82,11 @@ router.get("/plans", async (req, res) => {
 router.put("/plans/:id", async (req, res) => {
   try {
     req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    let result = await Plans.findByIdAndUpdate(req.params.id, req.body);
+    let result = await Plans.findOneAndUpdate(
+      { plan_id: req.params.id },
+      { $set: req.body },
+      { new: true }
+    );
     res.json({
       statusCode: 200,
       data: result,
@@ -175,7 +179,10 @@ router.get("/planlimitations/property/:admin_id", async (req, res) => {
       });
     }
 
-    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planPur = await PlanPurchase.findOne({
+      admin_id: adminId,
+      is_active: true,
+    });
     const planId = planPur.plan_id;
     console.log(planId);
     const plan = await Plans.findOne({ plan_id: planId });
@@ -224,7 +231,10 @@ router.get("/planlimitations/tenant/:admin_id", async (req, res) => {
       });
     }
 
-    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planPur = await PlanPurchase.findOne({
+      admin_id: adminId,
+      is_active: true,
+    });
     const planId = planPur.plan_id;
     const plan = await Plans.findOne({ plan_id: planId });
     if (!plan) {
@@ -274,7 +284,10 @@ router.get("/planlimitations/staff/:admin_id", async (req, res) => {
       });
     }
 
-    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planPur = await PlanPurchase.findOne({
+      admin_id: adminId,
+      is_active: true,
+    });
     const planId = planPur.plan_id;
     const plan = await Plans.findOne({ plan_id: planId });
     if (!plan) {
@@ -323,7 +336,10 @@ router.get("/planlimitations/rentalowner/:admin_id", async (req, res) => {
       });
     }
 
-    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planPur = await PlanPurchase.findOne({
+      admin_id: adminId,
+      is_active: true,
+    });
     const planId = planPur.plan_id;
     const plan = await Plans.findOne({ plan_id: planId });
     if (!plan) {
@@ -374,7 +390,10 @@ router.get("/planlimitations/lease/:admin_id", async (req, res) => {
       });
     }
 
-    const planPur = await PlanPurchase.findOne({ admin_id: adminId });
+    const planPur = await PlanPurchase.findOne({
+      admin_id: adminId,
+      is_active: true,
+    });
     const planId = planPur.plan_id;
     const plan = await Plans.findOne({ plan_id: planId });
     if (!plan) {
@@ -393,8 +412,7 @@ router.get("/planlimitations/lease/:admin_id", async (req, res) => {
     if (leaseCount >= leaseCountLimit) {
       return res.status(201).json({
         statusCode: 201,
-        message:
-          "Plan limitation is for " + leaseCountLimit + " lease records",
+        message: "Plan limitation is for " + leaseCountLimit + " lease records",
       });
     }
 
