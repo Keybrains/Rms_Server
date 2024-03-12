@@ -146,7 +146,7 @@ router.post("/payment", async (req, res) => {
           value: "Payment Received",
         },
         notification_send_to: [{ tenant_id: req.body.tenant_id }],
-        notification_read: { isRead: false },
+        notification_read: { is_tenant_read: false },
         createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
         updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
       };
@@ -432,7 +432,7 @@ router.get("/payment/:payment_id", async (req, res) => {
       rental_adress: rental_data.rental_adress,
       rental_unit: unit_data.rental_unit,
     };
-    
+
     res.json({
       statusCode: 200,
       data: {
