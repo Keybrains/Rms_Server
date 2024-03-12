@@ -56,7 +56,7 @@ cron.schedule("07 15 * * *", async () => {
             if (chargeDate === currentDate) {
               let id = charge.payment_id;
 
-              const nmiApiUrl = `http://localhost:4000/api/nmipayment/update_sale/${id}`;
+              const nmiApiUrl = `https://saas.cloudrentalmanager.com/api/nmipayment/update_sale/${id}`;
 
               try {
                 const response = await axios.post(nmiApiUrl, {

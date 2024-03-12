@@ -96,7 +96,7 @@ router.post("/register", async (req, res) => {
     };
 
     const response = await axios.post(
-      `http://localhost:4000/api/purchase/purchase`,
+      `https://saas.cloudrentalmanager.com/api/purchase/purchase`,
       planObject
     );
 
