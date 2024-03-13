@@ -797,9 +797,6 @@ cron.schedule("14 17 * * *", async () => {
                       The 302 Properties Team</p>
                     `,
                   });
-     
-
-          
                 }
               }
             }

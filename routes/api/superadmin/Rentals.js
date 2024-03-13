@@ -212,19 +212,28 @@ router.get("/rental-owners/:admin_id", async (req, res) => {
       is_active: true,
     });
 
-    let rentalOwners;
-
     if (!planPur) {
       return res.status(404).json({ message: "No plan found for the given admin_id" });
     }
 
     const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+    let rentalOwners = [];
 
     if (plan && plan.plan_name === "Free Plan") {
-      rentalOwners = await RentalOwner.find({
-        $or: [{ admin_id: adminId }, { admin_id: "is_trial" }],
+      // Fetch rental owners for admin_id
+      const adminRentalOwners = await RentalOwner.find({
+        admin_id: adminId,
         is_delete: false,
       }).sort({ createdAt: -1 });
+
+      // Fetch rental owners for is_trial
+      const trialRentalOwners = await RentalOwner.find({
+        admin_id: "is_trial",
+        is_delete: false,
+      }).sort({ createdAt: -1 });
+
+      // Combine both sets of rental owners
+      rentalOwners = [...adminRentalOwners, ...trialRentalOwners];
     } else {
       rentalOwners = await RentalOwner.find({
         admin_id: adminId,
@@ -232,7 +241,7 @@ router.get("/rental-owners/:admin_id", async (req, res) => {
       }).sort({ createdAt: -1 });
     }
 
-    if (!rentalOwners || rentalOwners.length === 0) {
+    if (rentalOwners.length === 0) {
       return res.status(404).json({ message: "No rental owners found for the given admin_id" });
     }
 
@@ -243,7 +252,6 @@ router.get("/rental-owners/:admin_id", async (req, res) => {
   }
 });
 
-
 router.get("/rentals/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
@@ -253,38 +261,35 @@ router.get("/rentals/:admin_id", async (req, res) => {
       is_active: true,
     });
 
-    const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+    if (!planPur) {
+      return res.status(404).json({ message: "Plan not found." });
+    }
 
-    var data;
-    if (plan.plan_name === "Free Plan") {
-      data = await Rentals.aggregate([
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $match: {
-            $or: [{ admin_id: admin_id }, { admin_id: "is_trial" }],
-            is_delete: false,
-          },
-        },
+    const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+    let rentalsData = [];
+
+    if (plan && plan.plan_name === "Free Plan") {
+      const adminRentals = await Rentals.aggregate([
+        { $match: { admin_id: admin_id, is_delete: false } },
+        { $sort: { createdAt: -1 } },
       ]);
+
+      const trialRentals = await Rentals.aggregate([
+        { $match: { admin_id: "is_trial", is_delete: false } },
+        { $sort: { createdAt: -1 } },
+      ]);
+
+      rentalsData = [...adminRentals, ...trialRentals];
     } else {
-      data = await Rentals.aggregate([
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $match: {
-            admin_id: admin_id,
-            is_delete: false,
-          },
-        },  
+      rentalsData = await Rentals.aggregate([
+        { $match: { admin_id: admin_id, is_delete: false } },
+        { $sort: { createdAt: -1 } },
       ]);
     }
 
-    for (let i = 0; i < data.length; i++) {
-      const rentalOwner = data[i].rentalowner_id;
-      const propertyType = data[i].property_id;
+    for (let i = 0; i < rentalsData.length; i++) {
+      const rentalOwner = rentalsData[i].rentalowner_id;
+      const propertyType = rentalsData[i].property_id;
 
       const rental_owner_data = await RentalOwner.findOne({
         rentalowner_id: rentalOwner,
@@ -294,13 +299,13 @@ router.get("/rentals/:admin_id", async (req, res) => {
         property_id: propertyType,
       });
 
-      data[i].rental_owner_data = rental_owner_data;
-      data[i].property_type_data = property_type_data;
+      rentalsData[i].rental_owner_data = rental_owner_data;
+      rentalsData[i].property_type_data = property_type_data;
     }
 
     res.json({
       statusCode: 200,
-      data: data,
+      data: rentalsData,
       message: "Read All Rentals",
     });
   } catch (error) {
@@ -310,6 +315,7 @@ router.get("/rentals/:admin_id", async (req, res) => {
     });
   }
 });
+
 
 
 router.get("/rental_summary/:rental_id", async (req, res) => {

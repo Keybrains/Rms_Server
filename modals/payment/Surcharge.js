@@ -5,6 +5,7 @@ const surchargeSchema = new Schema({
   admin_id: { type: String },
   surcharge_id: { type: String },
   surcharge_percent: { type: Number },
+  surcharge_percent_debit: { type: Number },
   createdAt: { type: String },
   updatedAt: { type: String },
   is_delete: { type: Boolean, default: false },

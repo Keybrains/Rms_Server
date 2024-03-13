@@ -234,9 +234,28 @@ router.get("/tenant_details/:tenant_id", async (req, res) => {
 });
 
 router.get("/tenants/:admin_id", async (req, res) => {
-  const admin_id = req.params.admin_id;
   try {
-    const tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
+    const admin_id = req.params.admin_id;
+
+    const planPurchase = await Plans_Purchased.findOne({
+      admin_id,
+      is_active: true,
+    });
+
+    let tenants = [];
+
+    if (planPurchase) {
+      const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
+      if (plan && plan.plan_name === "Free Plan") {
+        const adminTenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
+        const trialTenants = await Tenant.find({ admin_id: "is_trial", is_delete: false });
+        tenants = [...adminTenants, ...trialTenants];
+      } else {
+        tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
+      }
+    } else {
+      tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
+    }
 
     for (const tenant of tenants) {
       const password = decrypt(tenant.tenant_password);
@@ -244,9 +263,7 @@ router.get("/tenants/:admin_id", async (req, res) => {
     }
 
     if (tenants.length === 0) {
-      return res
-        .status(201)
-        .json({ message: "No tenants found for the given admin" });
+      return res.status(201).json({ message: "No tenants found for the given admin" });
     }
 
     res.json({
@@ -258,6 +275,7 @@ router.get("/tenants/:admin_id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 
 router.get("/get_tenant/:tenant_id", async (req, res) => {
   const tenant_id = req.params.tenant_id;
