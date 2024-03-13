@@ -9,6 +9,7 @@ router.post("/surcharge", async (req, res) => {
     let findSurcharge = await Surcharge.findOne({
       admin_id: req.body.admin_id,
       surcharge_percent: req.body.surcharge_percent,
+      surcharge_percent_debit: req.body.surcharge_percent_debit,
       is_delete: false,
     });
     if (!findSurcharge) {
@@ -132,7 +133,7 @@ router.get("/surcharge/getadmin/:admin_id", async (req, res) => {
 router.put("/surcharge/:surcharge_id", async (req, res) => {
   try {
     const { surcharge_id } = req.params;
-    const { surcharge_percent } = req.body;
+    const { surcharge_percent, surcharge_percent_debit } = req.body;
 
     if (!surcharge_id) {
       res.status(401).json({
