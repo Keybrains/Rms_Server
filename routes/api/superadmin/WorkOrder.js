@@ -10,7 +10,9 @@ const StaffMember = require("../../../modals/superadmin/StaffMember");
 const Vendor = require("../../../modals/superadmin/Vendor");
 const Lease = require("../../../modals/superadmin/Leasing");
 const Notification = require("../../../modals/superadmin/Notification");
-  
+const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
+const Plans = require("../../../modals/superadmin/Plans");
+
 router.post("/work-order", async (req, res) => {
   try {
     const timestamp = Date.now();
@@ -163,11 +165,31 @@ router.get("/work-orders/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
 
-    const workOrdersData = await WorkOrder.find({
+    let workOrdersCriteria = { admin_id: admin_id, is_delete: false };
+
+    const planPurchase = await Plans_Purchased.findOne({
       admin_id,
-      is_delete: false,
-    }).sort({ createdAt: -1 });
-    if (!workOrdersData || workOrdersData.length === 0) {
+      is_active: true,
+    });
+
+    let workOrdersData = [];
+
+    if (planPurchase) {
+      const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
+      
+      if (plan && plan.plan_name === "Free Plan") {
+        const adminWorkOrders = await WorkOrder.find(workOrdersCriteria).sort({ createdAt: -1 });
+        const trialWorkOrders = await WorkOrder.find({ admin_id: "is_trial", is_delete: false }).sort({ createdAt: -1 });
+        
+        workOrdersData = [...adminWorkOrders, ...trialWorkOrders];
+      } else {
+        workOrdersData = await WorkOrder.find(workOrdersCriteria).sort({ createdAt: -1 });
+      }
+    } else {
+      workOrdersData = await WorkOrder.find(workOrdersCriteria).sort({ createdAt: -1 });
+    }
+
+    if (workOrdersData.length === 0) {
       return res.status(200).json({
         statusCode: 201,
         message: "No work orders found for the specified admin.",
@@ -177,7 +199,7 @@ router.get("/work-orders/:admin_id", async (req, res) => {
     const resultDataArray = [];
 
     for (const workOrderData of workOrdersData) {
-      const rentalAdress = await Rentals.findOne({
+      const rentalAddress = await Rentals.findOne({
         rental_id: workOrderData.rental_id,
       });
 
@@ -191,7 +213,7 @@ router.get("/work-orders/:admin_id", async (req, res) => {
 
       const object = {
         workOrderData,
-        rentalAdress,
+        rentalAddress,
         rentalUnit,
         staffMember,
       };
@@ -210,6 +232,7 @@ router.get("/work-orders/:admin_id", async (req, res) => {
     });
   }
 });
+
 
 // router.put("/work-order/:workOrder_id", async (req, res) => {
 //   try {
