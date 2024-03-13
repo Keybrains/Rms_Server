@@ -20,6 +20,7 @@ var hashCompare = async (pwd, hash) => {
 var createToken = async ({
   _id,
   admin_id,
+  superadmin_id,
   email,
   first_name,
   last_name,
@@ -30,6 +31,7 @@ var createToken = async ({
     {
       id: _id,
       admin_id: admin_id,
+      superadmin_id: superadmin_id,
       first_name: first_name,
       last_name: last_name,
       email: email,

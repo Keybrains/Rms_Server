@@ -6,6 +6,7 @@ var AdminRegister = require("../../../modals/superadmin/Admin_Register");
 const { createVenorToken } = require("../../../authentication");
 var moment = require("moment");
 const crypto = require("crypto");
+const { default: axios } = require("axios");
 var emailService = require("./emailService");
 const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
 const Plans = require("../../../modals/superadmin/Plans");
@@ -160,7 +161,7 @@ router.post("/login", async (req, res) => {
     const vendor = await Vendor.findOne({
       vendor_email: req.body.email,
       admin_id: req.body.admin_id,
-      is_delete: false
+      is_delete: false,
     });
     console.log(vendor, "vendor");
 
@@ -215,6 +216,15 @@ router.post("/login", async (req, res) => {
 router.post("/vendor", async (req, res) => {
   const vendorData = req.body;
   try {
+    console.log(req.body.admin_id);
+    const externalApiResponse = await axios.get(
+      `http://localhost:4000/api/plans/planlimitations/vendor/${req.body.admin_id}`
+    );
+    console.log(externalApiResponse);
+    if (externalApiResponse.status === 201) {
+      return res.status(200).json(externalApiResponse.data);
+    }
+
     const existingVendor = await Vendor.findOne({
       admin_id: vendorData.admin_id,
       vendor_phoneNumber: vendorData.vendor_phoneNumber,
@@ -265,15 +275,32 @@ router.post("/vendor", async (req, res) => {
 router.get("/vendors/:admin_id", async (req, res) => {
   const admin_id = req.params.admin_id;
   try {
-    const vendors = await Vendor.find({
-      admin_id: admin_id,
-      is_delete: false,
-    }).sort({ createdAt: -1 });
+    const planPurchase = await Plans_Purchased.findOne({
+      admin_id,
+      is_active: true,
+    });
+
+    let isFreePlan = false;
+    if (planPurchase) {
+      const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
+      if (plan && plan.plan_name === "Free Plan") {
+        isFreePlan = true;
+      }
+    }
+
+    let queryConditions = { admin_id: admin_id, is_delete: false };
+
+    if (isFreePlan) {
+      queryConditions = {
+        $or: [{ admin_id: admin_id }, { admin_id: "is_trial" }],
+        is_delete: false,
+      };
+    }
+
+    const vendors = await Vendor.find(queryConditions).sort({ createdAt: -1 });
 
     if (vendors.length === 0) {
-      return res
-        .status(201)
-        .json({ message: "No vendors found for the given admin_id" });
+      return res.status(201).json({ message: "No vendors found for the given admin_id or trial" });
     }
 
     res.json({
@@ -285,6 +312,7 @@ router.get("/vendors/:admin_id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 
 router.get("/get_vendor/:vendor_id", async (req, res) => {
   const vendor_id = req.params.vendor_id;
@@ -397,8 +425,8 @@ router.get("/limitation/:admin_id", async (req, res) => {
           "Plan limitation is for " + vendorCountLimit + " vendor records",
       });
     }
-    console.log('vendorCount', vendorCount)
-    console.log('vendorCountLimit', vendorCountLimit)
+    console.log("vendorCount", vendorCount);
+    console.log("vendorCountLimit", vendorCountLimit);
 
     res.status(200).json({
       statusCode: 200,
@@ -410,7 +438,5 @@ router.get("/limitation/:admin_id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
-
 
 module.exports = router;

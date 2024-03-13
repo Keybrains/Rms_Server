@@ -14,7 +14,7 @@ const Unit = require("../../../modals/superadmin/Unit");
 const Lease = require("../../../modals/superadmin/Leasing");
 const Rentals = require("../../../modals/superadmin/Rentals");
 var emailService = require("./emailService");
-
+var Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
 const crypto = require("crypto");
 const Plans = require("../../../modals/superadmin/Plans");
 const Vendor = require("../../../modals/superadmin/Vendor");
@@ -353,39 +353,38 @@ router.post("/login", async (req, res) => {
 
 router.get("/admin", async (req, res) => {
   try {
-    var pageSize = parseInt(req.query.pageSize) || 10; // Default to 10 if not provided
-    var pageNumber = parseInt(req.query.pageNumber) || 0; // Default to 0 if not provided
+    var pageSize = parseInt(req.query.pageSize) || 10;
+    var pageNumber = parseInt(req.query.pageNumber) || 0;
 
-    var data = await AdminRegister.aggregate([
-      {
-        $match: { isAdmin_delete: false, roll: "admin" },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-      {
-        $skip: pageSize * pageNumber,
-      },
-      {
-        $limit: pageSize,
-      },
-    ]);
+    // Fetch admins with pagination
+    var admins = await AdminRegister.find({ isAdmin_delete: false, roll: "admin" })
+      .sort({ createdAt: -1 })
+      .skip(pageSize * pageNumber)
+      .limit(pageSize)
+      .lean(); // Add lean() for performance if you don't need a full Mongoose document
 
-    for (let i = 0; i < data.length; i++) {
-      const element = data[i];
-      const decryptedPassword = decrypt(element.password);
-      data[i].password = decryptedPassword;
-    }
+    // Fetch plan details for each admin
+    const plansDetailsPromises = admins.map(async (admin) => {
+      // Find the plan purchased by the admin
+      const planPurchased = await Plans_Purchased.findOne({ admin_id: admin.admin_id }).lean();
+      if (!planPurchased) {
+        return { ...admin, planName: 'No Plan Found' };
+      }
+      // Using the plan_id from the plan purchased to find the plan details
+      const planDetails = await Plans.findOne({ plan_id: planPurchased.plan_id }).lean();
+      return { ...admin, planName: planDetails ? planDetails.plan_name : 'Unknown Plan' };
+    });
 
-    var count = data.length;
+    const adminsDetailsWithPlans = await Promise.all(plansDetailsPromises);
 
     res.json({
       statusCode: 200,
-      data: data,
-      count: count,
-      message: "Read All Admins",
+      data: adminsDetailsWithPlans,
+      count: adminsDetailsWithPlans.length,
+      message: "Read All Admins with Their Plans",
     });
   } catch (error) {
+    console.error("Failed to fetch admin plans:", error);
     res.json({
       statusCode: 500,
       message: error.message,

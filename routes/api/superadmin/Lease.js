@@ -104,7 +104,7 @@ router.post("/leases", async (req, res) => {
 
   try {
     const { leaseData, tenantData, cosignerData, chargeData } = req.body;
-    
+
     const externalApiResponse = await axios.get(
       `https://saas.cloudrentalmanager.com/api/plans/planlimitations/lease/${tenantData.admin_id}`
     );
@@ -485,10 +485,32 @@ router.post("/check_lease", async (req, res) => {
 });
 
 router.get("/leases/:admin_id", async (req, res) => {
-  console.log("first===========");
   const admin_id = req.params.admin_id;
   try {
-    const leases = await Lease.find({ admin_id: admin_id, is_delete: false });
+    const planPur = await Plans_Purchased.findOne({
+      admin_id,
+      is_active: true,
+    });
+
+    let plan = null;
+    if (planPur) {
+      plan = await Plans.findOne({ plan_id: planPur.plan_id });
+    }
+
+    let leases = [];
+    if (!plan || plan.plan_name === "Free Plan") {
+      const leasesAdmin = await Lease.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+      const leasesTrial = await Lease.find({
+        admin_id: "is_trial",
+        is_delete: false,
+      });
+      leases = [...leasesAdmin, ...leasesTrial];
+    } else {
+      leases = await Lease.find({ admin_id: admin_id, is_delete: false });
+    }
 
     const data = [];
 
@@ -509,7 +531,7 @@ router.get("/leases/:admin_id", async (req, res) => {
         lease_type: lease?.lease_type,
         start_date: lease?.start_date,
         end_date: lease?.end_date,
-        amount: charge[0].amount,
+        amount: charge[0]?.amount || 0,
         tenant_firstName: tenant?.tenant_firstName,
         tenant_lastName: tenant?.tenant_lastName,
         rental_adress: rental?.rental_adress,

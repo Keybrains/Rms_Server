@@ -10,6 +10,7 @@ var emailService = require("./emailService");
 const ApplicantDetails = require("../../../modals/superadmin/ApplicantDetails");
 const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
 const Plans = require("../../../modals/superadmin/Plans");
+const ApplicantLease = require("../../../modals/superadmin/Applicant_property");
 
 router.post("/applicant", async (req, res) => {
   try {
@@ -84,27 +85,67 @@ router.get("/applicant/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
 
-    var data = await Applicant.aggregate([
-      {
-        $match: { admin_id: admin_id },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-    ]);
+    const planPur = await Plans_Purchased.findOne({
+      admin_id,
+      is_active: true,
+    });
+
+    let plan = null;
+    if (planPur) {
+      plan = await Plans.findOne({ plan_id: planPur.plan_id });
+    }
+
+    let applicants = [];
+
+    if (!plan || plan.plan_name === "Free Plan") {
+      const dataAdmin = await Applicant.aggregate([
+        { $match: { admin_id: admin_id } },
+        { $sort: { createdAt: -1 } },
+      ]);
+
+      const dataTrial = await Applicant.aggregate([
+        { $match: { admin_id: "is_trial" } },
+        { $sort: { createdAt: -1 } },
+      ]);
+
+      applicants = [...dataAdmin, ...dataTrial];
+    } else {
+      applicants = await Applicant.aggregate([
+        { $match: { admin_id: admin_id } },
+        { $sort: { createdAt: -1 } },
+      ]);
+    }
+
+    for (let i = 0; i < applicants.length; i++) {
+      const leaseData = await ApplicantLease.findOne({ applicant_id: applicants[i].applicant_id });
+      
+      if (leaseData) {
+        const rentalData = await Rentals.findOne({ rental_id: leaseData.rental_id });
+        const unitData = await Unit.findOne({ unit_id: leaseData.unit_id });
+
+        applicants[i].rentalData = rentalData;
+        applicants[i].unitData = unitData;
+      } else {
+    
+        applicants[i].rentalData = null;
+        applicants[i].unitData = null;
+      }
+    }
 
     res.json({
       statusCode: 200,
-      data: data,
-      message: "Read All Request",
+      data: applicants,
+      message: "Read All Applicants",
     });
   } catch (error) {
+    console.error(error);
     res.json({
       statusCode: 500,
       message: error.message,
     });
   }
 });
+
 
 router.get("/applicant_lease/:admin_id", async (req, res) => {
   try {
