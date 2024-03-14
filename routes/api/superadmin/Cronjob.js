@@ -41,10 +41,13 @@ cron.schedule("07 15 * * *", async () => {
         payment_type: "Credit Card",
         "entry.date": currentDate,
       });
-      console.log("fetchedchargespayaments-----------",fetchedchargespayaments)
+      console.log(
+        "fetchedchargespayaments-----------",
+        fetchedchargespayaments
+      );
       if (fetchedchargespayaments && fetchedchargespayaments.length > 0) {
         for (const charge of fetchedchargespayaments) {
-          console.log("charge-----------",charge)
+          console.log("charge-----------", charge);
           if (
             charge.response === "PENDING" &&
             charge.payment_type === "Credit Card"
@@ -251,7 +254,7 @@ cron.schedule("30 12 * * *", async () => {
 });
 
 //cron job for charge rent on each rent cycle
-cron.schedule("26 15 * * *", async () => {
+cron.schedule("33 16 * * *", async () => {
   const cronjobs = await Cronjobs.find();
   const isCronjobRunning = cronjobs[0].isCronjobRunning;
   try {
@@ -266,6 +269,12 @@ cron.schedule("26 15 * * *", async () => {
       const tenants = await Leasing.find();
 
       tenants.forEach(async (entry) => {
+        let details;
+        let adminLateFee;
+        const adminId = entry.admin_id;
+        if (adminId != 'is_trial') {
+           adminLateFee = await getLateFeeDuration(adminId);    
+        }
         const startDate = entry.start_date
           ? new Date(entry.start_date).toISOString().split("T")[0]
           : null;
@@ -281,7 +290,24 @@ cron.schedule("26 15 * * *", async () => {
           "start-end-due",
           startDate + " " + endDate + " " + nextDueDate + " " + rentCycle
         );
+        console.log(
+          "entry data---------------------------------------------",
+          entry
+        );
+        try {
+          const res = await axios.get(
+            `https://saas.cloudrentalmanager.com/api/tenants/tenant_details/${entry.tenant_id}`
+          ); // Save the new entry
 
+          details = res.data.data;
+          // await logToDatabase("Success", `Rent Monthly`);
+        } catch (error) {
+          console.error(
+            "Error saving data to payment-charges collection:",
+            error
+          );
+          // await logToDatabase("Failure", `Rent Monthly`);
+        }
         // Monthly cronjob condition
         if (
           startDate &&
@@ -298,7 +324,6 @@ cron.schedule("26 15 * * *", async () => {
           nextDueDatePlusOneMonth.setMonth(
             nextDueDatePlusOneMonth.getMonth() + 1
           );
-          console.log("--------------------------", nextDueDatePlusOneMonth);
 
           entry.entry[0].date = nextDueDatePlusOneMonth
             .toISOString()
@@ -307,6 +332,7 @@ cron.schedule("26 15 * * *", async () => {
           console.log("Monthly Cron end...!!!");
           // Save the changes to the database
           await entry.save();
+
           const postData = {
             admin_id: entry.admin_id,
             tenant_id: entry.tenant_id,
@@ -335,6 +361,22 @@ cron.schedule("26 15 * * *", async () => {
               postData
             ); // Save the new entry
             console.log("Data charges collection.");
+            const info = await transporter.sendMail({
+              from: '"302 Properties" <info@cloudpress.host>',
+              to: details[0].tenant_email,
+              subject: "Payment Reminder - 302 Properties",
+              html: `     
+                <p>Hello ${details[0].tenant_firstName} ${details[0].tenant_lastName},</p>
+          
+                <p>You have to pay your rent of <b>$${entry.entry[0].amount}</b> within ${adminLateFee.duration} days otherwise ${adminLateFee.late_fee}% late fee will apply.</p>
+
+                <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+          
+                <p>Best regards,<br>
+                The 302 Properties Team</p>
+              `,
+            });
+            console.log("mail sent successfully");
             // await logToDatabase("Success", `Rent Monthly`);
           } catch (error) {
             console.error(
@@ -397,6 +439,22 @@ cron.schedule("26 15 * * *", async () => {
               postData
             ); // Save the new entry
             console.log("Data charges collection.");
+            const info = await transporter.sendMail({
+              from: '"302 Properties" <info@cloudpress.host>',
+              to: details[0].tenant_email,
+              subject: "Payment Reminder - 302 Properties",
+              html: `     
+                <p>Hello ${details[0].tenant_firstName} ${details[0].tenant_lastName},</p>
+          
+                <p>You have to pay your rent of <b>$${entry.entry[0].amount}</b> within ${adminLateFee.duration} days otherwise ${adminLateFee.late_fee}% late fee will apply.</p>
+
+                <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+          
+                <p>Best regards,<br>
+                The 302 Properties Team</p>
+              `,
+            });
+            console.log("mail sent successfully");
             // await logToDatabase("Success", `Rent Monthly`);
           } catch (error) {
             console.error(
@@ -453,11 +511,26 @@ cron.schedule("26 15 * * *", async () => {
           };
 
           try {
-            await axios.post(
+            const mail = await axios.post(
               "https://saas.cloudrentalmanager.com/api/charge/charge",
               postData
             ); // Save the new entry
-            console.log("Data charges collection.");
+            const info = await transporter.sendMail({
+              from: '"302 Properties" <info@cloudpress.host>',
+              to: details[0].tenant_email,
+              subject: "Payment Reminder - 302 Properties",
+              html: `     
+                <p>Hello ${details[0].tenant_firstName} ${details[0].tenant_lastName},</p>
+          
+                <p>You have to pay your rent of <b>$${entry.entry[0].amount}</b> within ${adminLateFee.duration} days otherwise ${adminLateFee.late_fee}% late fee will apply.</p>
+
+                <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+          
+                <p>Best regards,<br>
+                The 302 Properties Team</p>
+              `,
+            });
+            console.log("mail sent successfully");
             // await logToDatabase("Success", `Rent Monthly`);
           } catch (error) {
             console.error(
@@ -521,6 +594,22 @@ cron.schedule("26 15 * * *", async () => {
               postData
             ); // Save the new entry
             console.log("Data charges collection.");
+            const info = await transporter.sendMail({
+              from: '"302 Properties" <info@cloudpress.host>',
+              to: details[0].tenant_email,
+              subject: "Payment Reminder - 302 Properties",
+              html: `     
+                <p>Hello ${details[0].tenant_firstName} ${details[0].tenant_lastName},</p>
+          
+                <p>You have to pay your rent of <b>$${entry.entry[0].amount}</b> within ${adminLateFee.duration} days otherwise ${adminLateFee.late_fee}% late fee will apply.</p>
+
+                <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+          
+                <p>Best regards,<br>
+                The 302 Properties Team</p>
+              `,
+            });
+            console.log("mail sent successfully");
             // await logToDatabase("Success", `Rent Monthly`);
           } catch (error) {
             console.error(
@@ -584,6 +673,22 @@ cron.schedule("26 15 * * *", async () => {
               postData
             ); // Save the new entry
             console.log("Data charges collection.");
+            const info = await transporter.sendMail({
+              from: '"302 Properties" <info@cloudpress.host>',
+              to: details[0].tenant_email,
+              subject: "Payment Reminder - 302 Properties",
+              html: `     
+                <p>Hello ${details[0].tenant_firstName} ${details[0].tenant_lastName},</p>
+          
+                <p>You have to pay your rent of <b>$${entry.entry[0].amount}</b> within ${adminLateFee.duration} days otherwise ${adminLateFee.late_fee}% late fee will apply.</p>
+
+                <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+          
+                <p>Best regards,<br>
+                The 302 Properties Team</p>
+              `,
+            });
+            console.log("mail sent successfully");
             // await logToDatabase("Success", `Rent Monthly`);
           } catch (error) {
             console.error(
@@ -647,6 +752,22 @@ cron.schedule("26 15 * * *", async () => {
               postData
             ); // Save the new entry
             console.log("Data charges collection.");
+            const info = await transporter.sendMail({
+              from: '"302 Properties" <info@cloudpress.host>',
+              to: details[0].tenant_email,
+              subject: "Payment Reminder - 302 Properties",
+              html: `     
+                <p>Hello ${details[0].tenant_firstName} ${details[0].tenant_lastName},</p>
+          
+                <p>You have to pay your rent of <b>$${entry.entry[0].amount}</b> within ${adminLateFee.duration} days otherwise ${adminLateFee.late_fee}% late fee will apply.</p>
+
+                <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+          
+                <p>Best regards,<br>
+                The 302 Properties Team</p>
+              `,
+            });
+            console.log("mail sent successfully");
             // await logToDatabase("Success", `Rent Monthly`);
           } catch (error) {
             console.error(
@@ -710,6 +831,22 @@ cron.schedule("26 15 * * *", async () => {
               postData
             ); // Save the new entry
             console.log("Data charges collection.");
+            const info = await transporter.sendMail({
+              from: '"302 Properties" <info@cloudpress.host>',
+              to: details[0].tenant_email,
+              subject: "Payment Reminder - 302 Properties",
+              html: `     
+                <p>Hello ${details[0].tenant_firstName} ${details[0].tenant_lastName},</p>
+          
+                <p>You have to pay your rent of <b>$${entry.entry[0].amount}</b> within ${adminLateFee.duration} days otherwise ${adminLateFee.late_fee}% late fee will apply.</p>
+
+                <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
+          
+                <p>Best regards,<br>
+                The 302 Properties Team</p>
+              `,
+            });
+            console.log("mail sent successfully");
             // await logToDatabase("Success", `Rent Monthly`);
           } catch (error) {
             console.error(
@@ -734,7 +871,7 @@ cron.schedule("26 15 * * *", async () => {
 });
 
 //reminder mails cron job
-cron.schedule("14 17 * * *", async () => {
+cron.schedule("46 11 * * *", async () => {
   const cronjobs = await Cronjobs.find();
   const isCronjobRunning = cronjobs[0].isCronjobRunning;
 
@@ -753,64 +890,57 @@ cron.schedule("14 17 * * *", async () => {
 
       if (fetchedchargespayaments && fetchedchargespayaments.length > 0) {
         for (const charge of fetchedchargespayaments) {
-              if (
-                charge.end_date &&
-                charge.tenant_id
-              ) {
-
-                try {
-                  const res = await axios.get(
-                    `https://saas.cloudrentalmanager.com/api/tenants/tenant_details/${charge.tenant_id}`
-                  ); // Save the new entry
-                  console.log("Data charges collection.",res.data);
-                   details = res.data.data;
-                  // await logToDatabase("Success", `Rent Monthly`);
-                } catch (error) {
-                  console.error(
-                    "Error saving data to payment-charges collection:",
-                    error
-                  );
-                  // await logToDatabase("Failure", `Rent Monthly`);
-                }
-                const chargeDate = new Date(charge.end_date);
-                const differenceInTime = Math.abs(
-                  chargeDate - new Date(currentDate)
-                );
-                const differenceInDays = Math.ceil(
-                  differenceInTime / (1000 * 60 * 60 * 24)
-                );
-                  console.log("details",details)
-                if (differenceInDays > 3) {
-                  console.log("Mail Sent");
-                  const info = await transporter.sendMail({
-                    from: '"302 Properties" <info@cloudpress.host>',
-                    to: details[0].tenant_email,
-                    subject: "Lease End Reminder - 302 Properties",
-                    html: `     
+          if (charge.end_date && charge.tenant_id) {
+            try {
+              const res = await axios.get(
+                `https://saas.cloudrentalmanager.com/api/tenants/tenant_details/${charge.tenant_id}`
+              ); // Save the new entry
+              console.log("Data charges collection.", res.data);
+              details = res.data.data;
+              // await logToDatabase("Success", `Rent Monthly`);
+            } catch (error) {
+              console.error(
+                "Error saving data to payment-charges collection:",
+                error
+              );
+              // await logToDatabase("Failure", `Rent Monthly`);
+            }
+            const chargeDate = new Date(charge.end_date);
+            const differenceInTime = Math.abs(
+              chargeDate - new Date(currentDate)
+            );
+            const differenceInDays = Math.ceil(
+              differenceInTime / (1000 * 60 * 60 * 24)
+            );
+            if (differenceInDays > 3) {
+              console.log("Mail Sent");
+              const info = await transporter.sendMail({
+                from: '"302 Properties" <info@cloudpress.host>',
+                to: details[0].tenant_email,
+                subject: "Lease End Reminder - 302 Properties",
+                html: `     
                       <p>Hello ${details[0].tenant_firstName} ${details[0].tenant_lastName},</p>
                 
-                      <p>We are pleased to inform you that your lease will end on ${details[0].end_date}.</p>
+                      <p>We are pleased to inform you that your lease will end on ${details[0].leaseData[0].end_date}.</p>
 
                       <p>Thank you for choosing 302 Properties. If you have any further questions or concerns, feel free to contact our customer support.</p>
                 
                       <p>Best regards,<br>
                       The 302 Properties Team</p>
                     `,
-                  });
-                }
-              }
+              });
             }
           }
         }
-      
-    
-      await Cronjobs.updateOne(
-        { _id: cronjobs[0]._id },
-        { isCronjobRunning: false }
-      );
+      }
+    }
 
-      console.log("cronjob updated to false");
-    
+    await Cronjobs.updateOne(
+      { _id: cronjobs[0]._id },
+      { isCronjobRunning: false }
+    );
+
+    console.log("cronjob updated to false");
 
     // await logToDatabase("Success", `Rent Late Fee`);
   } catch (error) {
@@ -822,7 +952,5 @@ cron.schedule("14 17 * * *", async () => {
     );
   }
 });
-
-
 
 module.exports = router;

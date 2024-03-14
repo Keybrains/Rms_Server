@@ -13,6 +13,17 @@ const crypto = require("crypto");
 var emailService = require("./emailService");
 const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
 const Plans = require("../../../modals/superadmin/Plans");
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.socketlabs.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "server39897",
+    pass: "c9J3Wwm5N4Bj",
+  },
+});
 
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
@@ -28,6 +39,30 @@ const decrypt = (text) => {
   decrypted += decipher.final("utf-8");
   return decrypted;
 };
+
+// const encryption = (text) => {
+//   const algorithm = 'aes-256-cbc';
+//   const key = 'mansi'; // Your secret key
+//   const iv = crypto.randomBytes(16); // Generate a random IV (Initialization Vector)
+
+//   const cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+//   let encrypted = cipher.update(text, 'utf-8', 'hex');
+//   encrypted += cipher.final('hex');
+//   return {
+//     iv: iv.toString('hex'), // Store the IV along with the encrypted data
+//     encryptedData: encrypted,
+//   };
+// };
+
+// const decryption = (text, iv) => {
+//   const algorithm = 'aes-256-cbc';
+//   const key = 'mansi'; // Your secret key
+
+//   const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), Buffer.from(iv, 'hex'));
+//   let decrypted = decipher.update(text, 'hex', 'utf-8');
+//   decrypted += decipher.final('utf-8');
+//   return decrypted;
+// };
 
 // ================= Super Admin =================================
 
@@ -128,6 +163,140 @@ router.post("/search", async (req, res) => {
     });
   }
 });
+
+// ============== Reset Password ==================================
+// const tokenExpirationMap = new Map();
+
+// router.post("/passwordmail", async (req, res) => {
+//   try {
+//     const { tenant_email } = req.body;
+//     console.log("object",tenant_email)
+//     const encryptedEmail = encryption(tenant_email);
+
+//     console.log("object",encryptedEmail)
+//     const token = encryptedEmail;
+
+//     const expirationTime = 60 * 60 * 1000; // One hour in milliseconds
+
+//     // Store the expiration time along with the token
+//     const expirationTimestamp = Date.now() + expirationTime;
+//     tokenExpirationMap.set(token, expirationTimestamp);
+
+//     const info = await transporter.sendMail({
+//       from: '"302 Properties" <info@cloudpress.host>',
+//       to: tenant_email,
+//       subject: "Welcome to your new resident center with 302 Properties",
+//       html: `
+//         <p>Hello Sir/Ma'am,</p>
+
+//         <p>Change your password now:</p>
+//         <p><a href="${
+//           `https://saas.cloudrentalmanager.com/auth/changepassword?token=` +
+//           token
+//         }" style="text-decoration: none;">Reset Password Link</a></p>
+        
+//         <p>Best regards,<br>
+//         The 302 Properties Team</p>
+//     `,
+//     });
+
+//     res.json({
+//       statusCode: 200,
+//       data: info,
+//       message: "Send Mail Successfully",
+//     });
+
+//     // Optionally, you can schedule a cleanup task to remove expired tokens from the map
+//     scheduleTokenCleanup();
+//   } catch (error) {
+//     res.json({
+//       statusCode: false,
+//       message: error.message,
+//     });
+//   }
+// });
+
+// function scheduleTokenCleanup() {
+//   setInterval(() => {
+//     const currentTimestamp = Date.now();
+
+//     for (const [token, expirationTimestamp] of tokenExpirationMap.entries()) {
+//       if (currentTimestamp > expirationTimestamp) {
+//         tokenExpirationMap.delete(token);
+//         console.log(
+//           `Token generated for email: ${decrypt(token)}, Expiration: ${new Date(
+//             expirationTimestamp
+//           )}`
+//         );
+//       }
+//     }
+//   }, 15 * 60 * 1000);
+// }
+
+// router.get("/check_token_status/:token", (req, res) => {
+//   const { token } = req.params;
+//   const expirationTimestamp = tokenExpirationMap.get(token);
+
+//   if (expirationTimestamp && Date.now() < expirationTimestamp) {
+//     res.json({ expired: false });
+//   } else {
+//     res.json({ expired: true });
+//   }
+// });
+
+// router.put("/reset_password/:mail", async (req, res) => {
+//   try {
+//     const encryptmail = req.params.mail;
+//     const email = decrypt(encryptmail);
+
+//     // Check if the token is still valid
+//     if (!isTokenValid(email)) {
+//       return res.json({
+//         statusCode: 401,
+//         message: "Token expired. Please request a new password reset email.",
+//       });
+//     }
+
+//     const updateData = req.body;
+//     const result = await Tenants.findOneAndUpdate(
+//       { tenant_email: email },
+//       updateData,
+//       { new: true }
+//     );
+
+//     if (result) {
+//       // Password changed successfully, remove the token from the map
+//       tokenExpirationMap.delete(encrypt(email));
+//       return res.json({
+//         statusCode: 200,
+//         data: result,
+//         message: "Password Updated Successfully",
+//       });
+//     } else {
+//       return res.json({
+//         statusCode: 404,
+//         message: "No matching record found for the provided email",
+//       });
+//     }
+//   } catch (err) {
+//     return res.json({
+//       statusCode: 500,
+//       message: err.message,
+//     });
+//   }
+// });
+
+// function isTokenValid(email) {
+//   const token = encrypt(email);
+//   const expirationTimestamp = tokenExpirationMap.get(token);
+//   console.log(
+//     `Token: ${token}, Expiration: ${new Date(
+//       expirationTimestamp
+//     )}, Current: ${new Date()}`
+//   );
+
+//   return expirationTimestamp && Date.now() < expirationTimestamp;
+// }
 
 // ============== Admin ==================================
 
@@ -275,7 +444,6 @@ router.get("/tenants/:admin_id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 router.get("/get_tenant/:tenant_id", async (req, res) => {
   const tenant_id = req.params.tenant_id;
@@ -492,48 +660,6 @@ router.post("/login", async (req, res) => {
     });
   }
 });
-
-// router.get("/tenant_profile/:tenant_id", async (req, res) => {
-//   try {
-//     const tenant_id = req.params.tenant_id;
-
-//     const tenantData = await Tenant.findOne({ tenant_id: tenant_id });
-
-//     if (!tenantData) {
-//       return res.status(201).json({
-//         statusCode: 201,
-//         message: "Tenant not found",
-//       });
-//     }
-
-//     const data = {};
-//     const leaseData = await Lease.find({ tenant_id: tenant_id });
-
-//     data.tenantData = tenantData;
-//     data.leaseData = [];
-//     for (let i = 0; i < leaseData.length; i++) {
-//       const rental_id = leaseData[i].rental_id;
-
-//       const rentalData = await Rentals.findOne({ rental_id: rental_id });
-
-//       data.leaseData.push({
-//         lease: leaseData[i],
-//         rental: rentalData,
-//       });
-//     }
-
-//     res.json({
-//       statusCode: 200,
-//       data: data,
-//       message: "Read All Request",
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       statusCode: 500,
-//       message: error.message,
-//     });
-//   }
-// });
 
 router.get("/tenant_profile/:tenant_id", async (req, res) => {
   try {
