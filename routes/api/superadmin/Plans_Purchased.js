@@ -40,6 +40,16 @@ router.post("/purchase", async (req, res) => {
       };
 
       await Notification.create(notification);
+
+      const freePlan = await Plans.findOne({ plan_name: "Free Plan" });
+      const update = await Plans_Purchased.findOneAndUpdate(
+        {
+          admin_id: req.body.admin_id,
+          plan_id: freePlan.plan_id,
+        },
+        { $set: { is_active: false } }
+      );
+      console.log(update);
       res.json({
         statusCode: 200,
         data: data,
