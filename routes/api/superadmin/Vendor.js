@@ -218,7 +218,7 @@ router.post("/vendor", async (req, res) => {
   try {
     console.log(req.body.admin_id);
     const externalApiResponse = await axios.get(
-      `http://localhost:4000/api/plans/planlimitations/vendor/${req.body.admin_id}`
+      `https://saas.cloudrentalmanager.com/api/plans/planlimitations/vendor/${req.body.admin_id}`
     );
     console.log(externalApiResponse);
     if (externalApiResponse.status === 201) {
