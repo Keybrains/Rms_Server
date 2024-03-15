@@ -319,6 +319,7 @@ router.get("/get_tenant/:tenant_id", async (req, res) => {
 
 router.post("/tenants", async (req, res) => {
   const tenantData = req.body;
+  console.log("object")
   try {
     const externalApiResponse = await axios.get(
       `https://saas.cloudrentalmanager.com/api/plans/planlimitations/tenant/${tenantData.admin_id}`
