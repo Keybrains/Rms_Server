@@ -252,7 +252,13 @@ router.post("/login", async (req, res) => {
         .json({ statusCode: 201, message: "User doesn't exist" });
     }
 
-    // Compare the encrypted password sent from the scraper with the hashed password stored in the database
+    if (user.status === "deactivate") {
+      return res.status(200).json({
+        statusCode: 204,
+        message: "Account is deactivated. Please contact support.",
+      });
+    }
+
     const isMatch = decrypt(user.password);
     console.log(isMatch);
     if (req.body.password !== isMatch) {
@@ -359,6 +365,10 @@ router.get("/admin", async (req, res) => {
     var pageNumber = parseInt(req.query.pageNumber) || 0;
 
     // Fetch admins with pagination
+    var admins = await AdminRegister.find({
+      isAdmin_delete: false,
+      roll: "admin",
+    })
     var admins = await AdminRegister.find({
       isAdmin_delete: false,
       roll: "admin",
@@ -697,6 +707,43 @@ router.get("/superadmin_count", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.put("/togglestatus/:adminId", async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { status } = req.body;
+
+    if (!["activate", "deactivate"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    const admin = await AdminRegister.findOne({ admin_id: adminId });
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+
+    admin.status = status === "activate" ? "activate" : "deactivate";
+    await admin.save();
+
+    res.json({
+      success: true,
+      message: `Admin status updated to ${status}`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 });
 

@@ -16,6 +16,10 @@ const registerSchema = new Schema({
   isAdmin_delete: { type: Boolean, default: false },
   is_addby_superdmin: { type: Boolean, default: false },
   role: { type: String },
+  status: {
+    type: String,
+    default: "activate",
+  },
 });
 
 module.exports = mongoose.model("admin-register", registerSchema);
