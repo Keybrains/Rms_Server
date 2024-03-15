@@ -19,6 +19,8 @@ const crypto = require("crypto");
 const Plans = require("../../../modals/superadmin/Plans");
 const Vendor = require("../../../modals/superadmin/Vendor");
 const { default: axios } = require("axios");
+const Admin_Register = require("../../../modals/superadmin/Admin_Register");
+
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
   let encrypted = cipher.update(text, "utf-8", "hex");
@@ -357,7 +359,10 @@ router.get("/admin", async (req, res) => {
     var pageNumber = parseInt(req.query.pageNumber) || 0;
 
     // Fetch admins with pagination
-    var admins = await AdminRegister.find({ isAdmin_delete: false, roll: "admin" })
+    var admins = await AdminRegister.find({
+      isAdmin_delete: false,
+      roll: "admin",
+    })
       .sort({ createdAt: -1 })
       .skip(pageSize * pageNumber)
       .limit(pageSize)
@@ -366,13 +371,20 @@ router.get("/admin", async (req, res) => {
     // Fetch plan details for each admin
     const plansDetailsPromises = admins.map(async (admin) => {
       // Find the plan purchased by the admin
-      const planPurchased = await Plans_Purchased.findOne({ admin_id: admin.admin_id }).lean();
+      const planPurchased = await Plans_Purchased.findOne({
+        admin_id: admin.admin_id,
+      }).lean();
       if (!planPurchased) {
-        return { ...admin, planName: 'No Plan Found' };
+        return { ...admin, planName: "No Plan Found" };
       }
       // Using the plan_id from the plan purchased to find the plan details
-      const planDetails = await Plans.findOne({ plan_id: planPurchased.plan_id }).lean();
-      return { ...admin, planName: planDetails ? planDetails.plan_name : 'Unknown Plan' };
+      const planDetails = await Plans.findOne({
+        plan_id: planPurchased.plan_id,
+      }).lean();
+      return {
+        ...admin,
+        planName: planDetails ? planDetails.plan_name : "Unknown Plan",
+      };
     });
 
     const adminsDetailsWithPlans = await Promise.all(plansDetailsPromises);
@@ -687,5 +699,184 @@ router.get("/superadmin_count", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
+// ============================ Reset Password ==================================
+const tokenExpirationMap = new Map();
+
+router.post("/passwordmail", async (req, res) => {
+  try {
+    const { tenant_email } = req.body;
+    console.log("object", tenant_email);
+    const encryptedEmail = encrypt(tenant_email);
+
+    console.log("object", encryptedEmail);
+    const token = encryptedEmail;
+
+    const expirationTime = 60 * 60 * 1000; // One hour in milliseconds
+
+    // Store the expiration time along with the token
+    const expirationTimestamp = Date.now() + expirationTime;
+    tokenExpirationMap.set(token, expirationTimestamp);
+
+    const subject = "Welcome to your new resident center with 302 Properties";
+
+    const text = `
+    <p>Hello Sir/Ma'am,</p>
+
+        <p>Change your password now:</p>
+        <p><a href="${
+          `https://saas.cloudrentalmanager.com/auth/changepassword?token=` + token
+        }" style="text-decoration: none;">Reset Password Link</a></p>
+        
+        <p>Best regards,<br>
+        The 302 Properties Team</p>
+    `;
+
+    // Send email with login credentials
+    await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
+
+    res.json({
+      statusCode: 200,
+      data: info,
+      message: "Send Mail Successfully",
+    });
+
+    // Optionally, you can schedule a cleanup task to remove expired tokens from the map
+    scheduleTokenCleanup();
+  } catch (error) {
+    res.json({
+      statusCode: false,
+      message: error.message,
+    });
+  }
+});
+
+function scheduleTokenCleanup() {
+  setInterval(() => {
+    const currentTimestamp = Date.now();
+
+    for (const [token, expirationTimestamp] of tokenExpirationMap.entries()) {
+      if (currentTimestamp > expirationTimestamp) {
+        tokenExpirationMap.delete(token);
+        console.log(
+          `Token generated for email: ${decrypt(token)}, Expiration: ${new Date(
+            expirationTimestamp
+          )}`
+        );
+      }
+    }
+  }, 15 * 60 * 1000);
+}
+
+router.get("/check_token_status/:token", (req, res) => {
+  const { token } = req.params;
+  const expirationTimestamp = tokenExpirationMap.get(token);
+
+  if (expirationTimestamp && Date.now() < expirationTimestamp) {
+    res.json({ expired: false });
+  } else {
+    res.json({ expired: true });
+  }
+});
+
+router.put("/reset_password/:mail", async (req, res) => {
+  try {
+    const encryptmail = req.params.mail;
+    const email = decrypt(encryptmail);
+
+    // Check if the token is still valid
+    if (!isTokenValid(email)) {
+      return res.json({
+        statusCode: 401,
+        message: "Token expired. Please request a new password reset email.",
+      });
+    }
+
+    const newPassword = req.body.password;
+    if (!newPassword) {
+      return res.status(400).json({
+        message: "New password is required.",
+      });
+    }
+
+    const hashConvert = encrypt(newPassword);
+    const updateData = { password: hashConvert };
+
+    let result = null;
+    let collection = null;
+    let admin = null;
+
+    // Check AdminRegister collection first
+    result = await AdminRegister.findOneAndUpdate(
+      { email: email },
+      { password: updateData.password },
+      { new: true }
+    );
+
+    if (result) {
+      collection = 'admin-register';
+    } else {
+      // Define an array of collections to check after AdminRegister
+      const collections = [Tenant, Vendor, StaffMember];
+
+      // Iterate through the collections
+      for (const Collection of collections) {
+        result = await Collection.findOneAndUpdate(
+          { [`${Collection.modelName.toLowerCase()}_email`]: email },
+          {
+            $set: {
+              [`${Collection.modelName.toLowerCase()}_password`]: updateData.password,
+            },
+          },
+          { new: true }
+        );
+        if (result) {
+          console.log(result);
+          collection = Collection.modelName;
+          break;
+        }
+      }
+    }
+
+    if (result) {
+      // Password changed successfully, remove the token from the map
+      tokenExpirationMap.delete(encrypt(email));
+
+      let url;
+      if (collection === "admin-register") {
+        url = "/auth/login";
+      } else {
+        const adminData = await Admin_Register.findOne({ admin_id: result.admin_id });
+        url = `/auth/${adminData.company_name}/${collection}/login`;
+      }
+
+      return res.status(200).json({
+        data: result,
+        url,
+        message: `Password Updated Successfully for ${collection}`,
+      });
+    } else {
+      return res.status(404).json({
+        message: "No matching record found for the provided email in any collection",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+});
+
+function isTokenValid(email) {
+  const token = encrypt(email);
+  const expirationTimestamp = tokenExpirationMap.get(token);
+  console.log(
+    `Token: ${token}, Expiration: ${new Date(
+      expirationTimestamp
+    )}, Current: ${new Date()}`
+  );
+
+  return expirationTimestamp && Date.now() < expirationTimestamp;
+}
 
 module.exports = router;

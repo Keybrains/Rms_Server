@@ -40,30 +40,6 @@ const decrypt = (text) => {
   return decrypted;
 };
 
-// const encryption = (text) => {
-//   const algorithm = 'aes-256-cbc';
-//   const key = 'mansi'; // Your secret key
-//   const iv = crypto.randomBytes(16); // Generate a random IV (Initialization Vector)
-
-//   const cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
-//   let encrypted = cipher.update(text, 'utf-8', 'hex');
-//   encrypted += cipher.final('hex');
-//   return {
-//     iv: iv.toString('hex'), // Store the IV along with the encrypted data
-//     encryptedData: encrypted,
-//   };
-// };
-
-// const decryption = (text, iv) => {
-//   const algorithm = 'aes-256-cbc';
-//   const key = 'mansi'; // Your secret key
-
-//   const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), Buffer.from(iv, 'hex'));
-//   let decrypted = decipher.update(text, 'hex', 'utf-8');
-//   decrypted += decipher.final('utf-8');
-//   return decrypted;
-// };
-
 // ================= Super Admin =================================
 
 router.get("/tenant/get/:admin_id", async (req, res) => {
@@ -164,141 +140,7 @@ router.post("/search", async (req, res) => {
   }
 });
 
-// ============== Reset Password ==================================
-// const tokenExpirationMap = new Map();
-
-// router.post("/passwordmail", async (req, res) => {
-//   try {
-//     const { tenant_email } = req.body;
-//     console.log("object",tenant_email)
-//     const encryptedEmail = encryption(tenant_email);
-
-//     console.log("object",encryptedEmail)
-//     const token = encryptedEmail;
-
-//     const expirationTime = 60 * 60 * 1000; // One hour in milliseconds
-
-//     // Store the expiration time along with the token
-//     const expirationTimestamp = Date.now() + expirationTime;
-//     tokenExpirationMap.set(token, expirationTimestamp);
-
-//     const info = await transporter.sendMail({
-//       from: '"302 Properties" <info@cloudpress.host>',
-//       to: tenant_email,
-//       subject: "Welcome to your new resident center with 302 Properties",
-//       html: `
-//         <p>Hello Sir/Ma'am,</p>
-
-//         <p>Change your password now:</p>
-//         <p><a href="${
-//           `https://saas.cloudrentalmanager.com/auth/changepassword?token=` +
-//           token
-//         }" style="text-decoration: none;">Reset Password Link</a></p>
-        
-//         <p>Best regards,<br>
-//         The 302 Properties Team</p>
-//     `,
-//     });
-
-//     res.json({
-//       statusCode: 200,
-//       data: info,
-//       message: "Send Mail Successfully",
-//     });
-
-//     // Optionally, you can schedule a cleanup task to remove expired tokens from the map
-//     scheduleTokenCleanup();
-//   } catch (error) {
-//     res.json({
-//       statusCode: false,
-//       message: error.message,
-//     });
-//   }
-// });
-
-// function scheduleTokenCleanup() {
-//   setInterval(() => {
-//     const currentTimestamp = Date.now();
-
-//     for (const [token, expirationTimestamp] of tokenExpirationMap.entries()) {
-//       if (currentTimestamp > expirationTimestamp) {
-//         tokenExpirationMap.delete(token);
-//         console.log(
-//           `Token generated for email: ${decrypt(token)}, Expiration: ${new Date(
-//             expirationTimestamp
-//           )}`
-//         );
-//       }
-//     }
-//   }, 15 * 60 * 1000);
-// }
-
-// router.get("/check_token_status/:token", (req, res) => {
-//   const { token } = req.params;
-//   const expirationTimestamp = tokenExpirationMap.get(token);
-
-//   if (expirationTimestamp && Date.now() < expirationTimestamp) {
-//     res.json({ expired: false });
-//   } else {
-//     res.json({ expired: true });
-//   }
-// });
-
-// router.put("/reset_password/:mail", async (req, res) => {
-//   try {
-//     const encryptmail = req.params.mail;
-//     const email = decrypt(encryptmail);
-
-//     // Check if the token is still valid
-//     if (!isTokenValid(email)) {
-//       return res.json({
-//         statusCode: 401,
-//         message: "Token expired. Please request a new password reset email.",
-//       });
-//     }
-
-//     const updateData = req.body;
-//     const result = await Tenants.findOneAndUpdate(
-//       { tenant_email: email },
-//       updateData,
-//       { new: true }
-//     );
-
-//     if (result) {
-//       // Password changed successfully, remove the token from the map
-//       tokenExpirationMap.delete(encrypt(email));
-//       return res.json({
-//         statusCode: 200,
-//         data: result,
-//         message: "Password Updated Successfully",
-//       });
-//     } else {
-//       return res.json({
-//         statusCode: 404,
-//         message: "No matching record found for the provided email",
-//       });
-//     }
-//   } catch (err) {
-//     return res.json({
-//       statusCode: 500,
-//       message: err.message,
-//     });
-//   }
-// });
-
-// function isTokenValid(email) {
-//   const token = encrypt(email);
-//   const expirationTimestamp = tokenExpirationMap.get(token);
-//   console.log(
-//     `Token: ${token}, Expiration: ${new Date(
-//       expirationTimestamp
-//     )}, Current: ${new Date()}`
-//   );
-
-//   return expirationTimestamp && Date.now() < expirationTimestamp;
-// }
-
-// ============== Admin ==================================
+//========================== Admin ==================================
 
 router.get("/dashboard_workorder/:tenant_id/:admin_id", async (req, res) => {
   try {
@@ -416,8 +258,14 @@ router.get("/tenants/:admin_id", async (req, res) => {
     if (planPurchase) {
       const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
       if (plan && plan.plan_name === "Free Plan") {
-        const adminTenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
-        const trialTenants = await Tenant.find({ admin_id: "is_trial", is_delete: false });
+        const adminTenants = await Tenant.find({
+          admin_id: admin_id,
+          is_delete: false,
+        });
+        const trialTenants = await Tenant.find({
+          admin_id: "is_trial",
+          is_delete: false,
+        });
         tenants = [...adminTenants, ...trialTenants];
       } else {
         tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
@@ -432,7 +280,9 @@ router.get("/tenants/:admin_id", async (req, res) => {
     }
 
     if (tenants.length === 0) {
-      return res.status(201).json({ message: "No tenants found for the given admin" });
+      return res
+        .status(201)
+        .json({ message: "No tenants found for the given admin" });
     }
 
     res.json({
@@ -511,8 +361,7 @@ router.post("/tenants", async (req, res) => {
         <p>Hello,</p>
         <p>Here are your credentials for tenant login:</p>
         <p>Email: ${req.body.tenant_email}</p>
-        <p>Password: ${req.body.tenant_password}</p>
-        <p>Login URL: https://saas.cloudrentalmanager.com/auth/${adminData.company_name}/tenants/login</p>
+        <p>Login URL: https://saas.cloudrentalmanager.com/auth/createpassword</p>
       `;
 
       // Send email with login credentials
