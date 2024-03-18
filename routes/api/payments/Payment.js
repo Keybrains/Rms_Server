@@ -235,7 +235,7 @@ router.post("/tenantpayment", async (req, res) => {
           value: "Payment Received",
         },
         notification_send_to: [{ admin_id: req.body.admin_id }],
-        notification_read: { isRead: false },
+        notification_read: { is_admin_read: false },
         createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
         updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
       };

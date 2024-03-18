@@ -332,4 +332,60 @@ router.put("/superadmin_notification/:notification_id", async (req, res) => {
     });
   }
 });
+
+router.get("/admin/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+    console.log(`Admin ID: ${admin_id}`);
+
+    var data = await Notification.aggregate([
+      {
+        $match: {
+          "notification_send_to.admin_id": admin_id,
+          "notification_read.is_admin_read": false,
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
+    console.log(`Data: ${JSON.stringify(data)}`);
+
+    res.json({
+      statusCode: 200,
+      data: data,
+      message: "Read Notification",
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/admin_notification/:notification_id", async (req, res) => {
+  try {
+    const notification_id = req.params.notification_id;
+    const updateNotification = await Notification.findOneAndUpdate(
+      { notification_id: notification_id },
+      { "notification_read.is_admin_read": true },
+      { new: true }
+    );
+
+    res.json({
+      data: updateNotification,
+      statusCode: 200,
+      message: "Updated is_admin_read to true",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;
