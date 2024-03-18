@@ -14,15 +14,37 @@ const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
 const Plans = require("../../../modals/superadmin/Plans");
 
 router.post("/work-order", async (req, res) => {
+  console.log("Posted data:", req.body); // Log the entire request body
   try {
     const timestamp = Date.now();
     const workId = `${timestamp}`;
-    req.body.workOrder["workOrder_id"] = workId;
-    req.body.workOrder["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
-    var workOrder = await WorkOrder.create(req.body.workOrder);
+    const workOrderData = req.body.workOrder;
+    console.log("Work Order Data:", workOrderData);
+    workOrderData["workOrder_id"] = workId;
+    workOrderData["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+    workOrderData["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    const staffMember = await StaffMember.findOne({
+      staffmember_id: workOrderData?.staffmember_id,
+    });
+
+    const updateData = {
+      status: workOrderData?.status,
+      date: workOrderData?.date || moment().format("YYYY-MM-DD"),
+      staffmember_name: staffMember?.staffmember_name,
+      staffmember_id: workOrderData?.staffmember_id,
+      statusUpdatedBy: workOrderData?.statusUpdatedBy,
+      createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+    };
+
+    if (!workOrderData.workorder_updates) {
+      workOrderData.workorder_updates = [];
+    }
+    workOrderData.workorder_updates.push(updateData);
+    console.log("Final WorkOrder object to be created:", workOrderData);
+    var workOrder = await WorkOrder.create(workOrderData);
     const parts = [];
-    
+
     if (req.body.parts) {
       for (const part of req.body.parts) {
         const timestampFotParts = Date.now();
@@ -43,7 +65,7 @@ router.post("/work-order", async (req, res) => {
       rental_id: workOrder.rental_id,
       unit_id: workOrder.unit_id,
       notification_title: "Workorder Created",
-      notification_detail: "A new Workorder has been created and assinged",
+      notification_detail: "A new Workorder has been created",
 
       notification_type: {
         type: "Create Workorder",
@@ -61,8 +83,7 @@ router.post("/work-order", async (req, res) => {
             is_vendor_read: false,
           }
         : {
-            is_staffmember_read: false,
-            is_vendor_read: false,
+            is_admin_read: false,
           },
 
       // ----------
@@ -76,9 +97,7 @@ router.post("/work-order", async (req, res) => {
           ]
         : [
             {
-              tenant_id: "",
-              staffmember_id: workOrder.staffmember_id,
-              vendor_id: workOrder.vendor_id,
+              admin_id: workOrder.admin_id,
             },
           ],
       createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
@@ -176,17 +195,26 @@ router.get("/work-orders/:admin_id", async (req, res) => {
 
     if (planPurchase) {
       const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
-      
+
       if (plan && plan.plan_name === "Free Plan") {
-        const adminWorkOrders = await WorkOrder.find(workOrdersCriteria).sort({ createdAt: -1 });
-        const trialWorkOrders = await WorkOrder.find({ admin_id: "is_trial", is_delete: false }).sort({ createdAt: -1 });
-        
+        const adminWorkOrders = await WorkOrder.find(workOrdersCriteria).sort({
+          createdAt: -1,
+        });
+        const trialWorkOrders = await WorkOrder.find({
+          admin_id: "is_trial",
+          is_delete: false,
+        }).sort({ createdAt: -1 });
+
         workOrdersData = [...adminWorkOrders, ...trialWorkOrders];
       } else {
-        workOrdersData = await WorkOrder.find(workOrdersCriteria).sort({ createdAt: -1 });
+        workOrdersData = await WorkOrder.find(workOrdersCriteria).sort({
+          createdAt: -1,
+        });
       }
     } else {
-      workOrdersData = await WorkOrder.find(workOrdersCriteria).sort({ createdAt: -1 });
+      workOrdersData = await WorkOrder.find(workOrdersCriteria).sort({
+        createdAt: -1,
+      });
     }
 
     if (workOrdersData.length === 0) {
@@ -232,7 +260,6 @@ router.get("/work-orders/:admin_id", async (req, res) => {
     });
   }
 });
-
 
 // router.put("/work-order/:workOrder_id", async (req, res) => {
 //   try {
@@ -282,23 +309,36 @@ router.get("/work-orders/:admin_id", async (req, res) => {
 router.put("/work-order/:workOrder_id", async (req, res) => {
   try {
     const { workOrder_id } = req.params;
-    const { status, date, staffmember_id, updated_by } = req.body.workOrder;
+    if (!req.body.workOrder) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "workOrder object is required in the request body.",
+      });
+    }
+    const { status, date, staffmember_name, statusUpdatedBy, staffmember_id , is_vendor } =
+      req.body.workOrder;
 
     const updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
+    const updateObj = {
+      ...req.body.workOrder,
+      updatedAt,
+    };
+
+    if (staffmember_id) {
+      updateObj.staffmember_id = staffmember_id;
+    }
+
     const result = await WorkOrder.findOneAndUpdate(
-      { workOrder_id: workOrder_id },
+      { workOrder_id },
       {
-        $set: {
-          ...req.body.workOrder,
-          updatedAt,
-        },
+        $set: updateObj,
         $push: {
           workorder_updates: {
             status,
             date,
-            staffmember_id,
-            updated_by,
+            staffmember_name,
+            statusUpdatedBy,
             updatedAt,
           },
         },
@@ -308,7 +348,8 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
 
     const parts = [];
 
-    for (const part of req.body.parts) {
+    for (const part of req.body.parts || []) {
+      // Added fallback to empty array
       if (part?.parts_id) {
         part["updatedAt"] = updatedAt;
         const partsData = await Parts.findOneAndUpdate(
@@ -318,17 +359,37 @@ router.put("/work-order/:workOrder_id", async (req, res) => {
         );
         parts.push(partsData);
       } else {
-        const timestampFotParts = Date.now();
-        const partId = `${timestampFotParts}`;
+        const timestampForParts = Date.now();
+        const partId = `${timestampForParts}`;
         part["parts_id"] = partId;
-        part["workOrder_id"] = result.workOrder_id;
+        part["workOrder_id"] = workOrder_id;
         part["createdAt"] = updatedAt;
         part["updatedAt"] = updatedAt;
         const partsData = await Parts.create(part);
         parts.push(partsData);
       }
     }
-
+    const notificationTimestamp = Date.now();
+    const notificationDetailMessage = `Parts updated for Work Order. Please review the changes.`;
+    if (is_vendor) {
+      const notificationData = {
+        notification_id: notificationTimestamp,
+        admin_id: req.body.workOrder.admin_id,
+        notification_title: "Vendor added parts and labors",
+        notification_detail: notificationDetailMessage,
+        notification_type: {
+          type: "Added Parts And Labors",
+          workorder_id: workOrder_id,
+        },
+        notification_send_to: [{ admin_id: req.body.workOrder.admin_id }],
+        notification_read: { is_admin_read: false },
+        createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+        updatedAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+        is_vendor: true,
+        is_workorder:true,
+      };
+      await Notification.create(notificationData);
+    }
     if (result) {
       res.json({
         statusCode: 200,

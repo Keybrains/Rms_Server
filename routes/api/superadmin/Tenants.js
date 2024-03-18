@@ -14,7 +14,7 @@ var emailService = require("./emailService");
 const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
 const Plans = require("../../../modals/superadmin/Plans");
 const nodemailer = require("nodemailer");
-
+const { default: axios } = require("axios");
 const transporter = nodemailer.createTransport({
   host: "smtp.socketlabs.com",
   port: 587,
@@ -319,7 +319,6 @@ router.get("/get_tenant/:tenant_id", async (req, res) => {
 
 router.post("/tenants", async (req, res) => {
   const tenantData = req.body;
-  console.log("object")
   try {
     const externalApiResponse = await axios.get(
       `https://saas.cloudrentalmanager.com/api/plans/planlimitations/tenant/${tenantData.admin_id}`
@@ -357,16 +356,24 @@ router.post("/tenants", async (req, res) => {
           .json({ message: "Recipient email not provided" });
       }
 
-      const subject = "Tenant Login Credentials";
-      const text = `
-        <p>Hello,</p>
-        <p>Here are your credentials for tenant login:</p>
-        <p>Email: ${req.body.tenant_email}</p>
-        <p>Login URL: https://saas.cloudrentalmanager.com/auth/createpassword</p>
-      `;
+      const ApiResponse = await axios.post(
+        `https://saas.cloudrentalmanager.com/api/admin/passwordmail`,{
+          tenant_email: req.body.tenant_email
+        }
+      );
+      if (ApiResponse.status === 200) {
+        console.log('Password mail sent successfully');
 
-      // Send email with login credentials
-      await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
+      // const subject = "Tenant Login Credentials";
+      // const text = `
+      //   <p>Hello,</p>
+      //   <p>Here are your credentials for tenant login:</p>
+      //   <p>Email: ${req.body.tenant_email}</p>
+      //   <p>Login URL: http://localhost:3000/auth/createpassword</p>
+      // `;
+
+      // // Send email with login credentials
+      // await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
 
       let hashConvert = encrypt(req.body.tenant_password);
       req.body.tenant_password = hashConvert;
@@ -378,6 +385,7 @@ router.post("/tenants", async (req, res) => {
         message: "Add Tenant Successfully",
       });
     }
+  }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
