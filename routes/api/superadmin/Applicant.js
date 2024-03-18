@@ -117,16 +117,19 @@ router.get("/applicant/:admin_id", async (req, res) => {
     }
 
     for (let i = 0; i < applicants.length; i++) {
-      const leaseData = await ApplicantLease.findOne({ applicant_id: applicants[i].applicant_id });
-      
+      const leaseData = await ApplicantLease.findOne({
+        applicant_id: applicants[i].applicant_id,
+      });
+
       if (leaseData) {
-        const rentalData = await Rentals.findOne({ rental_id: leaseData.rental_id });
+        const rentalData = await Rentals.findOne({
+          rental_id: leaseData.rental_id,
+        });
         const unitData = await Unit.findOne({ unit_id: leaseData.unit_id });
 
         applicants[i].rentalData = rentalData;
         applicants[i].unitData = unitData;
       } else {
-    
         applicants[i].rentalData = null;
         applicants[i].unitData = null;
       }
@@ -145,7 +148,6 @@ router.get("/applicant/:admin_id", async (req, res) => {
     });
   }
 });
-
 
 router.get("/applicant_lease/:admin_id", async (req, res) => {
   try {
@@ -676,9 +678,17 @@ router.get("/applicant_details/:id", async (req, res) => {
     });
 
     // Check if applicantDetails is null
-    if (!applicantDetails) {
+    if (!applicantData) {
       return res.json({
         statusCode: 404,
+        message: "Applicant details not found",
+      });
+    }
+
+    if (!applicantDetails) {
+      return res.json({
+        statusCode: 200,
+        data: applicantData,
         message: "Applicant details not found",
       });
     }
@@ -736,7 +746,7 @@ router.get("/limitation/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
     const applicantCount = await Applicant.count({ admin_id });
-    console.log('applicantCount', applicantCount)
+    console.log("applicantCount", applicantCount);
     const planPur = await Plans_Purchased.findOne({ admin_id });
     const planId = planPur.plan_id;
     const plan = await Plans.findOne({ plan_id: planId });
@@ -756,7 +766,9 @@ router.get("/limitation/:admin_id", async (req, res) => {
         applicantCount: applicantCount,
         applicantCountLimit: applicantCountLimit,
         message:
-          "Plan limitation is for " + applicantCountLimit + " applicant records",
+          "Plan limitation is for " +
+          applicantCountLimit +
+          " applicant records",
       });
     }
 
