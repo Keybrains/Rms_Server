@@ -368,7 +368,7 @@ router.get("/admin", async (req, res) => {
     var admins = await AdminRegister.find({
       isAdmin_delete: false,
       roll: "admin",
-    })
+    });
     var admins = await AdminRegister.find({
       isAdmin_delete: false,
       roll: "admin",
@@ -759,8 +759,7 @@ router.post("/passwordmail", async (req, res) => {
     console.log("object", encryptedEmail);
     const token = encryptedEmail;
 
-    const expirationTime = 60 * 60 * 1000; // One hour in milliseconds
-
+    const expirationTime = 60 * 60 * 1000;
     // Store the expiration time along with the token
     const expirationTimestamp = Date.now() + expirationTime;
     tokenExpirationMap.set(token, expirationTimestamp);
@@ -772,7 +771,8 @@ router.post("/passwordmail", async (req, res) => {
 
         <p>Change your password now:</p>
         <p><a href="${
-          `https://saas.cloudrentalmanager.com/auth/changepassword?token=` + token
+          `https://saas.cloudrentalmanager.com/auth/changepassword?token=` +
+          token
         }" style="text-decoration: none;">Reset Password Link</a></p>
         
         <p>Best regards,<br>
@@ -854,14 +854,17 @@ router.put("/reset_password/:mail", async (req, res) => {
     let admin = null;
 
     // Check AdminRegister collection first
-    result = await AdminRegister.findOneAndUpdate(
-      { email: email },
-      { password: updateData.password },
-      { new: true }
-    );
+    const adminData = await AdminRegister.findOne({ email, isAdmin_delete: false});
+    if (adminData) {
+      result = await AdminRegister.findOneAndUpdate(
+        { email: email, is_delete: false },
+        { password: updateData.password },
+        { new: true }
+      );
 
-    if (result) {
-      collection = 'admin-register';
+      if (result) {
+        collection = "admin-register";
+      }
     } else {
       // Define an array of collections to check after AdminRegister
       const collections = [Tenant, Vendor, StaffMember];
@@ -869,16 +872,17 @@ router.put("/reset_password/:mail", async (req, res) => {
       // Iterate through the collections
       for (const Collection of collections) {
         result = await Collection.findOneAndUpdate(
-          { [`${Collection.modelName.toLowerCase()}_email`]: email },
+          { [`${Collection.modelName.toLowerCase()}_email`]: email, is_delete: false},
           {
             $set: {
-              [`${Collection.modelName.toLowerCase()}_password`]: updateData.password,
+              [`${Collection.modelName.toLowerCase()}_password`]:
+                updateData.password,
             },
           },
           { new: true }
         );
         if (result) {
-          console.log(result);
+          console.log(result, "====");
           collection = Collection.modelName;
           break;
         }
@@ -893,7 +897,10 @@ router.put("/reset_password/:mail", async (req, res) => {
       if (collection === "admin-register") {
         url = "/auth/login";
       } else {
-        const adminData = await Admin_Register.findOne({ admin_id: result.admin_id });
+        const adminData = await Admin_Register.findOne({
+          admin_id: result.admin_id,
+          isAdmin_delete: false
+        });
         url = `/auth/${adminData.company_name}/${collection}/login`;
       }
 
@@ -904,7 +911,8 @@ router.put("/reset_password/:mail", async (req, res) => {
       });
     } else {
       return res.status(404).json({
-        message: "No matching record found for the provided email in any collection",
+        message:
+          "No matching record found for the provided email in any collection",
       });
     }
   } catch (err) {
