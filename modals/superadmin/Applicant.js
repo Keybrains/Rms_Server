@@ -15,6 +15,7 @@ const applicantSchema = new Schema({
   applicant_checkedChecklist: { type: Array },
   applicant_emailsend_date: { type: String },
   isMovedin: { type: Boolean, default: false },
+  is_delete: { type: Boolean, default: false },
   createdAt: { type: String },
   updatedAt: { type: String },
   applicant_NotesAndFile: {

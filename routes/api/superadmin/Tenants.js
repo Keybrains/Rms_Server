@@ -359,6 +359,7 @@ router.post("/tenants", async (req, res) => {
       const ApiResponse = await axios.post(
         `https://saas.cloudrentalmanager.com/api/admin/passwordmail`,{
           tenant_email: req.body.tenant_email
+          // name : tenantData.tenant_firstName + tenantData.tenant_lastName
         }
       );
       if (ApiResponse.status === 200) {
@@ -445,7 +446,7 @@ router.delete("/tenant/:tenant_id", async (req, res) => {
         { $set: { is_delete: true } }
       );
 
-      if (deletedTenant.modifiedCount === 1) {
+       if (deletedTenant.modifiedCount === 1) {
         return res.status(200).json({
           statusCode: 200,
           message: `Tenant deleted successfully.`,
