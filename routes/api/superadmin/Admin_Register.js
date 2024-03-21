@@ -769,7 +769,7 @@ router.post("/passwordmail", async (req, res) => {
     const text = `
     <p>Hello Sir/Ma'am,</p>
 
-        <p>Change your password now:</p>
+        <p>Reset your password now:</p>
         <p><a href="${
           `https://saas.cloudrentalmanager.com/auth/changepassword?token=` +
           token

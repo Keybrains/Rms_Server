@@ -56,6 +56,7 @@ var CronjobRoutes = require("./routes/api/superadmin/Cronjob.js");
 var PaymentRouter = require("./routes/api/payments/Payment.js");
 var SurchargeRouter = require("./routes/api/payments/Surcharge.js");
 var LateFeeRouter = require("./routes/api/payments/Latefee.js");
+var SecurityKeyRouter = require("./routes/api/payments/SecurityKey.js");
 var NmiPaymentRouter = require("./routes/api/payments/NMI-response.js");
 var CreditCardRouter = require("./routes/api/payments/CreditCard.js");
 
@@ -102,6 +103,7 @@ app.use('/api/cronjob', CronjobRoutes);
 app.use("/api/payment", PaymentRouter);
 app.use("/api/surcharge", SurchargeRouter);
 app.use("/api/latefee", LateFeeRouter);
+app.use("/api/nmi-keys", SecurityKeyRouter);
 app.use("/api/nmipayment", NmiPaymentRouter);
 app.use("/api/creditcard", CreditCardRouter);
 

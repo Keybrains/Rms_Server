@@ -254,6 +254,15 @@ router.post("/vendor", async (req, res) => {
         <p>Login URL: https://saas.cloudrentalmanager.com/auth/${adminData?.company_name}/vendor/login</p>
       `;
 
+      const ApiResponse = await axios.post(
+        `https://saas.cloudrentalmanager.com/api/admin/passwordmail`,{
+          tenant_email: req.body.vendor_email
+          // name : tenantData.tenant_firstName + tenantData.tenant_lastName
+        }
+      );
+      if (ApiResponse.status === 200) {
+        console.log('Password mail sent successfully');
+      }
       // Send email with login credentials
       await emailService.sendWelcomeEmail(req.body.vendor_email, subject, text);
       let hashConvert = encrypt(req.body.vendor_password);
@@ -312,7 +321,6 @@ router.get("/vendors/:admin_id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 router.get("/get_vendor/:vendor_id", async (req, res) => {
   const vendor_id = req.params.vendor_id;
@@ -436,6 +444,24 @@ router.get("/limitation/:admin_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/vendor_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const rentals = await Vendor.find({ admin_id, is_delete: false });
+    const count = rentals.length;
+    res.status(200).json({
+      statusCode: 200,
+      count: count,
+      message: "Vendor found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
   }
 });
 
