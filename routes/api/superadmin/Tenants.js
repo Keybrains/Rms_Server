@@ -131,31 +131,55 @@ router.post("/search", async (req, res) => {
 
 // ============== Admin ==================================
 
-router.get("/dashboard_workorder/:tenant_id/:admin_id", async (req, res) => {
+router.get("/dashboard_workorder/:tenant_id", async (req, res) => {
   try {
     const tenant_id = req.params.tenant_id;
-    const admin_id = req.params.admin_id;
 
-    const new_workorder = await WorkOrder.find({
-      tenant_id: tenant_id,
-      admin_id: admin_id,
-      status: "New",
-    })
-      .select("work_subject work_category workOrder_id date status")
-      .sort({ date: -1 });
+    const currentDate = new Date();
 
-    const currentDate = moment().format("YYYY-MM-DD");
-    const overdue_workorder = await WorkOrder.find({
-      tenant_id: tenant_id,
-      admin_id: admin_id,
-      status: { $ne: "Complete" },
-      date: { $lt: currentDate },
-    })
-      .select("work_subject work_category workOrder_id date status")
-      .sort({ date: -1 });
+    const leases = await Lease.find({
+      tenant_id,
+      $expr: {
+        $and: [
+          { $lte: [{ $toDate: "$start_date" }, currentDate] },
+          { $gte: [{ $toDate: "$end_date" }, currentDate] },
+        ],
+      },
+    });
+
+    const data = [];
+    for (const lease of leases) {
+      var work = await WorkOrder.find({
+        rental_id: lease.rental_id,
+        unit_id: lease.unit_id,
+        is_delete: false,
+      });
+      data.push(...work);
+    }
+
+    const uniqueIds = new Set();
+    const filteredData = data.filter((obj) => {
+      if (uniqueIds.has(obj.workOrder_id)) {
+        return false;
+      } else {
+        uniqueIds.add(obj.workOrder_id);
+        return true;
+      }
+    });
+
+    const total = filteredData.length;
+    const overdue_workorder = filteredData.filter((item) => {
+      return moment(currentDate).format("YYYY-MM-DD") > item.date;
+    }).length;
+
+    const new_workorder = filteredData.filter((item) => {
+      return moment(currentDate).format("YYYY-MM-DD") < item.date && item.status === "New";
+    }).length;
+
+    console.log(new_workorder, overdue_workorder, total);
 
     res.json({
-      data: { new_workorder, overdue_workorder },
+      data: { new_workorder, overdue_workorder, total },
       statusCode: 200,
       message: "Read Work-orders",
     });
@@ -758,6 +782,26 @@ router.get("/count/:tenant_id", async (req, res) => {
       tenant_id: tenant_id,
       is_delete: false,
     });
+    let currentActiveLease = null;
+
+    for (const lease of property_tenant) {
+      const existingStartDate = moment(lease.start_date).format("YYYY-MM-DD");
+      const existingEndDate = moment(lease.end_date).format("YYYY-MM-DD");
+      const currentDate = moment().format("YYYY-MM-DD");
+
+      if (currentDate >= existingStartDate && currentDate <= existingEndDate) {
+        currentActiveLease = lease;
+        break;
+      }
+    }
+
+    const charge = currentActiveLease.entry.find((item) => {
+      return item.charge_type === "Rent";
+    });
+
+    const rent = charge.amount;
+    const due_date = charge.date;
+    const end_date = currentActiveLease.end_date;
 
     const workorder_tenant = await WorkOrder.find({
       tenant_id: tenant_id,
@@ -765,8 +809,7 @@ router.get("/count/:tenant_id", async (req, res) => {
     });
 
     res.json({
-      property_tenant: property_tenant.length,
-      workorder_tenant: workorder_tenant.length,
+      data: { rent, due_date, end_date },
       statusCode: 200,
       message: "Read Tenant Dashboard count",
     });

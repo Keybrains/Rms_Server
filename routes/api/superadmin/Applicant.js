@@ -635,16 +635,29 @@ router.get("/applicant_details/:id", async (req, res) => {
     });
 
     // Check if applicantDetails is null
-    if (!applicantDetails) {
+    if (!applicantData) {
       return res.json({
         statusCode: 404,
         message: "Applicant details not found",
       });
     }
 
+    if (!applicantDetails) {
+      return res.json({
+        statusCode: 200,
+        data: {
+          applicant_firstName: applicantData.applicant_firstName,
+          applicant_lastName: applicantData.applicant_lastName,
+          applicant_email: applicantData.applicant_email,
+          applicant_phoneNumber: applicantData.applicant_phoneNumber,
+        },
+        message: "Applicant details not found",
+      });
+    }
+
     // Create response data
     const data = {
-      ...applicantDetails.toObject(), // Only access toObject if applicantDetails is not null
+      ...applicantDetails.toObject(),
       applicant_firstName: applicantData.applicant_firstName,
       applicant_lastName: applicantData.applicant_lastName,
       applicant_email: applicantData.applicant_email,
@@ -695,7 +708,7 @@ router.get("/limitation/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
     const applicantCount = await Applicant.count({ admin_id });
-    console.log('applicantCount', applicantCount)
+    console.log("applicantCount", applicantCount);
     const planPur = await Plans_Purchased.findOne({ admin_id });
     const planId = planPur.plan_id;
     const plan = await Plans.findOne({ plan_id: planId });
@@ -715,7 +728,9 @@ router.get("/limitation/:admin_id", async (req, res) => {
         applicantCount: applicantCount,
         applicantCountLimit: applicantCountLimit,
         message:
-          "Plan limitation is for " + applicantCountLimit + " applicant records",
+          "Plan limitation is for " +
+          applicantCountLimit +
+          " applicant records",
       });
     }
 
@@ -727,6 +742,24 @@ router.get("/limitation/:admin_id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/applicant_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const rentals = await Applicant.find({ admin_id, is_delete: false });
+    const count = rentals.length;
+    res.status(200).json({
+      statusCode: 200,
+      count: count,
+      message: "Applicant found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
   }
 });
 

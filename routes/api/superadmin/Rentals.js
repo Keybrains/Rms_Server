@@ -215,7 +215,9 @@ router.get("/rental-owners/:admin_id", async (req, res) => {
     let rentalOwners;
 
     if (!planPur) {
-      return res.status(404).json({ message: "No plan found for the given admin_id" });
+      return res
+        .status(404)
+        .json({ message: "No plan found for the given admin_id" });
     }
 
     const plan = await Plans.findOne({ plan_id: planPur.plan_id });
@@ -233,7 +235,9 @@ router.get("/rental-owners/:admin_id", async (req, res) => {
     }
 
     if (!rentalOwners || rentalOwners.length === 0) {
-      return res.status(404).json({ message: "No rental owners found for the given admin_id" });
+      return res
+        .status(404)
+        .json({ message: "No rental owners found for the given admin_id" });
     }
 
     res.status(200).json(rentalOwners);
@@ -242,7 +246,6 @@ router.get("/rental-owners/:admin_id", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 router.get("/rentals/:admin_id", async (req, res) => {
   try {
@@ -278,7 +281,7 @@ router.get("/rentals/:admin_id", async (req, res) => {
             admin_id: admin_id,
             is_delete: false,
           },
-        },  
+        },
       ]);
     }
 
@@ -311,6 +314,39 @@ router.get("/rentals/:admin_id", async (req, res) => {
   }
 });
 
+router.get("/dropdown_rentals/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+
+    var data = await Rentals.find({
+      admin_id: admin_id,
+      is_delete: false,
+    });
+
+    const filteredData = [];
+    const result = await Promise.all(
+      data.map(async (item) => {
+        const lease = await Leasing.findOne({ rental_id: item.rental_id });
+        if (lease) {
+          filteredData.push(item);
+        }
+      })
+    );
+
+    console.log(filteredData, "----------------==");
+
+    res.json({
+      statusCode: 200,
+      data: filteredData,
+      message: "Read All Rentals",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
 
 router.get("/rental_summary/:rental_id", async (req, res) => {
   try {

@@ -11,6 +11,7 @@ router.post("/purchase", async (req, res) => {
     const timestamp = Date.now();
     const uniqueId = `${timestamp}`;
     req.body["purchase_id"] = uniqueId;
+    req.body["is_active"] = true;
     req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
 

@@ -10,7 +10,7 @@ const StaffMember = require("../../../modals/superadmin/StaffMember");
 const Vendor = require("../../../modals/superadmin/Vendor");
 const Lease = require("../../../modals/superadmin/Leasing");
 const Notification = require("../../../modals/superadmin/Notification");
-  
+
 router.post("/work-order", async (req, res) => {
   try {
     const timestamp = Date.now();
@@ -20,7 +20,7 @@ router.post("/work-order", async (req, res) => {
     req.body.workOrder["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
     var workOrder = await WorkOrder.create(req.body.workOrder);
     const parts = [];
-    
+
     if (req.body.parts) {
       for (const part of req.body.parts) {
         const timestampFotParts = Date.now();
@@ -460,7 +460,17 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
       });
       data.push(...work);
     }
-    if (!data) {
+    const uniqueIds = new Set();
+    const filteredData = data.filter((obj) => {
+      if (uniqueIds.has(obj.workOrder_id)) {
+        return false;
+      } else {
+        uniqueIds.add(obj.workOrder_id);
+        return true;
+      }
+    });
+
+    if (!filteredData) {
       res.status(201).json({
         statusCode: 201,
         message: "No work orders found for the specified tenant.",
@@ -469,22 +479,15 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
 
     const return_data = [];
 
-    // Fetch client and property information for each item in data
-    console.log(data);
-    for (let i = 0; i < data.length; i++) {
-      const rental_id = data[i].rental_id;
-      const unit_id = data[i].unit_id;
-
-      // Fetch property information
-      const workorder_data = await WorkOrder.findOne({
-        rental_id: rental_id,
-        unit_id: unit_id,
-      });
+    for (let i = 0; i < filteredData.length; i++) {
+      const rental_id = filteredData[i].rental_id;
+      const unit_id = filteredData[i].unit_id;
 
       const staffmember_data = await StaffMember.findOne({
-        staffmember_id: workorder_data.staffmember_id,
+        staffmember_id: filteredData[i].staffmember_id,
       });
-      if (workorder_data) {
+
+      if (filteredData[i]) {
         const unit_data = await Unit.findOne({
           unit_id: unit_id,
         });
@@ -494,13 +497,14 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
         });
 
         return_data.push({
-          workOrder_id: data[i].workOrder_id,
-          work_subject: data[i].work_subject,
-          work_category: data[i].work_category,
-          priority: data[i].priority,
-          status: data[i].status,
-          createdAt: data[i].createdAt,
-          updatedAt: data[i].updatedAt,
+          workOrder_id: filteredData[i].workOrder_id,
+          work_subject: filteredData[i].work_subject,
+          work_category: filteredData[i].work_category,
+          priority: filteredData[i].priority,
+          status: filteredData[i].status,
+          date: filteredData[i].date,
+          createdAt: filteredData[i].createdAt,
+          updatedAt: filteredData[i].updatedAt,
           rental_id: rental_data.rental_id,
           unit_id: unit_data.unit_id,
           rental_adress: rental_data.rental_adress,
@@ -613,6 +617,24 @@ router.delete("/delete_workorder/:workOrder_id", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/workorder_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const rentals = await WorkOrder.find({ admin_id, is_delete: false });
+    const count = rentals.length;
+    res.status(200).json({
+      statusCode: 200,
+      count: count,
+      message: "Applicant found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
   }
 });
 

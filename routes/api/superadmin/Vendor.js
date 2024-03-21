@@ -421,4 +421,22 @@ router.get("/limitation/:admin_id", async (req, res) => {
   }
 });
 
+router.get("/vendor_count/:admin_id", async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+    const rentals = await Vendor.find({ admin_id, is_delete: false });
+    const count = rentals.length;
+    res.status(200).json({
+      statusCode: 200,
+      count: count,
+      message: "Vendor found",
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: err.message,
+    });
+  }
+});
+
 module.exports = router;

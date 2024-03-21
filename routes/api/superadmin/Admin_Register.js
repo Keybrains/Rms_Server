@@ -357,7 +357,10 @@ router.get("/admin", async (req, res) => {
     var pageNumber = parseInt(req.query.pageNumber) || 0;
 
     // Fetch admins with pagination
-    var admins = await AdminRegister.find({ isAdmin_delete: false, roll: "admin" })
+    var admins = await AdminRegister.find({
+      isAdmin_delete: false,
+      roll: "admin",
+    })
       .sort({ createdAt: -1 })
       .skip(pageSize * pageNumber)
       .limit(pageSize)
@@ -366,13 +369,20 @@ router.get("/admin", async (req, res) => {
     // Fetch plan details for each admin
     const plansDetailsPromises = admins.map(async (admin) => {
       // Find the plan purchased by the admin
-      const planPurchased = await Plans_Purchased.findOne({ admin_id: admin.admin_id }).lean();
+      const planPurchased = await Plans_Purchased.findOne({
+        admin_id: admin.admin_id,
+      }).lean();
       if (!planPurchased) {
-        return { ...admin, planName: 'No Plan Found' };
+        return { ...admin, planName: "No Plan Found" };
       }
       // Using the plan_id from the plan purchased to find the plan details
-      const planDetails = await Plans.findOne({ plan_id: planPurchased.plan_id }).lean();
-      return { ...admin, planName: planDetails ? planDetails.plan_name : 'Unknown Plan' };
+      const planDetails = await Plans.findOne({
+        plan_id: planPurchased.plan_id,
+      }).lean();
+      return {
+        ...admin,
+        planName: planDetails ? planDetails.plan_name : "Unknown Plan",
+      };
     });
 
     const adminsDetailsWithPlans = await Promise.all(plansDetailsPromises);
@@ -672,15 +682,41 @@ router.get("/check_company/:admin", async (req, res) => {
 
 router.get("/superadmin_count", async (req, res) => {
   try {
-    const admin = (
-      await AdminRegister.find({ roll: "admin", isAdmin_delete: false })
-    ).length;
-    const plan = (await Plans.find()).length;
+    const admin = await AdminRegister.find({
+      roll: "admin",
+      isAdmin_delete: false,
+    });
+
+    const planPur = await Plans_Purchased.find();
+
+    const plans = [];
+
+    for (const planp of planPur) {
+      const plan = await Plans.findOne({
+        plan_name: { $ne: "Free Plan" },
+        plan_id: planp.plan_id,
+      });
+      if (plan) {
+        plans.push({ ...plan.toObject(), ...planp.toObject() });
+      }
+    }
+
+    const activePlan = plans.filter((item) => {
+      return item.is_active === true;
+    });
+
+    const inactivePlan = plans.filter((item) => {
+      return item.is_active === false;
+    });
 
     res.json({
       statusCode: 200,
       admin: admin,
-      plan: plan,
+      plan: {
+        activePlan: activePlan.length,
+        inactivePlan: inactivePlan.length,
+        totalPlan: plans.length,
+      },
     });
   } catch (error) {
     console.error(error);
