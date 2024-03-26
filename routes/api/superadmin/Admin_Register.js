@@ -783,7 +783,7 @@ router.post("/passwordmail", async (req, res) => {
 
         <p>Reset your password now:</p>
         <p><a href="${
-          `http://localhost:3000/auth/changepassword?token=` +
+          `https://saas.cloudrentalmanager.com/auth/changepassword?token=` +
           token
         }" style="text-decoration: none;">Reset Password Link</a></p>
         

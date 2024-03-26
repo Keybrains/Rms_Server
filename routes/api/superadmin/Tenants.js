@@ -254,10 +254,12 @@ router.get("/tenants/:admin_id", async (req, res) => {
     });
 
     let tenants = [];
+    let plan = null;
 
     if (planPurchase) {
-      const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
-      if (plan && plan.plan_name === "Free Plan") {
+      plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
+    }
+      if (!plan || plan.plan_name === "Free Plan") {
         const adminTenants = await Tenant.find({
           admin_id: admin_id,
           is_delete: false,
@@ -270,9 +272,9 @@ router.get("/tenants/:admin_id", async (req, res) => {
       } else {
         tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
       }
-    } else {
-      tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
-    }
+    // } else {
+    //   tenants = await Tenant.find({ admin_id: admin_id, is_delete: false });
+    // }
 
     for (const tenant of tenants) {
       const password = decrypt(tenant.tenant_password);
@@ -357,7 +359,7 @@ router.post("/tenants", async (req, res) => {
       }
 
       const ApiResponse = await axios.post(
-        `http://localhost:4000/api/admin/passwordmail`,
+        `https://saas.cloudrentalmanager.com/api/admin/passwordmail`,
         {
           tenant_email: req.body.tenant_email,
           // name : tenantData.tenant_firstName + tenantData.tenant_lastName

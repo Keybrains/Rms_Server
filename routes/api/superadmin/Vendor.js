@@ -256,7 +256,7 @@ router.post("/vendor", async (req, res) => {
       // `;
 
       const ApiResponse = await axios.post(
-        `http://localhost:4000/api/admin/passwordmail`,{
+        `https://saas.cloudrentalmanager.com/api/admin/passwordmail`,{
           tenant_email: req.body.vendor_email
           // name : tenantData.tenant_firstName + tenantData.tenant_lastName
         }
@@ -291,12 +291,14 @@ router.get("/vendors/:admin_id", async (req, res) => {
     });
 
     let isFreePlan = false;
+    let plan = null;
     if (planPurchase) {
-      const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
-      if (plan && plan.plan_name === "Free Plan") {
+      plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
+    }
+      if (!plan || plan.plan_name === "Free Plan") {
         isFreePlan = true;
       }
-    }
+    
 
     let queryConditions = { admin_id: admin_id, is_delete: false };
 

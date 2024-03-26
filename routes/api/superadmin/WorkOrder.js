@@ -192,11 +192,11 @@ router.get("/work-orders/:admin_id", async (req, res) => {
     });
 
     let workOrdersData = [];
-
+    let plan = null;
     if (planPurchase) {
-      const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
-
-      if (plan && plan.plan_name === "Free Plan") {
+     plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
+    }
+      if (!plan || plan.plan_name === "Free Plan") {
         const adminWorkOrders = await WorkOrder.find(workOrdersCriteria).sort({
           createdAt: -1,
         });
@@ -211,11 +211,11 @@ router.get("/work-orders/:admin_id", async (req, res) => {
           createdAt: -1,
         });
       }
-    } else {
-      workOrdersData = await WorkOrder.find(workOrdersCriteria).sort({
-        createdAt: -1,
-      });
-    }
+    // } else {
+    //   workOrdersData = await WorkOrder.find(workOrdersCriteria).sort({
+    //     createdAt: -1,
+    //   });
+    // }
 
     if (workOrdersData.length === 0) {
       return res.status(200).json({

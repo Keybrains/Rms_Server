@@ -101,10 +101,12 @@ router.get("/property_type/:admin_id", async (req, res) => {
       is_active: true,
     });
 
-    const plan = await Plans.findOne({ plan_id: planPur.plan_id });
-
+    let plan = null;
+    if (planPur) {
+      const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+    }
     var data = [];
-    if (plan.plan_name === "Free Plan") {
+    if (!plan || plan.plan_name === "Free Plan") {
       const data1 = await PropertyType.find({
         admin_id: admin_id,
         is_delete: false,

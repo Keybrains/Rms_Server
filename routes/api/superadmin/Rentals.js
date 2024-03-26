@@ -261,11 +261,13 @@ router.get("/rentals/:admin_id", async (req, res) => {
       is_active: true,
     });
 
-    if (!planPur) {
-      return res.status(404).json({ message: "Plan not found." });
+    let plan = null;
+    if (planPur) {
+      const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+      // return res.status(404).json({ message: "Plan not found." });
     }
 
-    const plan = await Plans.findOne({ plan_id: planPur.plan_id });
+ 
     let rentalsData = [];
 
     if (plan && plan.plan_name === "Free Plan") {

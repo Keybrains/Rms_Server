@@ -347,7 +347,7 @@ router.post("/staff_member", async (req, res) => {
       req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
 
       const ApiResponse = await axios.post(
-        `http://localhost:4000/api/admin/passwordmail`,{
+        `https://saas.cloudrentalmanager.com/api/admin/passwordmail`,{
           tenant_email: req.body.staffmember_email
           // name : tenantData.tenant_firstName + tenantData.tenant_lastName
         }
@@ -404,10 +404,12 @@ router.get("/staff_member/:admin_id", async (req, res) => {
       is_active: true,
     });
 
+    let plan = null;
+    if (planPur) {
     const plan = await Plans.findOne({ plan_id: planPur.plan_id });
-
+    }
     var data = [];
-    if (plan.plan_name === "Free Plan") {
+    if (!plan || plan.plan_name === "Free Plan") {
       const data1 = await StaffMember.find({
         admin_id: admin_id,
         is_delete: false,

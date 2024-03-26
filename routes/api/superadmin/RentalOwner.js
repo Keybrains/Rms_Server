@@ -10,15 +10,38 @@ const { default: axios } = require("axios");
 router.get("/rental_owner/:admin_id", async (req, res) => {
   try {
     const admin_id = req.params.admin_id;
+    const planPur = await Plans_Purchased.findOne({
+      admin_id,
+      is_active: true,
+    });
 
-    var data = await RentalOwner.aggregate([
-      {
-        $match: { admin_id: admin_id },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-    ]);
+    let plan = null;
+    if (planPur) {
+      plan = await Plans.findOne({ plan_id: planPur.plan_id });
+    }
+
+    var data = [];
+    if (!plan || plan.plan_name === "Free Plan") {
+      const data1 = await RentalOwner.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+
+      const data2 = await RentalOwner.find({
+        admin_id: "is_trial",
+        is_delete: false,
+      });
+
+      data.push(...data1, ...data2);
+    } else {
+      const data1 = await RentalOwner.find({
+        admin_id: admin_id,
+        is_delete: false,
+      });
+
+      data.push(...data1);
+    }
+
 
     for (let i = 0; i < data.length; i++) {
       const admin_id = data[i].admin_id;
