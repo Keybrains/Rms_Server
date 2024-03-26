@@ -357,36 +357,37 @@ router.post("/tenants", async (req, res) => {
       }
 
       const ApiResponse = await axios.post(
-        `https://saas.cloudrentalmanager.com/api/admin/passwordmail`,{
-          tenant_email: req.body.tenant_email
+        `http://localhost:4000/api/admin/passwordmail`,
+        {
+          tenant_email: req.body.tenant_email,
           // name : tenantData.tenant_firstName + tenantData.tenant_lastName
         }
       );
       if (ApiResponse.status === 200) {
-        console.log('Password mail sent successfully');
+        console.log("Password mail sent successfully");
 
-      // const subject = "Tenant Login Credentials";
-      // const text = `
-      //   <p>Hello,</p>
-      //   <p>Here are your credentials for tenant login:</p>
-      //   <p>Email: ${req.body.tenant_email}</p>
-      //   <p>Login URL: http://localhost:3000/auth/createpassword</p>
-      // `;
+        // const subject = "Tenant Login Credentials";
+        // const text = `
+        //   <p>Hello,</p>
+        //   <p>Here are your credentials for tenant login:</p>
+        //   <p>Email: ${req.body.tenant_email}</p>
+        //   <p>Login URL: http://localhost:3000/auth/createpassword</p>
+        // `;
 
-      // // Send email with login credentials
-      // await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
+        // // Send email with login credentials
+        // await emailService.sendWelcomeEmail(req.body.tenant_email, subject, text);
 
-      let hashConvert = encrypt(req.body.tenant_password);
-      req.body.tenant_password = hashConvert;
+        let hashConvert = encrypt(req.body.tenant_password);
+        req.body.tenant_password = hashConvert;
 
-      const tenant = await Tenant.create(tenantData);
-      res.json({
-        statusCode: 200,
-        data: tenant,
-        message: "Add Tenant Successfully",
-      });
+        const tenant = await Tenant.create(tenantData);
+        res.json({
+          statusCode: 200,
+          data: tenant,
+          message: "Add Tenant Successfully",
+        });
+      }
     }
-  }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -446,7 +447,7 @@ router.delete("/tenant/:tenant_id", async (req, res) => {
         { $set: { is_delete: true } }
       );
 
-       if (deletedTenant.modifiedCount === 1) {
+      if (deletedTenant.modifiedCount === 1) {
         return res.status(200).json({
           statusCode: 200,
           message: `Tenant deleted successfully.`,
@@ -470,6 +471,7 @@ router.post("/login", async (req, res) => {
     const tenant = await Tenant.findOne({
       tenant_email: req.body.email,
       admin_id: req.body.admin_id,
+      is_delete: false,
     });
 
     if (!tenant) {
@@ -480,7 +482,7 @@ router.post("/login", async (req, res) => {
     }
 
     const pass = decrypt(tenant.tenant_password);
-
+    console.log(pass);
     if (req.body.password !== pass) {
       return res.status(200).json({
         statusCode: 202,
@@ -534,45 +536,51 @@ router.get("/tenant_profile/:tenant_id", async (req, res) => {
       });
     }
 
-    const leaseData = await Lease.find({ tenant_id: tenant_id });
-    const filteredLeaseData = leaseData.filter((lease) => {
-      const startDate = moment(lease.start_date);
-      const endDate = moment(lease.end_date);
-      return currentDate.isBetween(startDate, endDate, null, "[]");
-    });
-
-    const entry = filteredLeaseData.map((lease) => {
-      const entryData = lease.entry.filter(
-        (entry) => entry.charge_type === "Rent"
-      );
-      return entryData[0];
-    });
-
-    console.log(entry[0]);
-
-    const rental_id = filteredLeaseData[0].rental_id;
-    const rentalData = await Rentals.findOne({ rental_id: rental_id });
-    const unit_id = filteredLeaseData[0].unit_id;
-    const unitData = await Unit.findOne({ unit_id: unit_id });
-
-    const object = {
-      lease_id: filteredLeaseData[0].lease_id,
-      lease_type: filteredLeaseData[0].lease_type,
-      start_date: filteredLeaseData[0].start_date,
-      end_date: filteredLeaseData[0].end_date,
+    let object = {
       tenant_id: tenant_id,
       tenant_firstName: tenantData.tenant_firstName,
       tenant_lastName: tenantData.tenant_lastName,
       tenant_phoneNumber: tenantData.tenant_phoneNumber,
       tenant_email: tenantData.tenant_email,
-      rental_id: rental_id,
-      rental_adress: rentalData.rental_adress,
-      unit_id: unit_id,
-      rental_unit: unitData.rental_unit,
-      amount: entry[0].amount,
-      date: entry[0].date,
-      rent_cycle: entry[0].rent_cycle,
     };
+
+    const leaseData = await Lease.find({ tenant_id: tenant_id });
+    if (leaseData.length > 0) {
+      const filteredLeaseData = leaseData.filter((lease) => {
+        const startDate = moment(lease.start_date);
+        const endDate = moment(lease.end_date);
+        return currentDate.isBetween(startDate, endDate, null, "[]");
+      });
+
+      if (filteredLeaseData.length > 0) {
+        const entry = filteredLeaseData.map((lease) => {
+          const entryData = lease.entry.filter(
+            (entry) => entry.charge_type === "Rent"
+          );
+          return entryData[0];
+        });
+
+        const rental_id = filteredLeaseData[0].rental_id;
+        const rentalData = await Rentals.findOne({ rental_id: rental_id });
+        const unit_id = filteredLeaseData[0].unit_id;
+        const unitData = await Unit.findOne({ unit_id: unit_id });
+
+        object = {
+          ...object,
+          lease_id: filteredLeaseData[0].lease_id,
+          lease_type: filteredLeaseData[0].lease_type,
+          start_date: filteredLeaseData[0].start_date,
+          end_date: filteredLeaseData[0].end_date,
+          rental_id: rental_id,
+          rental_adress: rentalData?.rental_adress,
+          unit_id: unit_id,
+          rental_unit: unitData?.rental_unit,
+          amount: entry[0]?.amount,
+          date: entry[0]?.date,
+          rent_cycle: entry[0]?.rent_cycle,
+        };
+      }
+    }
 
     res.json({
       statusCode: 200,
@@ -586,6 +594,7 @@ router.get("/tenant_profile/:tenant_id", async (req, res) => {
     });
   }
 });
+
 
 router.get("/tenant_property/:tenant_id", async (req, res) => {
   try {

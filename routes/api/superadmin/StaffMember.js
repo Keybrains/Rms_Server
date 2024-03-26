@@ -272,8 +272,8 @@ router.post("/login", async (req, res) => {
     const staff_member = await StaffMember.findOne({
       admin_id: req.body.admin_id,
       staffmember_email: req.body.email,
+      is_delete: false
     });
-    console.log(req.body, staff_member);
 
     if (!staff_member) {
       return res.status(201).json({
@@ -283,7 +283,7 @@ router.post("/login", async (req, res) => {
     }
 
     const compare = decrypt(staff_member.staffmember_password);
-    console.log(compare);
+
     if (req.body.password !== compare) {
       return res.status(200).json({
         statusCode: 202,
@@ -346,20 +346,30 @@ router.post("/staff_member", async (req, res) => {
       req.body["createdAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
       req.body["updatedAt"] = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      const subject = "Staff-Member Login Credentials";
-      const text = `
-        <p>Hello,</p>
-        <p>Here are your credentials for staffmember login:</p>
-        <p>Email: ${req.body.staffmember_email}</p>
-        <p>Password: ${req.body.staffmember_password}</p>
-        <p>Login URL: https://saas.cloudrentalmanager.com/auth/${adminData.company_name}/staffmember/login</p>
-      `;
-
-      await emailService.sendWelcomeEmail(
-        req.body.staffmember_email,
-        subject,
-        text
+      const ApiResponse = await axios.post(
+        `http://localhost:4000/api/admin/passwordmail`,{
+          tenant_email: req.body.staffmember_email
+          // name : tenantData.tenant_firstName + tenantData.tenant_lastName
+        }
       );
+      if (ApiResponse.status === 200) {
+        console.log('Password mail sent successfully');
+      }
+
+      // const subject = "Staff-Member Login Credentials";
+      // const text = `
+      //   <p>Hello,</p>
+      //   <p>Here are your credentials for staffmember login:</p>
+      //   <p>Email: ${req.body.staffmember_email}</p>
+      //   <p>Password: ${req.body.staffmember_password}</p>
+      //   <p>Login URL: https://saas.cloudrentalmanager.com/auth/${adminData.company_name}/staffmember/login</p>
+      // `;
+
+      // await emailService.sendWelcomeEmail(
+      //   req.body.staffmember_email,
+      //   subject,
+      //   text
+      // );
 
       let hashConvert = encrypt(req.body.staffmember_password);
       req.body.staffmember_password = hashConvert;
@@ -428,6 +438,7 @@ router.get("/staff_member/:admin_id", async (req, res) => {
       // Attach client and property information to the data item
       data[i].admin = admin;
     }
+    data.reverse();
 
     res.json({
       statusCode: 200,

@@ -296,7 +296,7 @@ cron.schedule("33 16 * * *", async () => {
         );
         try {
           const res = await axios.get(
-            `https://saas.cloudrentalmanager.com/api/tenants/tenant_details/${entry.tenant_id}`
+            `https://saas.cloudrentalmanager.com/api/tenant/tenant_details/${entry.tenant_id}`
           ); // Save the new entry
 
           details = res.data.data;
@@ -893,7 +893,7 @@ cron.schedule("46 11 * * *", async () => {
           if (charge.end_date && charge.tenant_id) {
             try {
               const res = await axios.get(
-                `https://saas.cloudrentalmanager.com/api/tenants/tenant_details/${charge.tenant_id}`
+                `https://saas.cloudrentalmanager.com/api/tenant/tenant_details/${charge.tenant_id}`
               ); // Save the new entry
               console.log("Data charges collection.", res.data);
               details = res.data.data;

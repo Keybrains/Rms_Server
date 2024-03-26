@@ -527,6 +527,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
 
     const leases = await Lease.find({
       tenant_id,
+      is_delete: false,
       $expr: {
         $and: [
           { $lte: [{ $toDate: "$start_date" }, currentDate] },

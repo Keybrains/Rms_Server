@@ -89,7 +89,7 @@ app.use("/api/unit", UnitRouter);
 app.use("/api/appliance", ApplienceRouter);
 app.use("/api/leases", LeaseRouter);
 app.use("/api/accounts", AccountsRouter);
-app.use("/api/tenants", TenantsRouter);
+app.use("/api/tenant", TenantsRouter);
 app.use("/api/purchase", Plans_PurchasedRouter);
 app.use("/api/vendor", VendorAdmindRouter);
 app.use("/api/applicant", ApplicantAdmindRouter);
