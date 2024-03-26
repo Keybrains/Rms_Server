@@ -10,6 +10,7 @@ const { default: axios } = require("axios");
 var emailService = require("./emailService");
 const Plans_Purchased = require("../../../modals/superadmin/Plans_Purchased");
 const Plans = require("../../../modals/superadmin/Plans");
+
 const encrypt = (text) => {
   const cipher = crypto.createCipher("aes-256-cbc", "mansi");
   let encrypted = cipher.update(text, "utf-8", "hex");
@@ -245,14 +246,14 @@ router.post("/vendor", async (req, res) => {
       vendorData.createdAt = moment().format("YYYY-MM-DD HH:mm:ss");
       vendorData.updatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
 
-      const subject = "Vendor Login Credentials";
-      const text = `
-        <p>Hello,</p>
-        <p>Here are your credentials for vendor login:</p>
-        <p>Email: ${req.body.vendor_email}</p>
-        <p>Password: ${req.body.vendor_password}</p>
-        <p>Login URL: https://saas.cloudrentalmanager.com/auth/${adminData?.company_name}/vendor/login</p>
-      `;
+      // const subject = "Vendor Login Credentials";
+      // const text = `
+      //   <p>Hello,</p>
+      //   <p>Here are your credentials for vendor login:</p>
+      //   <p>Email: ${req.body.vendor_email}</p>
+      //   <p>Password: ${req.body.vendor_password}</p>
+      //   <p>Login URL: https://saas.cloudrentalmanager.com/auth/${adminData?.company_name}/vendor/login</p>
+      // `;
 
       const ApiResponse = await axios.post(
         `https://saas.cloudrentalmanager.com/api/admin/passwordmail`,{
@@ -264,7 +265,7 @@ router.post("/vendor", async (req, res) => {
         console.log('Password mail sent successfully');
       }
       // Send email with login credentials
-      await emailService.sendWelcomeEmail(req.body.vendor_email, subject, text);
+      // await emailService.sendWelcomeEmail(req.body.vendor_email, subject, text);
       let hashConvert = encrypt(req.body.vendor_password);
       req.body.vendor_password = hashConvert;
 
@@ -290,12 +291,14 @@ router.get("/vendors/:admin_id", async (req, res) => {
     });
 
     let isFreePlan = false;
+    let plan = null;
     if (planPurchase) {
-      const plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
-      if (plan && plan.plan_name === "Free Plan") {
+      plan = await Plans.findOne({ plan_id: planPurchase.plan_id });
+    }
+      if (!plan || plan.plan_name === "Free Plan") {
         isFreePlan = true;
       }
-    }
+    
 
     let queryConditions = { admin_id: admin_id, is_delete: false };
 

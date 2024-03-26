@@ -1918,8 +1918,6 @@ router.post("/edit-plan", async (req, res) => {
         console.log("parsedResponse.responsetext", parsedResponse.responsetext);
       })
       .catch(function (error) {
-        //console.log("for 500", res);
-
         sendResponse(res, error, 500);
       });
   } catch (error) {

@@ -750,6 +750,18 @@ router.put("/togglestatus/:adminId", async (req, res) => {
 // ============================ Reset Password ==================================
 const tokenExpirationMap = new Map();
 
+function isTokenValid(email) {
+  const token = encrypt(email);
+  const expirationTimestamp = tokenExpirationMap.get(token);
+  console.log(
+    `Token: ${token}, Expiration: ${new Date(
+      expirationTimestamp
+    )}, Current: ${new Date()}`
+  );
+
+  return expirationTimestamp && Date.now() < expirationTimestamp;
+}
+
 router.post("/passwordmail", async (req, res) => {
   try {
     const { tenant_email } = req.body;
@@ -759,7 +771,7 @@ router.post("/passwordmail", async (req, res) => {
     console.log("object", encryptedEmail);
     const token = encryptedEmail;
 
-    const expirationTime = 60 * 60 * 1000;
+    const expirationTime = 2 * 24 * 60 * 60 * 1000;
     // Store the expiration time along with the token
     const expirationTimestamp = Date.now() + expirationTime;
     tokenExpirationMap.set(token, expirationTimestamp);
@@ -830,6 +842,7 @@ router.put("/reset_password/:mail", async (req, res) => {
   try {
     const encryptmail = req.params.mail;
     const email = decrypt(encryptmail);
+    console.log("email",email)
 
     // Check if the token is still valid
     if (!isTokenValid(email)) {
@@ -856,6 +869,7 @@ router.put("/reset_password/:mail", async (req, res) => {
     // Check AdminRegister collection first
     const adminData = await AdminRegister.findOne({ email, isAdmin_delete: false});
     if (adminData) {
+      console.log("admin")
       result = await AdminRegister.findOneAndUpdate(
         { email: email, is_delete: false },
         { password: updateData.password },
@@ -870,7 +884,7 @@ router.put("/reset_password/:mail", async (req, res) => {
       const collections = [Tenant, Vendor, StaffMember];
 
       // Iterate through the collections
-      for (const Collection of collections) {
+      for (const Collection of collections) {   
         result = await Collection.findOneAndUpdate(
           { [`${Collection.modelName.toLowerCase()}_email`]: email, is_delete: false},
           {
@@ -881,6 +895,7 @@ router.put("/reset_password/:mail", async (req, res) => {
           },
           { new: true }
         );
+      
         if (result) {
           console.log(result, "====");
           collection = Collection.modelName;
@@ -888,7 +903,7 @@ router.put("/reset_password/:mail", async (req, res) => {
         }
       }
     }
-
+    console.log("result",result)
     if (result) {
       // Password changed successfully, remove the token from the map
       tokenExpirationMap.delete(encrypt(email));
@@ -921,17 +936,5 @@ router.put("/reset_password/:mail", async (req, res) => {
     });
   }
 });
-
-function isTokenValid(email) {
-  const token = encrypt(email);
-  const expirationTimestamp = tokenExpirationMap.get(token);
-  console.log(
-    `Token: ${token}, Expiration: ${new Date(
-      expirationTimestamp
-    )}, Current: ${new Date()}`
-  );
-
-  return expirationTimestamp && Date.now() < expirationTimestamp;
-}
 
 module.exports = router;
