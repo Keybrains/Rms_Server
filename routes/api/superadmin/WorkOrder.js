@@ -586,6 +586,7 @@ router.get("/tenant_work/:tenant_id", async (req, res) => {
           status: data[i].status,
           createdAt: data[i].createdAt,
           updatedAt: data[i].updatedAt,
+          date: data[i].date,
           rental_id: rental_data.rental_id,
           unit_id: unit_data.unit_id,
           rental_adress: rental_data.rental_adress,
