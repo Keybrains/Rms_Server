@@ -86,7 +86,6 @@ router.post("/payment", async (req, res) => {
     let totalAmount = 0;
     const entryIds = [];
 
-    console.log("1==========");
     for (let i = 0; i < req.body.entry.length; i++) {
       if (req.body.entry[i].entry_id) {
         const findCharge = await Charge.findOne({
@@ -175,7 +174,6 @@ router.post("/tenantpayment", async (req, res) => {
     let totalAmount = 0;
     const entryIds = [];
 
-    console.log("1==========");
     for (let i = 0; i < req.body.entry.length; i++) {
       if (req.body.entry[i].entry_id) {
         const findCharge = await Charge.findOne({
@@ -373,6 +371,189 @@ router.get("/tenant_financial/:tenant_id", async (req, res) => {
       data: sortedDates.reverse(),
       totalBalance: total_amount,
       message: "Read All Tenant-Financial Blance",
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/admin_balance/:admin_id", async (req, res) => {
+  try {
+    const admin_id = req.params.admin_id;
+
+    var payments = await Payment.aggregate([
+      {
+        $match: { admin_id: admin_id },
+      },
+      {
+        $group: {
+          _id: "$tenant_id",
+          payments: { $push: "$$ROOT" },
+        },
+      },
+    ]);
+
+    var charges = await Charge.aggregate([
+      {
+        $match: { admin_id: admin_id },
+      },
+      {
+        $group: {
+          _id: "$tenant_id",
+          charges: { $push: "$$ROOT" },
+        },
+      },
+    ]);
+
+    let allData = [];
+    for (const tenantPayment of payments) {
+      let paymentData = tenantPayment.payments;
+      allData.push(...paymentData);
+    }
+
+    for (const tenantCharge of charges) {
+      let chargeData = tenantCharge.charges;
+      allData.push(...chargeData);
+    }
+
+    const sortedDates = allData.sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
+
+    var PastDueAmount = {};
+    for (const item of sortedDates) {
+      let tenant_id = item.tenant_id;
+      if (!PastDueAmount[tenant_id]) {
+        PastDueAmount[tenant_id] = 0;
+      }
+
+      if (item.type === "Payment") {
+        PastDueAmount[tenant_id] -= item.total_amount;
+      } else if (item.type === "Charge" || item.type === "Refund") {
+        PastDueAmount[tenant_id] += item.total_amount;
+      }
+      item.balance = PastDueAmount[tenant_id];
+    }
+
+    let sumPastDueAmount = Object.values(PastDueAmount).reduce(
+      (acc, curr) => acc + curr,
+      0
+    );
+
+    var TotalCollectedAmount = {};
+    for (const item of sortedDates) {
+      let tenant_id = item.tenant_id;
+      if (!TotalCollectedAmount[tenant_id]) {
+        TotalCollectedAmount[tenant_id] = 0;
+      }
+
+      if (item.type === "Payment") {
+        TotalCollectedAmount[tenant_id] += item.total_amount;
+      } else if (item.type === "Refund") {
+        TotalCollectedAmount[tenant_id] -= item.total_amount;
+      }
+      item.balance = TotalCollectedAmount[tenant_id];
+    }
+
+    let sumTotalCollectedAmount = Object.values(TotalCollectedAmount).reduce(
+      (acc, curr) => acc + curr,
+      0
+    );
+
+    const today = new Date();
+    const lastMonthStartDate = new Date(
+      today.getFullYear(),
+      today.getMonth() - 1,
+      1
+    );
+    const lastMonthEndDate = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    const lastMonthPayments = payments.map((paymentGroup) => {
+      const processedPaymentIds = {};
+      const filteredPayments = paymentGroup.payments.filter((payment) => {
+        if (processedPaymentIds[payment._id]) {
+          return false;
+        }
+        const entryDates = payment.entry.map((entry) => new Date(entry.date));
+        const isLastMonthPayment = entryDates.some(
+          (date) => date >= lastMonthStartDate && date <= lastMonthEndDate
+        );
+        if (isLastMonthPayment) {
+          processedPaymentIds[payment._id] = true;
+        }
+        return isLastMonthPayment;
+      });
+
+      return filteredPayments;
+    });
+
+    const flattenedData = lastMonthPayments.flatMap((innerArray) => innerArray);
+    var LastMonthCollectedAmount = {};
+    for (const item of flattenedData) {
+      let tenant_id = item.tenant_id;
+      if (!LastMonthCollectedAmount[tenant_id]) {
+        LastMonthCollectedAmount[tenant_id] = 0;
+      }
+
+      if (item.type === "Payment") {
+        LastMonthCollectedAmount[tenant_id] += item.total_amount;
+      } else if (item.type === "Refund") {
+        LastMonthCollectedAmount[tenant_id] -= item.total_amount;
+      }
+      item.balance = LastMonthCollectedAmount[tenant_id];
+    }
+
+    let sumLastMonthCollectedAmount = Object.values(
+      LastMonthCollectedAmount
+    ).reduce((acc, curr) => acc + curr, 0);
+
+    const nextMonthCharge = charges.map((paymentGroup) => {
+      const processedPaymentIds = {};
+      const filteredPayments = paymentGroup.charges.filter((payment) => {
+        if (processedPaymentIds[payment._id]) {
+          return false;
+        }
+        const entryDates = payment.entry.map((entry) => new Date(entry.date));
+        const isLastMonthPayment = entryDates.some(
+          (date) => date >= lastMonthStartDate && date <= lastMonthEndDate
+        );
+        if (isLastMonthPayment) {
+          processedPaymentIds[payment._id] = true;
+        }
+        return isLastMonthPayment;
+      });
+
+      return filteredPayments;
+    });
+
+    const flattenedChargeData = nextMonthCharge.flatMap(
+      (innerArray) => innerArray
+    );
+    var NextMonthCharge = {};
+    for (const item of flattenedChargeData) {
+      let tenant_id = item.tenant_id;
+      if (!NextMonthCharge[tenant_id]) {
+        NextMonthCharge[tenant_id] = 0;
+      }
+      NextMonthCharge[tenant_id] += item.total_amount;
+      item.balance = NextMonthCharge[tenant_id];
+    }
+
+    let sumNextMonthCharge = Object.values(NextMonthCharge).reduce(
+      (acc, curr) => acc + curr,
+      0
+    );
+
+    res.json({
+      statusCode: 200,
+      PastDueAmount: sumPastDueAmount,
+      TotalCollectedAmount: sumTotalCollectedAmount,
+      LastMonthCollectedAmount: sumLastMonthCollectedAmount,
+      NextMonthCharge: sumNextMonthCharge,
+      message: "Read All Balance",
     });
   } catch (error) {
     res.json({
